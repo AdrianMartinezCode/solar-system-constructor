@@ -1,0 +1,105 @@
+.stats-panel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.stats-section {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.stats-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.stat-label {
+  color: #aaa;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #e8e8e8;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+.stat-value.good {
+  color: #50c878;
+}
+
+.stat-value.caution {
+  color: #ffaa00;
+}
+
+.stat-value.warning {
+  color: #ff5555;
+}
+
+.stat-unit {
+  color: #777;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+.stat-badge {
+  padding: 2px 8px;
+  background: #4a9eff;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+}
+
+.stat-badge.paused {
+  background: #ffaa00;
+}
+
+.stats-actions {
+  margin-top: auto;
+}
+
+.stats-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: #e8e8e8;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stats-btn:hover {
+  background: #4a9eff;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
