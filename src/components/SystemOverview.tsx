@@ -75,8 +75,11 @@ export const SystemOverview: React.FC = () => {
         return a.data.name.localeCompare(b.data.name);
       } else if (sortBy === 'mass' && a.type !== 'group' && b.type !== 'group') {
         return (b.data.mass || 0) - (a.data.mass || 0);
-      } else if (sortBy === 'distance' && a.type !== 'group' && b.type !== 'group') {
-        return (a.data.orbitalDistance || 0) - (b.data.orbitalDistance || 0);
+          } else if (sortBy === 'distance' && a.type !== 'group' && b.type !== 'group') {
+        // Use semi-major axis if available, otherwise fall back to orbitalDistance
+        const distA = a.data.semiMajorAxis ?? a.data.orbitalDistance ?? 0;
+        const distB = b.data.semiMajorAxis ?? b.data.orbitalDistance ?? 0;
+        return distA - distB;
       }
       return 0;
     });
@@ -169,7 +172,10 @@ export const SystemOverview: React.FC = () => {
                 <div className="result-name">{obj.data.name}</div>
                 {obj.type !== 'group' && obj.data.parentId && (
                   <div className="result-details">
-                    Parent: {stars[obj.data.parentId]?.name || 'Unknown'} | {obj.data.orbitalDistance?.toFixed(2)} AU
+                    Parent: {stars[obj.data.parentId]?.name || 'Unknown'} | {(obj.data.semiMajorAxis ?? obj.data.orbitalDistance)?.toFixed(2)} AU
+                    {obj.data.eccentricity && obj.data.eccentricity > 0 && (
+                      <> | e={obj.data.eccentricity.toFixed(2)}</>
+                    )}
                   </div>
                 )}
                 {obj.type !== 'group' && obj.data.mass && (

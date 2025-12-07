@@ -278,6 +278,61 @@ export const UniverseGeneratorPanel: React.FC = () => {
         </div>
       </div>
       
+      {/* Orbit Style Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">Orbit Styles</h3>
+        
+        {/* Orbit Eccentricity Style */}
+        <div className="generator-field">
+          <label className="generator-label">Eccentricity Style</label>
+          <select
+            className="generator-select"
+            value={config.orbitEccentricityStyle ?? "circular"}
+            onChange={(e) => updateConfig('orbitEccentricityStyle', e.target.value as GenerationConfig["orbitEccentricityStyle"])}
+          >
+            <option value="circular">Circular (e = 0)</option>
+            <option value="mixed">Mixed (e = 0-0.3)</option>
+            <option value="eccentric">Eccentric (e = 0.1-0.7)</option>
+          </select>
+          <small className="generator-hint">Controls how elliptical orbits are</small>
+        </div>
+        
+        {/* Orbit Inclination Max */}
+        <div className="generator-field">
+          <label className="generator-label">
+            Max Inclination
+            <span className="generator-value">{config.orbitInclinationMax ?? 0}°</span>
+          </label>
+          <input
+            type="range"
+            className="generator-slider"
+            min="0"
+            max="90"
+            step="5"
+            value={config.orbitInclinationMax ?? 0}
+            onChange={(e) => updateConfig('orbitInclinationMax', parseInt(e.target.value))}
+          />
+          <div className="generator-slider-labels">
+            <span>0° (flat)</span>
+            <span>90° (wild)</span>
+          </div>
+          <small className="generator-hint">Maximum tilt of orbit planes in 3D</small>
+        </div>
+        
+        {/* Orbit Offset Enabled */}
+        <div className="generator-field">
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.orbitOffsetEnabled ?? false}
+              onChange={(e) => updateConfig('orbitOffsetEnabled', e.target.checked)}
+            />
+            <span>Enable Orbit Center Offsets</span>
+          </label>
+          <small className="generator-hint">Allows ellipse centers to be displaced from parent</small>
+        </div>
+      </div>
+      
       {/* Grouping Controls */}
       <div className="generator-section">
         <h3 className="generator-section-title">Grouping</h3>

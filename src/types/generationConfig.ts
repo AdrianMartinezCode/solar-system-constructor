@@ -16,6 +16,11 @@ export interface GenerationConfig {
   planetDensity: number; // 0..1
   moonDensity: number;   // 0..1
 
+  // Orbit style parameters
+  orbitEccentricityStyle?: "circular" | "mixed" | "eccentric"; // Overall eccentricity distribution
+  orbitInclinationMax?: number; // Maximum inclination/tilt in degrees (0 = all co-planar)
+  orbitOffsetEnabled?: boolean; // Whether to enable orbit center offsets
+
   // Grouping
   enableGroups: boolean;
   targetGalaxyCount: number;

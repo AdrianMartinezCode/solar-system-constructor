@@ -30,6 +30,12 @@ interface GeneratorConfig {
   orbitJitter: number;      // Jitter range [-jitter, +jitter]
   orbitK: number;           // Kepler constant for speed calculation
   
+  // Elliptical orbit parameters
+  eccentricityMin?: number;       // Min eccentricity (default 0)
+  eccentricityMax?: number;       // Max eccentricity (default 0)
+  inclinationMax?: number;        // Max inclination in degrees (default 0)
+  orbitOffsetMagnitude?: number;  // Max orbit center offset (default 0)
+  
   // Physical parameters
   massMu: number;           // Mean for log-normal mass distribution
   massSigma: number;        // Std dev for log-normal mass distribution
@@ -52,6 +58,11 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   orbitGrowth: 1.8,
   orbitJitter: 0.1,
   orbitK: 20.0,
+  
+  eccentricityMin: 0,
+  eccentricityMax: 0,
+  inclinationMax: 0,
+  orbitOffsetMagnitude: 0,
   
   massMu: 1.5,
   massSigma: 0.8,
@@ -364,6 +375,59 @@ class PhysicsGenerator {
       return this.rng.uniform(0, 360);
     }
   }
+  
+  /**
+   * Generate eccentricity for an orbit
+   */
+  generateEccentricity(): number {
+    const min = this.config.eccentricityMin ?? 0;
+    const max = this.config.eccentricityMax ?? 0;
+    if (min === 0 && max === 0) return 0;
+    return this.rng.uniform(min, max);
+  }
+  
+  /**
+   * Generate orbit inclination (rotation around X axis)
+   */
+  generateInclination(): number {
+    const maxIncl = this.config.inclinationMax ?? 0;
+    if (maxIncl === 0) return 0;
+    // Generate inclination in range [-maxIncl, +maxIncl]
+    return this.rng.uniform(-maxIncl, maxIncl);
+  }
+  
+  /**
+   * Generate orbit orientation (rotations around Y and Z)
+   */
+  generateOrbitRotations(): { rotY: number; rotZ: number } {
+    const maxIncl = this.config.inclinationMax ?? 0;
+    if (maxIncl === 0) return { rotY: 0, rotZ: 0 };
+    
+    // Random orientation angles
+    return {
+      rotY: this.rng.uniform(-maxIncl * 0.5, maxIncl * 0.5),
+      rotZ: this.rng.uniform(0, 360), // Full range for ascending node
+    };
+  }
+  
+  /**
+   * Generate orbit center offset
+   */
+  generateOrbitOffset(): { offsetX: number; offsetY: number; offsetZ: number } {
+    const mag = this.config.orbitOffsetMagnitude ?? 0;
+    if (mag === 0) return { offsetX: 0, offsetY: 0, offsetZ: 0 };
+    
+    // Generate random offset within sphere of radius mag
+    const theta = this.rng.uniform(0, Math.PI * 2);
+    const phi = Math.acos(this.rng.uniform(-1, 1));
+    const r = this.rng.uniform(0, mag);
+    
+    return {
+      offsetX: r * Math.sin(phi) * Math.cos(theta),
+      offsetY: r * Math.sin(phi) * Math.sin(theta),
+      offsetZ: r * Math.cos(phi),
+    };
+  }
 }
 
 // ============================================================================
@@ -547,6 +611,12 @@ class StarDataGenerator {
     const color = this.physics.generateColor(mass, node.type);
     const name = this.generateName(node.type);
     
+    // Generate elliptical orbit parameters
+    const eccentricity = this.physics.generateEccentricity();
+    const inclination = this.physics.generateInclination();
+    const rotations = this.physics.generateOrbitRotations();
+    const offset = this.physics.generateOrbitOffset();
+    
     return {
       id: node.id,
       name,
@@ -558,6 +628,15 @@ class StarDataGenerator {
       orbitalDistance,
       orbitalSpeed,
       orbitalPhase,
+      // Elliptical orbit parameters (only include if non-zero)
+      semiMajorAxis: orbitalDistance, // Use orbital distance as semi-major axis
+      eccentricity: eccentricity > 0 ? eccentricity : undefined,
+      orbitOffsetX: offset.offsetX !== 0 ? offset.offsetX : undefined,
+      orbitOffsetY: offset.offsetY !== 0 ? offset.offsetY : undefined,
+      orbitOffsetZ: offset.offsetZ !== 0 ? offset.offsetZ : undefined,
+      orbitRotX: inclination !== 0 ? inclination : undefined,
+      orbitRotY: rotations.rotY !== 0 ? rotations.rotY : undefined,
+      orbitRotZ: rotations.rotZ !== 0 ? rotations.rotZ : undefined,
     };
   }
   

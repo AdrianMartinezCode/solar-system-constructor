@@ -22,6 +22,15 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
   // Map scaleMode to orbital parameters
   const { orbitBase, orbitGrowth, orbitK } = mapScaleMode(config.scaleMode);
   
+  // Map orbit eccentricity style
+  const { eccentricityMin, eccentricityMax } = mapEccentricityStyle(config.orbitEccentricityStyle);
+  
+  // Map orbit inclination
+  const inclinationMax = config.orbitInclinationMax ?? 0;
+  
+  // Map orbit offset
+  const orbitOffsetMagnitude = config.orbitOffsetEnabled ? 2.0 : 0;
+  
   // Map grouping
   const enableGrouping = config.enableGroups;
   const numGroups = mapGroupCount(config.targetGalaxyCount, config.groupStructureMode);
@@ -35,6 +44,10 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     orbitBase,
     orbitGrowth,
     orbitK,
+    eccentricityMin,
+    eccentricityMax,
+    inclinationMax,
+    orbitOffsetMagnitude,
     enableGrouping,
     numGroups,
     nestingProbability,
@@ -110,6 +123,24 @@ function mapNestingProbability(mode: GenerationConfig["groupStructureMode"]): nu
       return 0.5;
     default:
       return 0.2;
+  }
+}
+
+/**
+ * Map orbit eccentricity style to min/max values
+ */
+function mapEccentricityStyle(style?: GenerationConfig["orbitEccentricityStyle"]): {
+  eccentricityMin: number;
+  eccentricityMax: number;
+} {
+  switch (style) {
+    case "circular":
+    default:
+      return { eccentricityMin: 0, eccentricityMax: 0 };
+    case "mixed":
+      return { eccentricityMin: 0, eccentricityMax: 0.3 };
+    case "eccentric":
+      return { eccentricityMin: 0.1, eccentricityMax: 0.7 };
   }
 }
 

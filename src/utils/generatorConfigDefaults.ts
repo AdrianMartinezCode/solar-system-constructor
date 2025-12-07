@@ -16,6 +16,10 @@ export const defaultConfig: GenerationConfig = {
   planetDensity: 0.6,
   moonDensity: 0.7,
   
+  orbitEccentricityStyle: "circular",
+  orbitInclinationMax: 0,
+  orbitOffsetEnabled: false,
+  
   enableGroups: false,
   targetGalaxyCount: 3,
   groupStructureMode: "flat",
@@ -37,6 +41,8 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         planetDensity: 0.8,
         moonDensity: 0.8,
         enableNarySystems: false,
+        orbitEccentricityStyle: "circular",
+        orbitInclinationMax: 5, // Slight tilt
       };
       
     case "solarLike":
@@ -48,6 +54,9 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         planetDensity: 0.5,
         moonDensity: 0.6,
         enableNarySystems: true,
+        orbitEccentricityStyle: "circular",
+        orbitInclinationMax: 10, // Low inclinations like our solar system
+        orbitOffsetEnabled: false,
       };
       
     case "crowded":
@@ -59,6 +68,9 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         planetDensity: 0.3,
         moonDensity: 0.4,
         enableNarySystems: true,
+        orbitEccentricityStyle: "mixed",
+        orbitInclinationMax: 25, // More variety
+        orbitOffsetEnabled: false,
       };
       
     case "superDenseExperimental":
@@ -73,6 +85,9 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         enableGroups: true,
         targetGalaxyCount: 8,
         groupStructureMode: "deepHierarchy",
+        orbitEccentricityStyle: "eccentric",
+        orbitInclinationMax: 45, // Wild, chaotic orbits
+        orbitOffsetEnabled: true,
       };
       
     default:

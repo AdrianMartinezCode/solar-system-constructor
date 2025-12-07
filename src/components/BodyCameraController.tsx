@@ -52,12 +52,8 @@ export const BodyCameraController: React.FC = () => {
       if (!star) break;
       
       if (star.orbitalDistance > 0) {
-        const pos = calculateOrbitalPosition(
-          time,
-          star.orbitalDistance,
-          star.orbitalSpeed,
-          star.orbitalPhase
-        );
+        // Use the new elliptical orbit calculation
+        const pos = calculateOrbitalPosition(time, star);
         positions.unshift(new THREE.Vector3(pos.x, pos.y, pos.z));
       } else {
         positions.unshift(new THREE.Vector3(0, 0, 0));

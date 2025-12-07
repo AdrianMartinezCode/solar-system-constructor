@@ -6,9 +6,26 @@ export interface Star {
   color: string;
   children: string[];
   parentId: string | null;
+  
+  // Legacy circular orbit parameters (maintained for backward compatibility)
   orbitalDistance: number;
   orbitalSpeed: number;
   orbitalPhase: number; // Phase offset in degrees (0-360) for n-ary systems
+  
+  // Elliptical orbit shape parameters
+  semiMajorAxis?: number;        // a - semi-major axis (if undefined, derived from orbitalDistance)
+  eccentricity?: number;          // e - eccentricity (0 = circular, 0-1 = ellipse)
+  
+  // Orbit center offset (3D translation of the ellipse center relative to parent)
+  orbitOffsetX?: number;
+  orbitOffsetY?: number;
+  orbitOffsetZ?: number;
+  
+  // Orbit plane orientation (Euler angles in degrees)
+  // Applied in order: rotZ, then rotY, then rotX
+  orbitRotX?: number;  // Rotation around X axis (inclination-like)
+  orbitRotY?: number;  // Rotation around Y axis
+  orbitRotZ?: number;  // Rotation around Z axis (longitude of ascending node-like)
 }
 
 export interface Position {

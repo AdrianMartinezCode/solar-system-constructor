@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
-import { calculateOrbitalPosition } from '../utils/physics';
+import { calculateOrbitalPosition, generateOrbitPath } from '../utils/physics';
 import { OrbitRing } from './OrbitRing';
 import * as THREE from 'three';
 
@@ -20,13 +20,21 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
   
   const isSelected = selectedStarId === starId;
   
-  // Calculate position based on orbital parameters
+  // Calculate position based on orbital parameters (now supports elliptical orbits)
   const position = useMemo(() => {
     if (!star || star.orbitalDistance === 0) {
       return { x: 0, y: 0, z: 0 };
     }
-    return calculateOrbitalPosition(time, star.orbitalDistance, star.orbitalSpeed, star.orbitalPhase);
+    return calculateOrbitalPosition(time, star);
   }, [time, star]);
+  
+  // Generate orbit path for visualization
+  const orbitPath = useMemo(() => {
+    if (!star || star.orbitalDistance === 0) {
+      return [];
+    }
+    return generateOrbitPath(star);
+  }, [star]); // Only regenerate when star orbit params change, not on every frame
   
   if (!star) return null;
   
@@ -39,10 +47,10 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
   
   return (
     <group ref={groupRef} position={[position.x, position.y, position.z]}>
-      {/* Orbit ring */}
+      {/* Orbit ring - positioned at parent origin */}
       {star.orbitalDistance > 0 && (
         <group position={[-position.x, -position.y, -position.z]}>
-          <OrbitRing radius={star.orbitalDistance} />
+          <OrbitRing points={orbitPath} />
         </group>
       )}
       

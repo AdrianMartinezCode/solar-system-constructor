@@ -295,3 +295,12 @@
   background: #4a4a4a;
 }
 
+/* Hint text */
+.generator-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+  margin-top: -0.25rem;
+}
+

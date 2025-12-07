@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
 import './StarEditorPanel.css';
 
+type OrbitMode = 'simple' | 'advanced';
+
 export const StarEditorPanel: React.FC = () => {
   const selectedStarId = useSystemStore((state) => state.selectedStarId);
   const stars = useSystemStore((state) => state.stars);
@@ -16,6 +18,7 @@ export const StarEditorPanel: React.FC = () => {
   const resetCamera = useSystemStore((state) => state.resetCamera);
   
   const [showAddForm, setShowAddForm] = useState(false);
+  const [orbitMode, setOrbitMode] = useState<OrbitMode>('simple');
   const [newStarForm, setNewStarForm] = useState({
     name: '',
     mass: 10,
@@ -28,6 +31,17 @@ export const StarEditorPanel: React.FC = () => {
   });
   
   const selectedStar = selectedStarId ? stars[selectedStarId] : null;
+  
+  // Determine if the selected star has advanced orbit parameters
+  const hasAdvancedOrbit = selectedStar && (
+    (selectedStar.eccentricity !== undefined && selectedStar.eccentricity > 0) ||
+    (selectedStar.orbitOffsetX !== undefined && selectedStar.orbitOffsetX !== 0) ||
+    (selectedStar.orbitOffsetY !== undefined && selectedStar.orbitOffsetY !== 0) ||
+    (selectedStar.orbitOffsetZ !== undefined && selectedStar.orbitOffsetZ !== 0) ||
+    (selectedStar.orbitRotX !== undefined && selectedStar.orbitRotX !== 0) ||
+    (selectedStar.orbitRotY !== undefined && selectedStar.orbitRotY !== 0) ||
+    (selectedStar.orbitRotZ !== undefined && selectedStar.orbitRotZ !== 0)
+  );
   
   const handleUpdate = (field: string, value: any) => {
     if (selectedStarId) {
@@ -76,6 +90,20 @@ export const StarEditorPanel: React.FC = () => {
   
   const handleResetCamera = () => {
     resetCamera();
+  };
+  
+  const handleOrbitModeChange = (mode: OrbitMode) => {
+    setOrbitMode(mode);
+    if (mode === 'simple' && selectedStar) {
+      // Reset to simple circular orbit
+      handleUpdate('eccentricity', 0);
+      handleUpdate('orbitOffsetX', 0);
+      handleUpdate('orbitOffsetY', 0);
+      handleUpdate('orbitOffsetZ', 0);
+      handleUpdate('orbitRotX', 0);
+      handleUpdate('orbitRotY', 0);
+      handleUpdate('orbitRotZ', 0);
+    }
   };
   
   const isViewingFromThisStar = cameraMode === 'body' && cameraTargetBodyId === selectedStarId;
@@ -284,40 +312,201 @@ export const StarEditorPanel: React.FC = () => {
           
           {selectedStar.parentId && (
             <>
-              <div className="form-group">
-                <label>Orbital Distance</label>
-                <input
-                  type="number"
-                  value={selectedStar.orbitalDistance}
-                  onChange={(e) => handleUpdate('orbitalDistance', Number(e.target.value))}
-                  min="1"
-                  step="1"
-                />
+              {/* Orbit Mode Toggle */}
+              <div className="form-group orbit-mode-toggle">
+                <label>Orbit Mode</label>
+                <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+                  <button 
+                    className={`btn-toggle ${orbitMode === 'simple' ? 'active' : ''}`}
+                    onClick={() => handleOrbitModeChange('simple')}
+                    style={{ flex: 1 }}
+                  >
+                    Simple Circular
+                  </button>
+                  <button 
+                    className={`btn-toggle ${orbitMode === 'advanced' ? 'active' : ''}`}
+                    onClick={() => setOrbitMode('advanced')}
+                    style={{ flex: 1 }}
+                  >
+                    Advanced Elliptical
+                  </button>
+                </div>
+                {hasAdvancedOrbit && orbitMode === 'simple' && (
+                  <small style={{ color: '#ff9800' }}>⚠ This orbit has advanced parameters. Switching to simple mode will reset them.</small>
+                )}
               </div>
               
-              <div className="form-group">
-                <label>Orbital Speed (deg/sec)</label>
-                <input
-                  type="number"
-                  value={selectedStar.orbitalSpeed}
-                  onChange={(e) => handleUpdate('orbitalSpeed', Number(e.target.value))}
-                  min="0.1"
-                  step="0.1"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Orbital Phase (degrees)</label>
-                <input
-                  type="number"
-                  value={selectedStar.orbitalPhase}
-                  onChange={(e) => handleUpdate('orbitalPhase', Number(e.target.value))}
-                  min="0"
-                  max="360"
-                  step="1"
-                />
-                <small>Phase offset for n-ary systems (0-360°)</small>
-              </div>
+              {orbitMode === 'simple' ? (
+                <>
+                  {/* Simple Circular Orbit Controls */}
+                  <div className="form-group">
+                    <label>Orbital Distance</label>
+                    <input
+                      type="number"
+                      value={selectedStar.orbitalDistance}
+                      onChange={(e) => handleUpdate('orbitalDistance', Number(e.target.value))}
+                      min="1"
+                      step="1"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Orbital Speed (deg/sec)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.orbitalSpeed}
+                      onChange={(e) => handleUpdate('orbitalSpeed', Number(e.target.value))}
+                      min="0.1"
+                      step="0.1"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Orbital Phase (degrees)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.orbitalPhase}
+                      onChange={(e) => handleUpdate('orbitalPhase', Number(e.target.value))}
+                      min="0"
+                      max="360"
+                      step="1"
+                    />
+                    <small>Phase offset for n-ary systems (0-360°)</small>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Advanced Elliptical Orbit Controls */}
+                  <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'rgba(74, 144, 226, 0.1)', borderRadius: '5px' }}>
+                    <h5 style={{ marginTop: 0, marginBottom: '10px' }}>Orbit Shape</h5>
+                    
+                    <div className="form-group">
+                      <label>Semi-Major Axis (a)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.semiMajorAxis ?? selectedStar.orbitalDistance}
+                        onChange={(e) => handleUpdate('semiMajorAxis', Number(e.target.value))}
+                        min="1"
+                        step="1"
+                      />
+                      <small>Main orbital radius</small>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Eccentricity (e)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.eccentricity ?? 0}
+                        onChange={(e) => handleUpdate('eccentricity', Number(e.target.value))}
+                        min="0"
+                        max="0.99"
+                        step="0.01"
+                      />
+                      <small>0 = circular, 0.99 = highly elliptical</small>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Orbital Speed (deg/sec)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitalSpeed}
+                        onChange={(e) => handleUpdate('orbitalSpeed', Number(e.target.value))}
+                        min="0.1"
+                        step="0.1"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Orbital Phase (degrees)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitalPhase}
+                        onChange={(e) => handleUpdate('orbitalPhase', Number(e.target.value))}
+                        min="0"
+                        max="360"
+                        step="1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'rgba(144, 74, 226, 0.1)', borderRadius: '5px' }}>
+                    <h5 style={{ marginTop: 0, marginBottom: '10px' }}>Orbit Center Offset</h5>
+                    
+                    <div className="form-group">
+                      <label>Offset X</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitOffsetX ?? 0}
+                        onChange={(e) => handleUpdate('orbitOffsetX', Number(e.target.value))}
+                        step="0.5"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Offset Y</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitOffsetY ?? 0}
+                        onChange={(e) => handleUpdate('orbitOffsetY', Number(e.target.value))}
+                        step="0.5"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Offset Z</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitOffsetZ ?? 0}
+                        onChange={(e) => handleUpdate('orbitOffsetZ', Number(e.target.value))}
+                        step="0.5"
+                      />
+                    </div>
+                    <small>3D translation of ellipse center</small>
+                  </div>
+                  
+                  <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'rgba(226, 144, 74, 0.1)', borderRadius: '5px' }}>
+                    <h5 style={{ marginTop: 0, marginBottom: '10px' }}>Orbit Plane Rotation</h5>
+                    
+                    <div className="form-group">
+                      <label>Rotation X (degrees)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitRotX ?? 0}
+                        onChange={(e) => handleUpdate('orbitRotX', Number(e.target.value))}
+                        min="-180"
+                        max="180"
+                        step="1"
+                      />
+                      <small>Inclination-like tilt</small>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Rotation Y (degrees)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitRotY ?? 0}
+                        onChange={(e) => handleUpdate('orbitRotY', Number(e.target.value))}
+                        min="-180"
+                        max="180"
+                        step="1"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Rotation Z (degrees)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.orbitRotZ ?? 0}
+                        onChange={(e) => handleUpdate('orbitRotZ', Number(e.target.value))}
+                        min="-180"
+                        max="180"
+                        step="1"
+                      />
+                      <small>Ascending node-like rotation</small>
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           )}
           
