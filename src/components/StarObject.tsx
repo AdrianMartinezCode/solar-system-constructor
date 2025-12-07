@@ -6,6 +6,7 @@ import { OrbitRing } from './OrbitRing';
 import * as THREE from 'three';
 import { PlanetaryRingObject } from './PlanetaryRingObject';
 import { CometObject } from './CometObject';
+import { LagrangePointObject } from './LagrangePointObject';
 
 interface StarObjectProps {
   starId: string;
@@ -59,6 +60,9 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
       {/* Comet rendering (if this is a comet) - handles its own geometry and tail */}
       {star.bodyType === 'comet' ? (
         <CometObject cometId={starId} />
+      ) : star.bodyType === 'lagrangePoint' ? (
+        /* Lagrange point rendering - small distinctive marker */
+        <LagrangePointObject id={starId} />
       ) : (
         <>
           {/* Star/Planet/Moon mesh with glow */}

@@ -8,7 +8,7 @@ export interface Star {
   parentId: string | null;
   
   // Body type discriminant for identifying different celestial body types
-  bodyType?: 'star' | 'planet' | 'moon' | 'asteroid' | 'comet';
+  bodyType?: 'star' | 'planet' | 'moon' | 'asteroid' | 'comet' | 'lagrangePoint';
   
   // Optional planetary ring (primarily for planets)
   ring?: PlanetaryRing;
@@ -18,6 +18,12 @@ export interface Star {
   
   // Optional comet-specific metadata (if this is a comet)
   comet?: CometMeta;
+  
+  // Optional Lagrange point metadata (if this is a Lagrange point marker)
+  lagrangePoint?: LagrangePointMeta;
+  
+  // Reference to Lagrange point (for Trojan bodies)
+  lagrangeHostId?: string;
   
   // Legacy circular orbit parameters (maintained for backward compatibility)
   orbitalDistance: number;
@@ -78,6 +84,16 @@ export interface CometMeta {
   
   // Determinism / misc
   seed?: string | number;           // per-comet seed if needed
+}
+
+// Lagrange point metadata for L1-L5 markers and their associated Trojan populations
+export interface LagrangePointMeta {
+  primaryId: string;                // ID of the primary body (e.g. star)
+  secondaryId: string;              // ID of the secondary body (e.g. planet or moon)
+  pointIndex: 1 | 2 | 3 | 4 | 5;    // Which Lagrange point (L1-L5)
+  stable: boolean;                  // true for L4/L5, false for L1-L3
+  pairType: 'starPlanet' | 'planetMoon'; // Type of two-body pair
+  label?: string;                   // Optional display label (e.g. "Earth L4")
 }
 
 // Asteroid belt entity representing a collection of many small bodies

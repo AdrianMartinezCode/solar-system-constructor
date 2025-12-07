@@ -123,6 +123,16 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     cometActivityDistanceRange,
     cometTailLengthRange,
     cometTailOpacityRange,
+
+    // Lagrange points / Trojans
+    enableLagrangePoints: config.enableLagrangePoints,
+    lagrangePairTypes: config.lagrangePairScope === 'both' ? 'both' : config.lagrangePairScope,
+    generateL1L2L3Markers: config.lagrangeMarkerMode === 'all',
+    generateL4L5Markers: config.lagrangeMarkerMode !== 'none',
+    enableTrojans: mapTrojanFrequencyToEnable(config.trojanFrequency),
+    trojanBodyType: 'asteroid', // Default to asteroid Trojans
+    trojanCountRange: mapTrojanFrequencyToCountRange(config.trojanFrequency),
+    ...mapTrojanRichnessToMassScaleAndVariation(config.trojanRichness),
   };
 }
 
@@ -355,6 +365,44 @@ function mapCometActivity(activity: number): {
 }
 
 /**
+ * Map trojan frequency (0-1) to enable boolean
+ */
+function mapTrojanFrequencyToEnable(frequency: number): boolean {
+  return frequency > 0.05; // Enable if frequency > 5%
+}
+
+/**
+ * Map trojan frequency (0-1) to per-L-point trojan count range
+ */
+function mapTrojanFrequencyToCountRange(frequency: number): [number, number] {
+  if (frequency === 0) return [0, 0];
+  
+  // Low frequency: 0-2 Trojans
+  // Medium frequency: 1-4 Trojans
+  // High frequency: 2-6 Trojans
+  const minCount = Math.floor(frequency * 2);
+  const maxCount = Math.floor(2 + frequency * 4);
+  
+  return [minCount, maxCount];
+}
+
+/**
+ * Map trojan richness (0-1) to mass scale and color variation
+ */
+function mapTrojanRichnessToMassScaleAndVariation(richness: number): {
+  trojanMassScale: number;
+  trojanColorVariation: number;
+} {
+  const r = Math.max(0, Math.min(1, richness));
+  
+  // Higher richness = larger, more prominent Trojans with more variety
+  return {
+    trojanMassScale: 0.3 + r * 0.5,  // 0.3 to 0.8
+    trojanColorVariation: 0.2 + r * 0.3, // 0.2 to 0.5
+  };
+}
+
+/**
  * Main generation function - bridge to internal generator
  */
 export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
@@ -378,6 +426,9 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   ).length;
   const totalRings = totalRingedPlanets; // One ring system per planet for now
   const totalComets = allStars.filter((star) => star.bodyType === 'comet').length;
+  const totalLagrangePoints = allStars.filter((star) => star.bodyType === 'lagrangePoint').length;
+  const totalLagrangeMarkers = totalLagrangePoints; // Same count
+  const totalTrojanBodies = allStars.filter((star) => star.lagrangeHostId !== undefined).length;
   
   return {
     ...result,
@@ -388,6 +439,9 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     totalRingedPlanets,
     totalRings,
     totalComets,
+    totalLagrangePoints,
+    totalLagrangeMarkers,
+    totalTrojanBodies,
     generatedAt: new Date(),
   };
 }

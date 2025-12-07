@@ -42,6 +42,13 @@ export const defaultConfig: GenerationConfig = {
   cometFrequency: 0.2,
   cometOrbitStyle: "rareLong",
   cometActivity: 0.6,
+
+  // Lagrange points / Trojans defaults
+  enableLagrangePoints: false,
+  lagrangeMarkerMode: "stableOnly",
+  trojanFrequency: 0.3,
+  trojanRichness: 0.5,
+  lagrangePairScope: "starPlanet",
 };
 
 /**
@@ -75,6 +82,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         cometFrequency: 0,
         cometOrbitStyle: "rareLong",
         cometActivity: 0.3,
+
+        enableLagrangePoints: false,
+        lagrangeMarkerMode: "none",
+        trojanFrequency: 0,
+        trojanRichness: 0.3,
+        lagrangePairScope: "starPlanet",
       };
       
     case "solarLike":
@@ -104,6 +117,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         cometFrequency: 0.3,  // Few long-period comets
         cometOrbitStyle: "rareLong",
         cometActivity: 0.5,
+
+        enableLagrangePoints: true,
+        lagrangeMarkerMode: "all",  // Show all L1-L5 markers
+        trojanFrequency: 0.3,
+        trojanRichness: 0.4,
+        lagrangePairScope: "starPlanet",
       };
       
     case "crowded":
@@ -133,6 +152,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         cometFrequency: 0.5,  // Moderate number of comets
         cometOrbitStyle: "mixed",
         cometActivity: 0.7,
+
+        enableLagrangePoints: true,
+        lagrangeMarkerMode: "all",
+        trojanFrequency: 0.6,
+        trojanRichness: 0.7,
+        lagrangePairScope: "starPlanet",
       };
       
     case "superDenseExperimental":
@@ -165,6 +190,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         cometFrequency: 0.8,   // Many comets
         cometOrbitStyle: "manyShort",
         cometActivity: 0.9,    // Very active tails
+
+        enableLagrangePoints: true,
+        lagrangeMarkerMode: "all",
+        trojanFrequency: 0.8,
+        trojanRichness: 0.9,
+        lagrangePairScope: "both",  // Star-planet AND planet-moon pairs
       };
       
     default:

@@ -577,8 +577,8 @@ Potential enhancements:
 1. **Resonance patterns**: Lock planets into orbital resonances (e.g., 2:1, 3:2)
 2. **Stellar evolution**: Time-based star property changes
 3. **Habitable zones**: Mark planets in Goldilocks zone
-4. **Trojan points**: Add L4/L5 companion objects
-5. **Advanced belt and ring features**: Belt gaps (Kirkwood gaps), shepherd moons, belt density variations, fine-grained ring substructures
+4. **Advanced belt and ring features**: Belt gaps (Kirkwood gaps), shepherd moons, belt density variations, fine-grained ring substructures
+5. **Three-body orbital dynamics**: More sophisticated Lagrange point stability and Trojan orbital variations
 
 ## References
 

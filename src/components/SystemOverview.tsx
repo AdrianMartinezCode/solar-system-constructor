@@ -3,7 +3,7 @@ import { useSystemStore } from '../state/systemStore';
 import { useWindowStore } from '../state/windowStore';
 import './SystemOverview.css';
 
-type FilterType = 'all' | 'stars' | 'planets' | 'moons' | 'asteroids' | 'comets' | 'groups';
+type FilterType = 'all' | 'stars' | 'planets' | 'moons' | 'asteroids' | 'comets' | 'lagrangePoints' | 'groups';
 type SortType = 'name' | 'mass' | 'distance';
 
 export const SystemOverview: React.FC = () => {
@@ -26,6 +26,7 @@ export const SystemOverview: React.FC = () => {
     const moonsCount = starArray.filter(s => s.bodyType === 'moon').length;
     const asteroidsCount = starArray.filter(s => s.bodyType === 'asteroid').length;
     const cometsCount = starArray.filter(s => s.bodyType === 'comet').length;
+    const lagrangePointsCount = starArray.filter(s => s.bodyType === 'lagrangePoint').length;
     
     return {
       stars: starsCount,
@@ -33,6 +34,7 @@ export const SystemOverview: React.FC = () => {
       moons: moonsCount,
       asteroids: asteroidsCount,
       comets: cometsCount,
+      lagrangePoints: lagrangePointsCount,
       groups: Object.keys(groups).length,
       total: starArray.length,
     };
@@ -60,6 +62,8 @@ export const SystemOverview: React.FC = () => {
             results.push({ type: 'asteroid', data: star });
           } else if (filter === 'comets' && star.bodyType === 'comet') {
             results.push({ type: 'comet', data: star });
+          } else if (filter === 'lagrangePoints' && star.bodyType === 'lagrangePoint') {
+            results.push({ type: 'lagrangePoint', data: star });
           }
         }
       });

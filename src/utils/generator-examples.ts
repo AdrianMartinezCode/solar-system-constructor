@@ -147,6 +147,8 @@ export function analyzeSystem(data: {
     moons: 0,
     asteroids: 0,
     comets: 0,
+    lagrangePoints: 0,
+    trojanBodies: 0,
     
     // Multi-star systems
     singleStar: 0,

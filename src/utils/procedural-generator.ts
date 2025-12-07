@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta } from '../types';
+import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta } from '../types';
 import { createPRNG, PRNG } from '../../prng';
 
 /**
@@ -84,6 +84,17 @@ interface GeneratorConfig {
   cometActivityDistanceRange: [number, number]; // Distances controlling tail strength
   cometTailLengthRange: [number, number];      // Base tail length
   cometTailOpacityRange: [number, number];     // Base opacity
+
+  // Lagrange points / Trojans parameters
+  enableLagrangePoints: boolean;               // Master switch for Lagrange point generation
+  lagrangePairTypes: 'starPlanet' | 'planetMoon' | 'both'; // Which two-body pairs to consider
+  generateL1L2L3Markers: boolean;              // Whether to generate unstable L1-L3 markers
+  generateL4L5Markers: boolean;                // Whether to generate stable L4-L5 markers
+  enableTrojans: boolean;                      // Whether to generate Trojan bodies at L4/L5
+  trojanBodyType: 'asteroid' | 'moon';         // Body type for Trojan objects
+  trojanCountRange: [number, number];          // [min, max] Trojans per L4/L5 point
+  trojanMassScale: number;                     // Relative mass scale vs normal asteroids/moons
+  trojanColorVariation: number;                // 0-1 color variation for Trojans
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -148,6 +159,17 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   cometActivityDistanceRange: [5, 20], // Tail active within this range
   cometTailLengthRange: [2, 8],        // Base tail length range
   cometTailOpacityRange: [0.3, 0.7],   // Base tail opacity range
+
+  // Lagrange points / Trojans (disabled by default)
+  enableLagrangePoints: false,
+  lagrangePairTypes: 'starPlanet',
+  generateL1L2L3Markers: true,
+  generateL4L5Markers: true,
+  enableTrojans: false,
+  trojanBodyType: 'asteroid',
+  trojanCountRange: [0, 4],
+  trojanMassScale: 0.5,
+  trojanColorVariation: 0.3,
 };
 
 // ============================================================================
@@ -173,6 +195,13 @@ class RandomGenerator {
   
   constructor(rng: PRNG) {
     this.rng = rng;
+  }
+  
+  /**
+   * Fork the RNG to create a new independent generator
+   */
+  fork(label: string): RandomGenerator {
+    return new RandomGenerator(this.rng.fork(label));
   }
   
   /**
@@ -1457,6 +1486,329 @@ class CometGenerator {
 }
 
 // ============================================================================
+// Lagrange Point Generator
+// ============================================================================
+
+class LagrangePointGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+  private physics: PhysicsGenerator;
+
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+    this.physics = new PhysicsGenerator(config, rng);
+  }
+
+  /**
+   * Generate Lagrange points and optional Trojan bodies for a given system
+   * @param stars - All stars in the system (Record)
+   * @param centerStarId - The central star ID
+   * @returns Array of Lagrange marker Stars and Trojan Stars
+   */
+  generate(stars: Record<string, Star>, centerStarId: string): Star[] {
+    if (!this.config.enableLagrangePoints) {
+      return [];
+    }
+
+    const lagrangeMarkers: Star[] = [];
+    const trojanBodies: Star[] = [];
+
+    // Collect eligible pairs based on configuration
+    const pairs = this.collectEligiblePairs(stars, centerStarId);
+
+    // Generate Lagrange points for each pair
+    for (const pair of pairs) {
+      const markers = this.createLagrangeMarkers(pair, stars);
+      lagrangeMarkers.push(...markers);
+
+      // Generate Trojans at L4/L5 if enabled
+      if (this.config.enableTrojans) {
+        for (const marker of markers) {
+          if (marker.lagrangePoint && marker.lagrangePoint.stable) {
+            const trojans = this.createTrojansForPoint(marker, pair);
+            trojanBodies.push(...trojans);
+          }
+        }
+      }
+    }
+
+    return [...lagrangeMarkers, ...trojanBodies];
+  }
+
+  /**
+   * Collect eligible two-body pairs for Lagrange point generation
+   */
+  private collectEligiblePairs(
+    stars: Record<string, Star>,
+    centerStarId: string
+  ): Array<{ primary: Star; secondary: Star; pairType: 'starPlanet' | 'planetMoon' }> {
+    const pairs: Array<{ primary: Star; secondary: Star; pairType: 'starPlanet' | 'planetMoon' }> = [];
+    const starsArray = Object.values(stars);
+
+    // Star-Planet pairs
+    if (this.config.lagrangePairTypes === 'starPlanet' || this.config.lagrangePairTypes === 'both') {
+      const centerStar = stars[centerStarId];
+      if (centerStar) {
+        const planets = starsArray.filter(
+          (s) => s.parentId === centerStarId && s.bodyType === 'planet'
+        );
+        for (const planet of planets) {
+          pairs.push({ primary: centerStar, secondary: planet, pairType: 'starPlanet' });
+        }
+      }
+    }
+
+    // Planet-Moon pairs
+    if (this.config.lagrangePairTypes === 'planetMoon' || this.config.lagrangePairTypes === 'both') {
+      const planets = starsArray.filter(
+        (s) => s.bodyType === 'planet'
+      );
+      for (const planet of planets) {
+        const moons = starsArray.filter(
+          (s) => s.parentId === planet.id && s.bodyType === 'moon'
+        );
+        for (const moon of moons) {
+          pairs.push({ primary: planet, secondary: moon, pairType: 'planetMoon' });
+        }
+      }
+    }
+
+    return pairs;
+  }
+
+  /**
+   * Create Lagrange point markers for a two-body pair
+   */
+  private createLagrangeMarkers(
+    pair: { primary: Star; secondary: Star; pairType: 'starPlanet' | 'planetMoon' },
+    stars: Record<string, Star>
+  ): Star[] {
+    const markers: Star[] = [];
+    const { primary, secondary, pairType } = pair;
+
+    // Determine which points to generate
+    const pointsToGenerate: Array<{ index: 1 | 2 | 3 | 4 | 5; stable: boolean }> = [];
+
+    if (this.config.generateL1L2L3Markers) {
+      pointsToGenerate.push(
+        { index: 1, stable: false },
+        { index: 2, stable: false },
+        { index: 3, stable: false }
+      );
+    }
+
+    if (this.config.generateL4L5Markers) {
+      pointsToGenerate.push(
+        { index: 4, stable: true },
+        { index: 5, stable: true }
+      );
+    }
+
+    // Create markers
+    for (const point of pointsToGenerate) {
+      const marker = this.createLagrangeMarker(primary, secondary, point.index, point.stable, pairType);
+      markers.push(marker);
+    }
+
+    return markers;
+  }
+
+  /**
+   * Create a single Lagrange point marker
+   */
+  private createLagrangeMarker(
+    primary: Star,
+    secondary: Star,
+    pointIndex: 1 | 2 | 3 | 4 | 5,
+    stable: boolean,
+    pairType: 'starPlanet' | 'planetMoon'
+  ): Star {
+    const markerId = uuidv4();
+    const label = `${secondary.name} L${pointIndex}`;
+
+    // Calculate position based on point index
+    // L4 and L5 are at ±60° from the secondary's phase
+    // L1, L2, L3 are colinear (on the line between primary and secondary)
+    
+    const secondaryDistance = secondary.orbitalDistance;
+    const secondaryPhase = secondary.orbitalPhase;
+    const secondarySpeed = secondary.orbitalSpeed;
+
+    let orbitalDistance: number;
+    let orbitalPhase: number;
+    let orbitalSpeed: number;
+
+    if (pointIndex === 4) {
+      // L4: 60° ahead of secondary
+      orbitalDistance = secondaryDistance;
+      orbitalPhase = (secondaryPhase + 60) % 360;
+      orbitalSpeed = secondarySpeed;
+    } else if (pointIndex === 5) {
+      // L5: 60° behind secondary
+      orbitalDistance = secondaryDistance;
+      orbitalPhase = (secondaryPhase - 60 + 360) % 360;
+      orbitalSpeed = secondarySpeed;
+    } else {
+      // L1, L2, L3: Use approximate formulas for circular restricted three-body problem
+      // For simplicity, place them along the orbital radius with slight offsets
+      const massRatio = secondary.mass / (primary.mass + secondary.mass);
+      
+      if (pointIndex === 1) {
+        // L1: Between primary and secondary
+        orbitalDistance = secondaryDistance * (1 - Math.cbrt(massRatio / 3));
+      } else if (pointIndex === 2) {
+        // L2: Beyond secondary
+        orbitalDistance = secondaryDistance * (1 + Math.cbrt(massRatio / 3));
+      } else {
+        // L3: Opposite side of primary from secondary
+        orbitalDistance = secondaryDistance * (1 + 5 * massRatio / 12);
+      }
+
+      // Same phase as secondary (colinear)
+      if (pointIndex === 3) {
+        // L3 is on the opposite side
+        orbitalPhase = (secondaryPhase + 180) % 360;
+      } else {
+        orbitalPhase = secondaryPhase;
+      }
+
+      // Orbital speed calculated from distance
+      orbitalSpeed = this.physics.calculateOrbitalSpeed(orbitalDistance);
+    }
+
+    // Color coding: unstable = orange/red, stable = green/blue
+    const color = stable ? '#5BC95B' : '#FF8C42'; // Green for stable, orange for unstable
+
+    const lagrangePointMeta: LagrangePointMeta = {
+      primaryId: primary.id,
+      secondaryId: secondary.id,
+      pointIndex,
+      stable,
+      pairType,
+      label,
+    };
+
+    return {
+      id: markerId,
+      name: label,
+      mass: 0.001, // Negligible mass
+      radius: 0.05, // Very small marker
+      color,
+      children: [],
+      parentId: primary.id, // Lagrange points orbit the primary
+      bodyType: 'lagrangePoint',
+      lagrangePoint: lagrangePointMeta,
+      orbitalDistance,
+      orbitalSpeed,
+      orbitalPhase,
+      semiMajorAxis: orbitalDistance,
+      eccentricity: secondary.eccentricity || 0, // Inherit eccentricity from secondary
+      orbitRotX: secondary.orbitRotX,
+      orbitRotY: secondary.orbitRotY,
+      orbitRotZ: secondary.orbitRotZ,
+    };
+  }
+
+  /**
+   * Create Trojan bodies for a Lagrange point
+   */
+  private createTrojansForPoint(
+    marker: Star,
+    pair: { primary: Star; secondary: Star }
+  ): Star[] {
+    const trojans: Star[] = [];
+    
+    // Fork RNG for this Lagrange point
+    const trojanRng = this.rng.fork(`trojan-${marker.id}`);
+
+    // Sample number of Trojans
+    const trojanCount = trojanRng.randInt(
+      this.config.trojanCountRange[0],
+      this.config.trojanCountRange[1]
+    );
+
+    for (let i = 0; i < trojanCount; i++) {
+      const trojan = this.createTrojan(marker, pair, i, trojanRng);
+      trojans.push(trojan);
+    }
+
+    return trojans;
+  }
+
+  /**
+   * Create a single Trojan body
+   */
+  private createTrojan(
+    marker: Star,
+    pair: { primary: Star; secondary: Star },
+    index: number,
+    trojanRng: RandomGenerator
+  ): Star {
+    const trojanId = uuidv4();
+    const lagrangeLabel = marker.lagrangePoint?.label || `L${marker.lagrangePoint?.pointIndex}`;
+    const name = `${pair.secondary.name} ${lagrangeLabel} Trojan ${index + 1}`;
+
+    // Generate physical properties based on body type
+    const trojanPhysics = new PhysicsGenerator(this.config, trojanRng);
+    const baseMass = trojanPhysics.generateMass(this.config.trojanBodyType);
+    const mass = baseMass * this.config.trojanMassScale;
+    const radius = trojanPhysics.generateRadius(mass);
+
+    // Color: rocky/asteroid colors with variation
+    const baseColors = ['#8B7355', '#A0826D', '#6B5D56', '#9C8F7A', '#7A6E5E'];
+    const baseColor = trojanRng.choice(baseColors);
+    const color = this.varyColor(baseColor, this.config.trojanColorVariation, trojanRng);
+
+    // Orbital parameters: cluster around the Lagrange point with small offsets
+    const orbitalDistance = marker.orbitalDistance + trojanRng.uniform(-0.1, 0.1);
+    const orbitalPhase = (marker.orbitalPhase + trojanRng.uniform(-5, 5) + 360) % 360;
+    const orbitalSpeed = this.physics.calculateOrbitalSpeed(orbitalDistance);
+
+    return {
+      id: trojanId,
+      name,
+      mass,
+      radius,
+      color,
+      children: [],
+      parentId: pair.primary.id,
+      bodyType: this.config.trojanBodyType,
+      lagrangeHostId: marker.id, // Link to Lagrange point
+      orbitalDistance,
+      orbitalSpeed,
+      orbitalPhase,
+      semiMajorAxis: orbitalDistance,
+      eccentricity: marker.eccentricity,
+      orbitRotX: marker.orbitRotX,
+      orbitRotY: marker.orbitRotY,
+      orbitRotZ: marker.orbitRotZ,
+    };
+  }
+
+  /**
+   * Vary a color slightly
+   */
+  private varyColor(hexColor: string, variation: number, rng: RandomGenerator): string {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    const vary = (value: number) => {
+      const delta = Math.floor(rng.uniform(-40, 40) * variation);
+      return Math.max(0, Math.min(255, value + delta));
+    };
+
+    const newR = vary(r);
+    const newG = vary(g);
+    const newB = vary(b);
+
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  }
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -1488,6 +1840,7 @@ export function generateSolarSystem(
   const beltRng = new RandomGenerator(masterRng.fork('belts'));
   const ringRng = new RandomGenerator(masterRng.fork('rings'));
   const cometRng = new RandomGenerator(masterRng.fork('comets'));
+  const lagrangeRng = new RandomGenerator(masterRng.fork('lagrange'));
   
   // 1. Generate L-System topology
   const lsystem = new LSystemGenerator(fullConfig, lsystemRng);
@@ -1554,7 +1907,22 @@ export function generateSolarSystem(
     });
   });
   
-  // 7. Generate groups (optional)
+  // 7. Generate Lagrange points and Trojans (if enabled)
+  const lagrangeGen = new LagrangePointGenerator(fullConfig, lagrangeRng);
+  systemData.rootIds.forEach((rootId) => {
+    const lagrangeBodies = lagrangeGen.generate(starMap, rootId);
+    
+    // Add Lagrange markers and Trojans to the star map
+    lagrangeBodies.forEach((body) => {
+      starMap[body.id] = body;
+      // Add to parent's children array
+      if (body.parentId && starMap[body.parentId]) {
+        starMap[body.parentId].children.push(body.id);
+      }
+    });
+  });
+  
+  // 8. Generate groups (optional)
   const groupGen = new GroupGenerator(fullConfig, groupRng);
   const groupList = groupGen.generate(systemData.rootIds);
   

@@ -13,6 +13,8 @@ interface GenerationStats {
   totalRingedPlanets: number;
   totalRings: number;
   totalComets: number;
+  totalLagrangePoints?: number;
+  totalTrojanBodies?: number;
   generatedAt: string;
 }
 
@@ -63,6 +65,8 @@ export const UniverseGeneratorPanel: React.FC = () => {
         totalRingedPlanets: result.totalRingedPlanets,
         totalRings: result.totalRings,
         totalComets: result.totalComets,
+        totalLagrangePoints: result.totalLagrangePoints || 0,
+        totalTrojanBodies: result.totalTrojanBodies || 0,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -616,6 +620,101 @@ export const UniverseGeneratorPanel: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Lagrange Points / Trojans Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">Lagrange Points / Trojans 🔺</h3>
+        
+        {/* Enable Lagrange Points */}
+        <div className="generator-field">
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableLagrangePoints}
+              onChange={(e) => updateConfig('enableLagrangePoints', e.target.checked)}
+            />
+            <span>Enable Lagrange Points</span>
+          </label>
+        </div>
+        
+        {config.enableLagrangePoints && (
+          <>
+            {/* Lagrange Markers */}
+            <div className="generator-field">
+              <label className="generator-label">Lagrange Markers</label>
+              <select
+                className="generator-select"
+                value={config.lagrangeMarkerMode}
+                onChange={(e) => updateConfig('lagrangeMarkerMode', e.target.value as GenerationConfig["lagrangeMarkerMode"])}
+              >
+                <option value="none">None</option>
+                <option value="stableOnly">Stable Only (L4/L5)</option>
+                <option value="all">All (L1-L5)</option>
+              </select>
+              <small className="generator-hint">Which Lagrange point markers to display</small>
+            </div>
+            
+            {/* Trojan Frequency */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Trojan Frequency
+                <span className="generator-value">{(config.trojanFrequency * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.trojanFrequency}
+                onChange={(e) => updateConfig('trojanFrequency', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Rare Trojans</span>
+                <span>Many Trojans</span>
+              </div>
+              <small className="generator-hint">How often Trojan bodies appear at L4/L5</small>
+            </div>
+            
+            {/* Trojan Richness */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Trojan Richness
+                <span className="generator-value">{(config.trojanRichness * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.trojanRichness}
+                onChange={(e) => updateConfig('trojanRichness', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Few Per Point</span>
+                <span>Many Per Point</span>
+              </div>
+              <small className="generator-hint">Number and prominence of Trojans per L4/L5</small>
+            </div>
+            
+            {/* Pair Scope */}
+            <div className="generator-field">
+              <label className="generator-label">Pair Scope</label>
+              <select
+                className="generator-select"
+                value={config.lagrangePairScope}
+                onChange={(e) => updateConfig('lagrangePairScope', e.target.value as GenerationConfig["lagrangePairScope"])}
+              >
+                <option value="starPlanet">Star-Planet</option>
+                <option value="planetMoon">Planet-Moon</option>
+                <option value="both">Both</option>
+              </select>
+              <small className="generator-hint">Which two-body pairs to consider for Lagrange points</small>
+            </div>
+          </>
+        )}
+      </div>
       
       {/* Actions */}
       <div className="generator-actions">
@@ -672,6 +771,18 @@ export const UniverseGeneratorPanel: React.FC = () => {
               <span className="generator-stat-label">Comets</span>
               <span className="generator-stat-value">{stats.totalComets}</span>
             </div>
+            {(stats.totalLagrangePoints ?? 0) > 0 && (
+              <div className="generator-stat">
+                <span className="generator-stat-label">Lagrange Points</span>
+                <span className="generator-stat-value">{stats.totalLagrangePoints}</span>
+              </div>
+            )}
+            {(stats.totalTrojanBodies ?? 0) > 0 && (
+              <div className="generator-stat">
+                <span className="generator-stat-label">Trojan Bodies</span>
+                <span className="generator-stat-value">{stats.totalTrojanBodies}</span>
+              </div>
+            )}
             <div className="generator-stat">
               <span className="generator-stat-label">Generated At</span>
               <span className="generator-stat-value">{stats.generatedAt}</span>
