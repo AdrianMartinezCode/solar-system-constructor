@@ -106,7 +106,14 @@ export const Scene: React.FC = () => {
         <AsteroidBeltObject key={`belt-${beltId}`} beltId={beltId} />
       ))}
       
-      <OrbitControls ref={controlsRef} makeDefault />
+      <OrbitControls 
+        ref={controlsRef} 
+        makeDefault 
+        enableZoom={true}
+        enablePan={true}
+        enableRotate={true}
+        zoomSpeed={1.0}
+      />
       
       {/* Grid helper */}
       <gridHelper args={[100, 20, '#444444', '#222222']} />

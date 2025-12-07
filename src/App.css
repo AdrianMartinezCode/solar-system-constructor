@@ -149,6 +149,7 @@ body {
   flex-direction: column;
   gap: 6px;
   z-index: 10;
+  pointer-events: none;
 }
 
 .controls-hint-windowed .hint-item {
@@ -164,6 +165,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
+  pointer-events: none;
 }
 
 .indicator-content {
@@ -177,6 +179,7 @@ body {
   gap: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   animation: slideDown 0.3s ease-out;
+  pointer-events: auto;
 }
 
 @keyframes slideDown {

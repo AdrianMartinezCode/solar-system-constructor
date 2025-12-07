@@ -152,6 +152,8 @@ export const BodyCameraController: React.FC = () => {
           eased
         );
         (controls as any).target.copy(newTarget);
+        // Update controls after modifying target during transition
+        (controls as any).update();
       }
     }
     
@@ -164,19 +166,15 @@ export const BodyCameraController: React.FC = () => {
         // Calculate how much the body has moved since last frame
         const bodyDelta = new THREE.Vector3().subVectors(bodyWorldPos, lastBodyPositionRef.current);
         
-        // Update the camera offset based on user's control inputs
-        // (OrbitControls will modify camera.position, we need to track that)
+        // Only update if the body has actually moved
         if (controls && bodyDelta.length() > 0.0001) {
           // Body has moved - update camera position by the same delta
           camera.position.add(bodyDelta);
           
           // Update controls target
           (controls as any).target.copy(bodyWorldPos);
-        } else {
-          // Body hasn't moved, just ensure controls target is correct
-          if (controls) {
-            (controls as any).target.copy(bodyWorldPos);
-          }
+          // Call update to ensure OrbitControls recalculates its internal state
+          (controls as any).update();
         }
         
         // Store current body position for next frame
