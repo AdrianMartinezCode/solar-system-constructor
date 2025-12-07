@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, Position, AsteroidBelt } from '../types';
+import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing } from '../types';
 import { createPRNG, PRNG } from '../../prng';
 
 /**
@@ -60,6 +60,19 @@ interface GeneratorConfig {
   beltOuterGapScale: number;                  // Fraction of gap for outer radius (0-1)
   beltOuterMultiplier: number;                // For outer belts: factor × outermost planet orbit
   beltEccentricityRange: [number, number];    // [min, max] eccentricity for belts
+
+  // Planetary ring parameters (per-planet rings)
+  enablePlanetaryRings: boolean;              // Master switch for ring generation
+  ringedPlanetProbability: number;            // Base probability that a given planet gets rings
+  ringMassBiasThreshold: number;              // Planets above this mass are more likely to be ringed
+  ringOuterOrbitBias: number;                 // Bias rings toward outer planets (0-1)
+  ringInnerRadiusRange: [number, number];     // Inner radius multipliers relative to planet radius
+  ringOuterRadiusRange: [number, number];     // Outer radius multipliers relative to planet radius
+  ringThicknessRange: [number, number];       // Thickness range in multiples of planet radius
+  ringOpacityRange: [number, number];         // Opacity range 0-1
+  ringAlbedoRange: [number, number];          // Albedo (brightness) range
+  ringColorVariation: number;                 // 0-1 color variation strength
+  ringDensityRange: [number, number];         // 0-1 density range
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -100,6 +113,19 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   beltOuterGapScale: 0.6,
   beltOuterMultiplier: 1.5,
   beltEccentricityRange: [0, 0.1],
+
+  // Planetary rings (disabled by default)
+  enablePlanetaryRings: false,
+  ringedPlanetProbability: 0.1,
+  ringMassBiasThreshold: 20,          // Planets roughly "giant" scale become more likely
+  ringOuterOrbitBias: 0.5,            // Prefer outer planets somewhat
+  ringInnerRadiusRange: [1.3, 1.8],
+  ringOuterRadiusRange: [2.3, 3.8],
+  ringThicknessRange: [0.05, 0.15],   // Multiples of planet radius
+  ringOpacityRange: [0.3, 0.8],
+  ringAlbedoRange: [0.4, 1.0],
+  ringColorVariation: 0.25,
+  ringDensityRange: [0.2, 0.9],
 };
 
 // ============================================================================
@@ -1050,6 +1076,152 @@ class AsteroidBeltGenerator {
 }
 
 // ============================================================================
+// Planetary Ring Generator
+// ============================================================================
+
+class PlanetaryRingGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+  }
+
+  /**
+   * Assign planetary rings to suitable planets in a given system.
+   * Rings are attached directly to planet Star objects as PlanetaryRing.
+   */
+  generate(stars: Star[], centerStarId: string): void {
+    if (!this.config.enablePlanetaryRings) {
+      return;
+    }
+
+    // Find planets orbiting the center star
+    const planets = stars.filter(
+      (s) => s.parentId === centerStarId && s.bodyType === 'planet'
+    );
+
+    if (planets.length === 0) {
+      return;
+    }
+
+    const maxDistance = planets.reduce(
+      (max, p) => Math.max(max, p.orbitalDistance),
+      0
+    );
+
+    planets.forEach((planet) => {
+      const baseProb = this.config.ringedPlanetProbability;
+
+      // Mass bias: heavier planets are more likely to have rings
+      let massFactor = 1;
+      if (planet.mass >= this.config.ringMassBiasThreshold) {
+        const ratio = planet.mass / this.config.ringMassBiasThreshold;
+        massFactor = Math.min(2, 1 + (ratio - 1) * 0.5);
+      }
+
+      // Outer orbit bias: outer planets are slightly more likely
+      let distanceFactor = 1;
+      if (maxDistance > 0 && this.config.ringOuterOrbitBias > 0) {
+        const normalized = planet.orbitalDistance / maxDistance;
+        distanceFactor =
+          1 + normalized * this.config.ringOuterOrbitBias;
+      }
+
+      const finalProb = Math.min(1, baseProb * massFactor * distanceFactor);
+
+      if (!this.rng.bool(finalProb)) {
+        return;
+      }
+
+      // Fork RNG per planet for deterministic ring styling
+      const planetRng = this.rng.fork(`ring-${planet.id}`);
+
+      const innerMultiplier = planetRng.uniform(
+        this.config.ringInnerRadiusRange[0],
+        this.config.ringInnerRadiusRange[1]
+      );
+      const outerMultiplierRaw = planetRng.uniform(
+        this.config.ringOuterRadiusRange[0],
+        this.config.ringOuterRadiusRange[1]
+      );
+      const outerMultiplier = Math.max(
+        innerMultiplier + 0.1,
+        outerMultiplierRaw
+      );
+
+      const thicknessMultiplier = planetRng.uniform(
+        this.config.ringThicknessRange[0],
+        this.config.ringThicknessRange[1]
+      );
+      const thickness = planet.radius * thicknessMultiplier;
+
+      const opacity = planetRng.uniform(
+        this.config.ringOpacityRange[0],
+        this.config.ringOpacityRange[1]
+      );
+
+      const albedo = planetRng.uniform(
+        this.config.ringAlbedoRange[0],
+        this.config.ringAlbedoRange[1]
+      );
+
+      const density = planetRng.uniform(
+        this.config.ringDensityRange[0],
+        this.config.ringDensityRange[1]
+      );
+
+      // Derive ring color from planet color with small variation
+      const color = this.varyColor(
+        planet.color,
+        this.config.ringColorVariation,
+        planetRng
+      );
+
+      const ring: PlanetaryRing = {
+        innerRadiusMultiplier: Math.max(1.1, innerMultiplier),
+        outerRadiusMultiplier: Math.max(
+          innerMultiplier + 0.1,
+          outerMultiplier
+        ),
+        thickness,
+        opacity,
+        albedo,
+        color,
+        density,
+        seed: planetRng.randInt(0, 2147483647),
+      };
+
+      // Attach ring to planet
+      planet.ring = ring;
+    });
+  }
+
+  /**
+   * Vary a hex color by a given amount (reused pattern from belt generator)
+   */
+  private varyColor(hexColor: string, variation: number, rng: RandomGenerator): string {
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+
+    const vary = (value: number) => {
+      const delta = rng.uniform(-variation * 40, variation * 40);
+      return Math.max(0, Math.min(255, Math.round(value + delta)));
+    };
+
+    const newR = vary(r);
+    const newG = vary(g);
+    const newB = vary(b);
+
+    return `#${newR.toString(16).padStart(2, '0')}${newG
+      .toString(16)
+      .padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  }
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -1079,6 +1251,7 @@ export function generateSolarSystem(
   const starDataRng = new RandomGenerator(masterRng.fork('stardata'));
   const groupRng = new RandomGenerator(masterRng.fork('groups'));
   const beltRng = new RandomGenerator(masterRng.fork('belts'));
+  const ringRng = new RandomGenerator(masterRng.fork('rings'));
   
   // 1. Generate L-System topology
   const lsystem = new LSystemGenerator(fullConfig, lsystemRng);
@@ -1123,8 +1296,14 @@ export function generateSolarSystem(
       }
     });
   });
+
+  // 5. Generate planetary rings (if enabled)
+  const ringGen = new PlanetaryRingGenerator(fullConfig, ringRng);
+  systemData.rootIds.forEach((rootId) => {
+    ringGen.generate(systemData.stars, rootId);
+  });
   
-  // 5. Generate groups (optional)
+  // 6. Generate groups (optional)
   const groupGen = new GroupGenerator(fullConfig, groupRng);
   const groupList = groupGen.generate(systemData.rootIds);
   

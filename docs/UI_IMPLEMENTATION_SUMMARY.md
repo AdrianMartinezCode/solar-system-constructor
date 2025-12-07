@@ -97,6 +97,11 @@ A complete **React UI panel** for configuring and running the procedural generat
 - ✅ Max Belts Per System (slider 0-5) - shown if enabled
 - ✅ Placement Mode (select: none/betweenPlanets/outerBelt/both) - shown if enabled
 
+### Planetary Ring Controls
+- ✅ Enable Planetary Rings (checkbox)
+- ✅ Ring Frequency (slider 0-1) - shown if enabled
+- ✅ Ring Prominence (slider 0-1) - shown if enabled
+
 ### Actions
 - ✅ **Generate Universe** (primary button)
 - ✅ **Reset to Defaults** (secondary button)
@@ -107,6 +112,7 @@ A complete **React UI panel** for configuring and running the procedural generat
 - ✅ Total Groups count
 - ✅ Asteroid Belts count
 - ✅ Total Asteroids count
+- ✅ Ringed Planets count
 - ✅ Generated timestamp
 - ✅ Hidden until first generation
 

@@ -12,6 +12,8 @@ export const StarEditorPanel: React.FC = () => {
   const addStar = useSystemStore((state) => state.addStar);
   const attachStar = useSystemStore((state) => state.attachStar);
   const detachStar = useSystemStore((state) => state.detachStar);
+  const updateRing = useSystemStore((state) => state.updateRing);
+  const removeRing = useSystemStore((state) => state.removeRing);
   const cameraMode = useSystemStore((state) => state.cameraMode);
   const cameraTargetBodyId = useSystemStore((state) => state.cameraTargetBodyId);
   const setCameraMode = useSystemStore((state) => state.setCameraMode);
@@ -508,6 +510,133 @@ export const StarEditorPanel: React.FC = () => {
                 </>
               )}
             </>
+          )}
+
+          {/* Planetary Rings - only for planets */}
+          {selectedStar.bodyType === 'planet' && (
+            <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <h5 style={{ marginTop: 0, marginBottom: '8px' }}>Planetary Rings</h5>
+              
+              <div className="form-group">
+                <label className="generator-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={!!selectedStar.ring}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        updateRing(selectedStar.id, {});
+                      } else {
+                        removeRing(selectedStar.id);
+                      }
+                    }}
+                  />
+                  <span>Has Rings</span>
+                </label>
+              </div>
+              
+              {selectedStar.ring && (
+                <>
+                  <div className="form-group">
+                    <label>Inner Radius (× planet radius)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.ring.innerRadiusMultiplier}
+                      min={1.1}
+                      step={0.1}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        updateRing(selectedStar.id, {
+                          innerRadiusMultiplier: value,
+                          outerRadiusMultiplier: Math.max(
+                            selectedStar.ring.outerRadiusMultiplier,
+                            value + 0.1
+                          ),
+                        });
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Outer Radius (× planet radius)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.ring.outerRadiusMultiplier}
+                      min={
+                        (selectedStar.ring.innerRadiusMultiplier ?? 1.5) + 0.1
+                      }
+                      step={0.1}
+                      onChange={(e) =>
+                        updateRing(selectedStar.id, {
+                          outerRadiusMultiplier: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Ring Thickness</label>
+                    <input
+                      type="number"
+                      value={selectedStar.ring.thickness}
+                      min={0}
+                      step={0.01}
+                      onChange={(e) =>
+                        updateRing(selectedStar.id, {
+                          thickness: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <small>Vertical half-height in world units</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Opacity</label>
+                    <input
+                      type="number"
+                      value={selectedStar.ring.opacity}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      onChange={(e) =>
+                        updateRing(selectedStar.id, {
+                          opacity: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Density</label>
+                    <input
+                      type="number"
+                      value={selectedStar.ring.density}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      onChange={(e) =>
+                        updateRing(selectedStar.id, {
+                          density: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <small>Visual indication of how solid the ring appears</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Ring Color</label>
+                    <input
+                      type="color"
+                      value={selectedStar.ring.color}
+                      onChange={(e) =>
+                        updateRing(selectedStar.id, {
+                          color: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           )}
           
           <button className="btn-danger" onClick={handleDelete}>

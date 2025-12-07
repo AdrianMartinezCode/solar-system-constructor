@@ -91,6 +91,14 @@ generateSolarSystem({
 });
 ```
 
+### Planetary Rings Enabled
+```typescript
+generateSolarSystem({
+  enablePlanetaryRings: true,
+  ringedPlanetProbability: 0.2,   // ~1 in 5 planets with rings
+});
+```
+
 ### Solar-Like System with Main Belt
 ```typescript
 generateSolarSystem({
@@ -129,6 +137,8 @@ generateSolarSystem({
 | `beltMaxCount` | `number` | `1000` | Max asteroids per belt |
 | `beltThickness` | `number` | `0.5` | Vertical spread (σ) |
 | `beltEccentricityRange` | `[number, number]` | `[0, 0.1]` | Min/max eccentricity |
+| `enablePlanetaryRings` | `boolean` | `false` | Enable per-planet ring systems |
+| `ringedPlanetProbability` | `number` | `0.1` | Base probability a planet has rings |
 
 ## Tips
 

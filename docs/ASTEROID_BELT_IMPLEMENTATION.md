@@ -257,7 +257,7 @@ While not required for the current implementation, these could be added later:
 2. **Shepherd moons**: Moons that clear belt gaps
 3. **Belt editor panel**: Dedicated UI for editing belt properties
 4. **Belt statistics in hierarchy**: Show belt summaries in tree view
-5. **Advanced placement modes**: Trojan belts, ring systems
+5. **Advanced placement modes**: Trojan belts
 6. **Collision simulation**: Asteroid-asteroid interactions
 
 ---

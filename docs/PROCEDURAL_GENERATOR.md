@@ -131,7 +131,48 @@ Each belt is represented by an `AsteroidBelt` object containing:
 - Visual hints (color)
 - Deterministic seed for reproducibility
 
-### 5. Hierarchical Rules
+### 5. Planetary Rings (Per-Planet Ring Systems)
+
+After planets are generated and assigned physical/orbital properties, the system performs a **per-planet post-processing step** to assign planetary rings:
+
+#### Ring Eligibility and Probability
+
+- Rings are controlled by the generator configuration:
+  - `enablePlanetaryRings: boolean`
+  - `ringedPlanetProbability: number` – base probability of a planet having rings
+  - `ringMassBiasThreshold: number` – planets above this mass are more likely to be ringed
+  - `ringOuterOrbitBias: number` – bias toward outer planets (0–1)
+- Only bodies with `bodyType === 'planet'` (and orbiting the system’s center star) are considered.
+- For each candidate planet:
+  1. Start with `ringedPlanetProbability`.
+  2. Increase probability for massive planets (`mass >= ringMassBiasThreshold`).
+  3. Optionally increase probability for planets farther from the star (scaled by `ringOuterOrbitBias`).
+  4. Clamp the final probability to `[0, 1]` and sample with the PRNG.
+
+#### Ring Geometry
+
+For each planet that is selected to have rings, the generator samples:
+
+- `innerRadiusMultiplier` ∈ `ringInnerRadiusRange`  
+  (inner radius = `planet.radius * innerRadiusMultiplier`)
+- `outerRadiusMultiplier` ∈ `ringOuterRadiusRange`  
+  (outer radius = `planet.radius * outerRadiusMultiplier`, enforced `outer > inner`)
+- `thickness` = `planet.radius * thicknessMultiplier`, where `thicknessMultiplier` ∈ `ringThicknessRange`
+
+These values are stored in a `PlanetaryRing` object attached to the planet (`Star.ring`).
+
+#### Visual and Physical Style
+
+Additional ring properties are sampled from configurable ranges:
+
+- Opacity: `opacity` ∈ `ringOpacityRange` (0–1)
+- Albedo (brightness): `albedo` ∈ `ringAlbedoRange`
+- Density: `density` ∈ `ringDensityRange` (0–1)
+- Color: derived from the planet’s base color, with variation controlled by `ringColorVariation`
+
+Each ring also receives an optional `seed` to support deterministic sub-patterns if needed later.
+
+### 6. Hierarchical Rules
 
 #### Center Star Selection
 The **heaviest star** in each system becomes the center (parentId = null). All other bodies orbit it directly or indirectly.
@@ -148,7 +189,7 @@ The **heaviest star** in each system becomes the center (parentId = null). All o
 - **Binary**: 2 stars at same orbital distance, phases 0° and 180°
 - **Ternary**: 3 stars at same orbital distance, phases 0°, 120°, 240°
 
-### 6. Group Generator
+### 7. Group Generator
 
 Optional hierarchical grouping for galaxy-scale structures:
 
@@ -292,6 +333,19 @@ interface GeneratorConfig {
   beltOuterGapScale: number;                  // Fraction of gap for outer radius (0-1)
   beltOuterMultiplier: number;                // For outer belts: factor × outermost orbit
   beltEccentricityRange: [number, number];    // [min, max] eccentricity for belts
+
+  // Planetary ring parameters (per-planet ring systems)
+  enablePlanetaryRings: boolean;              // Master switch for rings
+  ringedPlanetProbability: number;            // Base probability that a planet has rings
+  ringMassBiasThreshold: number;              // Planets above this mass get higher ring chance
+  ringOuterOrbitBias: number;                 // Bias rings toward outer planets (0-1)
+  ringInnerRadiusRange: [number, number];     // Inner radius multipliers (× planet radius)
+  ringOuterRadiusRange: [number, number];     // Outer radius multipliers (× planet radius)
+  ringThicknessRange: [number, number];       // Thickness multipliers (× planet radius)
+  ringOpacityRange: [number, number];         // Opacity range [0, 1]
+  ringAlbedoRange: [number, number];          // Albedo range
+  ringColorVariation: number;                 // 0-1 color variation strength
+  ringDensityRange: [number, number];         // Density range [0, 1]
 }
 ```
 
@@ -331,6 +385,19 @@ const DEFAULT_CONFIG = {
   beltOuterGapScale: 0.6,
   beltOuterMultiplier: 1.5,
   beltEccentricityRange: [0, 0.1],
+
+  // Planetary rings (disabled by default)
+  enablePlanetaryRings: false,
+  ringedPlanetProbability: 0.1,
+  ringMassBiasThreshold: 20,
+  ringOuterOrbitBias: 0.5,
+  ringInnerRadiusRange: [1.3, 1.8],
+  ringOuterRadiusRange: [2.3, 3.8],
+  ringThicknessRange: [0.05, 0.15],
+  ringOpacityRange: [0.3, 0.8],
+  ringAlbedoRange: [0.4, 1.0],
+  ringColorVariation: 0.25,
+  ringDensityRange: [0.2, 0.9],
 };
 ```
 
@@ -510,9 +577,8 @@ Potential enhancements:
 1. **Resonance patterns**: Lock planets into orbital resonances (e.g., 2:1, 3:2)
 2. **Stellar evolution**: Time-based star property changes
 3. **Habitable zones**: Mark planets in Goldilocks zone
-4. **Ring systems**: Add Saturn-like rings to planets
-5. **Trojan points**: Add L4/L5 companion objects
-6. **Advanced belt features**: Belt gaps (Kirkwood gaps), shepherd moons, belt density variations
+4. **Trojan points**: Add L4/L5 companion objects
+5. **Advanced belt and ring features**: Belt gaps (Kirkwood gaps), shepherd moons, belt density variations, fine-grained ring substructures
 
 ## References
 

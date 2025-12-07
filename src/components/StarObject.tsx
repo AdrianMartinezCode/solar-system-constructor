@@ -4,6 +4,7 @@ import { useSystemStore } from '../state/systemStore';
 import { calculateOrbitalPosition, generateOrbitPath } from '../utils/physics';
 import { OrbitRing } from './OrbitRing';
 import * as THREE from 'three';
+import { PlanetaryRingObject } from './PlanetaryRingObject';
 
 interface StarObjectProps {
   starId: string;
@@ -87,6 +88,11 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
             wireframe
           />
         </mesh>
+      )}
+      
+      {/* Planetary ring (if this body has a ring definition) */}
+      {star.ring && star.bodyType === 'planet' && (
+        <PlanetaryRingObject planetId={starId} />
       )}
       
       {/* Render children recursively */}

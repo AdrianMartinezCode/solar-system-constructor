@@ -163,6 +163,10 @@ export function analyzeSystem(data: {
     minRadius: Infinity,
     maxRadius: -Infinity,
     avgRadius: 0,
+
+    // Ring statistics
+    ringedPlanets: 0,
+    totalRings: 0,
   };
   
   const depths: number[] = [];
@@ -210,6 +214,12 @@ export function analyzeSystem(data: {
       else stats.planets++;
     } else if (depth === 2) {
       stats.moons++;
+    }
+
+    // Ring statistics
+    if (star.bodyType === 'planet' && star.ring) {
+      stats.ringedPlanets++;
+      stats.totalRings++;
     }
   });
   
@@ -312,6 +322,33 @@ export function validateSystem(data: {
         errors.push(`In system ${rootId}, companion ${companion.id} (mass: ${companion.mass}) is heavier than center ${rootStar.id} (mass: ${rootStar.mass})`);
       }
     });
+  });
+
+  // Validate planetary rings
+  Object.values(data.stars).forEach((star: any) => {
+    if (star.ring) {
+      const ring = star.ring;
+      if (ring.innerRadiusMultiplier <= 1) {
+        errors.push(
+          `Ring on body ${star.id} has invalid innerRadiusMultiplier (must be > 1): ${ring.innerRadiusMultiplier}`
+        );
+      }
+      if (ring.outerRadiusMultiplier <= ring.innerRadiusMultiplier) {
+        errors.push(
+          `Ring on body ${star.id} has outerRadiusMultiplier <= innerRadiusMultiplier`
+        );
+      }
+      if (ring.thickness < 0) {
+        errors.push(
+          `Ring on body ${star.id} has negative thickness: ${ring.thickness}`
+        );
+      }
+      if (ring.opacity < 0 || ring.opacity > 1) {
+        errors.push(
+          `Ring on body ${star.id} has opacity outside [0,1]: ${ring.opacity}`
+        );
+      }
+    }
   });
   
   return {

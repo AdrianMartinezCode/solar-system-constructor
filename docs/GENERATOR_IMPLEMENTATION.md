@@ -354,13 +354,11 @@ Group {
 
 ### Possible
 1. Orbital resonances (2:1, 3:2 ratios)
-2. Asteroid belts
-3. Eccentric orbits (ellipses)
-4. Inclined orbits (3D angles)
-5. Trojan points (L4/L5)
-6. Ring systems
-7. Habitable zone marking
-8. Time-based stellar evolution
+2. Eccentric orbits (ellipses)
+3. Inclined orbits (3D angles)
+4. Trojan points (L4/L5)
+5. Habitable zone marking
+6. Time-based stellar evolution
 
 ### Advanced
 1. N-body gravitational simulation

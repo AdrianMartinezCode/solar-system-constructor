@@ -10,6 +10,9 @@ export interface Star {
   // Body type discriminant for identifying different celestial body types
   bodyType?: 'star' | 'planet' | 'moon' | 'asteroid';
   
+  // Optional planetary ring (primarily for planets)
+  ring?: PlanetaryRing;
+  
   // Reference to parent asteroid belt (if this is an asteroid)
   parentBeltId?: string;
   
@@ -32,6 +35,26 @@ export interface Star {
   orbitRotX?: number;  // Rotation around X axis (inclination-like)
   orbitRotY?: number;  // Rotation around Y axis
   orbitRotZ?: number;  // Rotation around Z axis (longitude of ascending node-like)
+}
+
+// Per-planet ring system (Saturn-like rings)
+export interface PlanetaryRing {
+  // Geometry defined in multiples of planet radius
+  innerRadiusMultiplier: number; // Inner edge (e.g. 1.5x planet radius)
+  outerRadiusMultiplier: number; // Outer edge (e.g. 3.0x planet radius)
+  
+  // Vertical half-thickness of the ring (visual only, in world units)
+  thickness: number;
+  
+  // Visual style
+  opacity: number; // 0-1 base opacity
+  albedo: number;  // Brightness / reflectivity scalar
+  color: string;   // Base color / tint
+  density: number; // 0-1 density hint (used for shader/alpha mapping)
+  
+  // Optional advanced styling / reproducibility
+  warpFactor?: number;
+  seed?: string | number;
 }
 
 // Asteroid belt entity representing a collection of many small bodies

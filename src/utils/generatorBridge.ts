@@ -43,6 +43,19 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
   const maxBeltsPerSystem = config.maxBeltsPerSystem;
   const beltPlacementMode = config.beltPlacementMode;
   
+  // Map planetary ring parameters
+  const enablePlanetaryRings = config.enablePlanetaryRings;
+  const ringedPlanetProbability = 0.05 + config.ringFrequency * 0.45; // 0.05 - 0.5
+  const {
+    ringThicknessRange,
+    ringOpacityRange,
+    ringDensityRange,
+    ringAlbedoRange,
+    ringColorVariation,
+  } = mapRingProminence(config.ringProminence);
+  const ringInnerRadiusRange: [number, number] = [1.3, 1.8];
+  const ringOuterRadiusRange: [number, number] = [2.3, 3.8];
+  
   return {
     starProbabilities,
     planetGeometricP,
@@ -71,6 +84,63 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     beltOuterGapScale: 0.6,
     beltOuterMultiplier: 1.5,
     beltEccentricityRange: [0, 0.1],
+
+    // Planetary rings
+    enablePlanetaryRings,
+    ringedPlanetProbability,
+    ringMassBiasThreshold: 20,
+    ringOuterOrbitBias: 0.5,
+    ringInnerRadiusRange,
+    ringOuterRadiusRange,
+    ringThicknessRange,
+    ringOpacityRange,
+    ringAlbedoRange,
+    ringColorVariation,
+    ringDensityRange,
+  };
+}
+
+/**
+ * Map ring prominence (0-1) to geometry/visual ranges
+ */
+function mapRingProminence(prominence: number): {
+  ringThicknessRange: [number, number];
+  ringOpacityRange: [number, number];
+  ringDensityRange: [number, number];
+  ringAlbedoRange: [number, number];
+  ringColorVariation: number;
+} {
+  const p = Math.max(0, Math.min(1, prominence));
+
+  // Thicker, brighter rings at higher prominence
+  const ringThicknessRange: [number, number] = [
+    0.03 + p * 0.04,
+    0.08 + p * 0.08,
+  ];
+
+  const ringOpacityRange: [number, number] = [
+    0.2 + p * 0.2,
+    0.5 + p * 0.4,
+  ];
+
+  const ringDensityRange: [number, number] = [
+    0.2 + p * 0.3,
+    0.6 + p * 0.4,
+  ];
+
+  const ringAlbedoRange: [number, number] = [
+    0.4,
+    0.7 + p * 0.3,
+  ];
+
+  const ringColorVariation = 0.15 + p * 0.25;
+
+  return {
+    ringThicknessRange,
+    ringOpacityRange,
+    ringDensityRange,
+    ringAlbedoRange,
+    ringColorVariation,
   };
 }
 
@@ -196,8 +266,13 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     result = generateMultipleSystems(config.maxSystems, seed, internalConfig);
   }
   
-  // Count total asteroids
+  // Count totals
   const totalAsteroids = Object.values(result.belts).reduce((sum, belt) => sum + belt.asteroidCount, 0);
+  const allStars = Object.values(result.stars);
+  const totalRingedPlanets = allStars.filter(
+    (star) => star.bodyType === 'planet' && star.ring
+  ).length;
+  const totalRings = totalRingedPlanets; // One ring system per planet for now
   
   return {
     ...result,
@@ -205,6 +280,8 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     totalGroups: Object.keys(result.groups).length,
     totalBelts: Object.keys(result.belts).length,
     totalAsteroids,
+    totalRingedPlanets,
+    totalRings,
     generatedAt: new Date(),
   };
 }

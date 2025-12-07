@@ -10,6 +10,8 @@ interface GenerationStats {
   totalGroups: number;
   totalBelts: number;
   totalAsteroids: number;
+  totalRingedPlanets: number;
+  totalRings: number;
   generatedAt: string;
 }
 
@@ -57,6 +59,8 @@ export const UniverseGeneratorPanel: React.FC = () => {
         totalGroups: result.totalGroups,
         totalBelts: result.totalBelts,
         totalAsteroids: result.totalAsteroids,
+        totalRingedPlanets: result.totalRingedPlanets,
+        totalRings: result.totalRings,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -468,6 +472,69 @@ export const UniverseGeneratorPanel: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Planetary Ring Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">Planetary Rings</h3>
+        
+        {/* Enable Planetary Rings */}
+        <div className="generator-field">
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enablePlanetaryRings}
+              onChange={(e) => updateConfig('enablePlanetaryRings', e.target.checked)}
+            />
+            <span>Enable Planetary Rings</span>
+          </label>
+        </div>
+        
+        {config.enablePlanetaryRings && (
+          <>
+            {/* Ring Frequency */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Ring Frequency
+                <span className="generator-value">{(config.ringFrequency * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.ringFrequency}
+                onChange={(e) => updateConfig('ringFrequency', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>None</span>
+                <span>Many Ringed Worlds</span>
+              </div>
+            </div>
+            
+            {/* Ring Prominence */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Ring Prominence
+                <span className="generator-value">{(config.ringProminence * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.ringProminence}
+                onChange={(e) => updateConfig('ringProminence', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Subtle</span>
+                <span>Dramatic</span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
       
       {/* Actions */}
       <div className="generator-actions">
@@ -515,6 +582,10 @@ export const UniverseGeneratorPanel: React.FC = () => {
             <div className="generator-stat">
               <span className="generator-stat-label">Total Asteroids</span>
               <span className="generator-stat-value">{stats.totalAsteroids}</span>
+            </div>
+            <div className="generator-stat">
+              <span className="generator-stat-label">Ringed Planets</span>
+              <span className="generator-stat-value">{stats.totalRingedPlanets}</span>
             </div>
             <div className="generator-stat">
               <span className="generator-stat-label">Generated At</span>

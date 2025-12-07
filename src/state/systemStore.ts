@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, NestingLevel, AsteroidBelt } from '../types';
+import { Star, Group, GroupChild, NestingLevel, AsteroidBelt, PlanetaryRing } from '../types';
 import { saveSystem, loadSystem } from '../utils/persistence';
 import { createExampleSystem } from '../utils/exampleData';
 import { findHeaviestStar } from '../utils/physics';
@@ -35,6 +35,10 @@ interface SystemStore {
   // Hierarchy operations for stars
   attachStar: (childId: string, parentId: string) => void;
   detachStar: (childId: string) => void;
+
+  // Planetary ring operations (per-planet)
+  updateRing: (planetId: string, payload: Partial<PlanetaryRing>) => void;
+  removeRing: (planetId: string) => void;
   
   // CRUD operations for groups
   addGroup: (payload: Omit<Group, 'id'>) => string;
@@ -134,6 +138,60 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       };
     });
     
+    get().save();
+  },
+
+  updateRing: (planetId, payload) => {
+    set((state) => {
+      const planet = state.stars[planetId];
+      if (!planet) return state;
+
+      const existingRing: PlanetaryRing | undefined = planet.ring;
+
+      const defaultRing: PlanetaryRing = existingRing ?? {
+        innerRadiusMultiplier: 1.5,
+        outerRadiusMultiplier: 3.0,
+        thickness: planet.radius * 0.1,
+        opacity: 0.6,
+        albedo: 0.8,
+        color: planet.color,
+        density: 0.6,
+      };
+
+      const updatedRing: PlanetaryRing = {
+        ...defaultRing,
+        ...payload,
+      };
+
+      return {
+        stars: {
+          ...state.stars,
+          [planetId]: {
+            ...planet,
+            ring: updatedRing,
+          },
+        },
+      };
+    });
+
+    get().save();
+  },
+
+  removeRing: (planetId) => {
+    set((state) => {
+      const planet = state.stars[planetId];
+      if (!planet || !planet.ring) return state;
+
+      const { ring, ...rest } = planet;
+
+      return {
+        stars: {
+          ...state.stars,
+          [planetId]: rest,
+        },
+      };
+    });
+
     get().save();
   },
   

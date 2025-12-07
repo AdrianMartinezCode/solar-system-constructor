@@ -32,6 +32,12 @@ export interface GenerationConfig {
   maxBeltsPerSystem: number;
   beltPlacementMode: "none" | "betweenPlanets" | "outerBelt" | "both";
   beltStylePreset?: "none" | "mainBelt" | "kuiper" | "heavyDebris";
+
+  // Planetary Rings
+  enablePlanetaryRings: boolean;
+  ringFrequency: number;  // 0..1 likelihood of planets having rings
+  ringProminence: number; // 0..1 visual prominence (thickness/opacity)
+  ringStylePreset?: "none" | "rare" | "solarLike" | "dramatic";
 }
 
 export interface GeneratedUniverse {
@@ -44,6 +50,8 @@ export interface GeneratedUniverse {
   totalGroups: number;
   totalBelts: number;
   totalAsteroids: number;
+  totalRingedPlanets: number;
+  totalRings: number;
   generatedAt: Date;
 }
 

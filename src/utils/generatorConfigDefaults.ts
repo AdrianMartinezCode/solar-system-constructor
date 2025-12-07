@@ -30,6 +30,12 @@ export const defaultConfig: GenerationConfig = {
   maxBeltsPerSystem: 2,
   beltPlacementMode: "betweenPlanets",
   beltStylePreset: "none",
+
+  // Planetary rings defaults
+  enablePlanetaryRings: false,
+  ringFrequency: 0.2,
+  ringProminence: 0.6,
+  ringStylePreset: "none",
 };
 
 /**
@@ -53,6 +59,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         enableAsteroidBelts: false,
         beltDensity: 0,
         maxBeltsPerSystem: 0,
+
+        enablePlanetaryRings: false,
+        ringFrequency: 0,
+        ringProminence: 0.3,
+        ringStylePreset: "none",
       };
       
     case "solarLike":
@@ -72,6 +83,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         maxBeltsPerSystem: 1,
         beltPlacementMode: "betweenPlanets",
         beltStylePreset: "mainBelt",
+
+        enablePlanetaryRings: true,
+        ringFrequency: 0.3,   // Occasional ringed planets
+        ringProminence: 0.7,  // Fairly visible like Saturn
+        ringStylePreset: "solarLike",
       };
       
     case "crowded":
@@ -91,6 +107,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         maxBeltsPerSystem: 2,
         beltPlacementMode: "both",
         beltStylePreset: "mainBelt",
+
+        enablePlanetaryRings: true,
+        ringFrequency: 0.6,   // Many ringed worlds
+        ringProminence: 0.6,
+        ringStylePreset: "dramatic",
       };
       
     case "superDenseExperimental":
@@ -113,6 +134,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         maxBeltsPerSystem: 3,
         beltPlacementMode: "both",
         beltStylePreset: "heavyDebris",
+
+        enablePlanetaryRings: true,
+        ringFrequency: 0.9,
+        ringProminence: 0.9,
+        ringStylePreset: "dramatic",
       };
       
     default:
