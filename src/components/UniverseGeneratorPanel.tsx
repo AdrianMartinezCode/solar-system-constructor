@@ -8,6 +8,8 @@ import './UniverseGeneratorPanel.css';
 interface GenerationStats {
   totalStars: number;
   totalGroups: number;
+  totalBelts: number;
+  totalAsteroids: number;
   generatedAt: string;
 }
 
@@ -53,6 +55,8 @@ export const UniverseGeneratorPanel: React.FC = () => {
       setStats({
         totalStars: result.totalStars,
         totalGroups: result.totalGroups,
+        totalBelts: result.totalBelts,
+        totalAsteroids: result.totalAsteroids,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -388,6 +392,83 @@ export const UniverseGeneratorPanel: React.FC = () => {
         )}
       </div>
       
+      {/* Asteroid Belt Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">Asteroid Belts</h3>
+        
+        {/* Enable Asteroid Belts */}
+        <div className="generator-field">
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableAsteroidBelts}
+              onChange={(e) => updateConfig('enableAsteroidBelts', e.target.checked)}
+            />
+            <span>Enable Asteroid Belts</span>
+          </label>
+        </div>
+        
+        {config.enableAsteroidBelts && (
+          <>
+            {/* Belt Density */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Asteroid Belt Density
+                <span className="generator-value">{(config.beltDensity * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.1"
+                value={config.beltDensity}
+                onChange={(e) => updateConfig('beltDensity', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Sparse</span>
+                <span>Debris Field</span>
+              </div>
+            </div>
+            
+            {/* Max Belts Per System */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Max Belts Per System
+                <span className="generator-value">{config.maxBeltsPerSystem}</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="5"
+                value={config.maxBeltsPerSystem}
+                onChange={(e) => updateConfig('maxBeltsPerSystem', parseInt(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>0</span>
+                <span>5</span>
+              </div>
+            </div>
+            
+            {/* Belt Placement Mode */}
+            <div className="generator-field">
+              <label className="generator-label">Placement</label>
+              <select
+                className="generator-select"
+                value={config.beltPlacementMode}
+                onChange={(e) => updateConfig('beltPlacementMode', e.target.value as GenerationConfig["beltPlacementMode"])}
+              >
+                <option value="none">None</option>
+                <option value="betweenPlanets">Between Planets</option>
+                <option value="outerBelt">Outer Belt (Kuiper-like)</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          </>
+        )}
+      </div>
+      
       {/* Actions */}
       <div className="generator-actions">
         <button
@@ -426,6 +507,14 @@ export const UniverseGeneratorPanel: React.FC = () => {
             <div className="generator-stat">
               <span className="generator-stat-label">Total Groups</span>
               <span className="generator-stat-value">{stats.totalGroups}</span>
+            </div>
+            <div className="generator-stat">
+              <span className="generator-stat-label">Asteroid Belts</span>
+              <span className="generator-stat-value">{stats.totalBelts}</span>
+            </div>
+            <div className="generator-stat">
+              <span className="generator-stat-label">Total Asteroids</span>
+              <span className="generator-stat-value">{stats.totalAsteroids}</span>
             </div>
             <div className="generator-stat">
               <span className="generator-stat-label">Generated At</span>

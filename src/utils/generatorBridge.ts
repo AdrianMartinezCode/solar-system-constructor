@@ -36,6 +36,13 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
   const numGroups = mapGroupCount(config.targetGalaxyCount, config.groupStructureMode);
   const nestingProbability = mapNestingProbability(config.groupStructureMode);
   
+  // Map asteroid belt parameters
+  const enableAsteroidBelts = config.enableAsteroidBelts;
+  const beltAsteroidGeometricP = 0.8 - (config.beltDensity * 0.6); // Same pattern as planets/moons
+  const { beltMinCount, beltMaxCount } = mapBeltDensityToCounts(config.beltDensity);
+  const maxBeltsPerSystem = config.maxBeltsPerSystem;
+  const beltPlacementMode = config.beltPlacementMode;
+  
   return {
     starProbabilities,
     planetGeometricP,
@@ -51,6 +58,19 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     enableGrouping,
     numGroups,
     nestingProbability,
+    enableAsteroidBelts,
+    maxBeltsPerSystem,
+    beltPlacementMode,
+    beltAsteroidGeometricP,
+    beltMinCount,
+    beltMaxCount,
+    // Use reasonable defaults for other belt parameters
+    beltThickness: 0.5,
+    beltColorVariation: 0.2,
+    beltInnerGapScale: 0.4,
+    beltOuterGapScale: 0.6,
+    beltOuterMultiplier: 1.5,
+    beltEccentricityRange: [0, 0.1],
   };
 }
 
@@ -145,6 +165,22 @@ function mapEccentricityStyle(style?: GenerationConfig["orbitEccentricityStyle"]
 }
 
 /**
+ * Map belt density (0-1) to min/max asteroid counts
+ */
+function mapBeltDensityToCounts(density: number): {
+  beltMinCount: number;
+  beltMaxCount: number;
+} {
+  // Scale asteroid counts based on density
+  // Low density: 50-500 asteroids
+  // High density: 200-1000 asteroids
+  const minCount = Math.floor(50 + density * 150);
+  const maxCount = Math.floor(500 + density * 500);
+  
+  return { beltMinCount: minCount, beltMaxCount: maxCount };
+}
+
+/**
  * Main generation function - bridge to internal generator
  */
 export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
@@ -160,10 +196,15 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     result = generateMultipleSystems(config.maxSystems, seed, internalConfig);
   }
   
+  // Count total asteroids
+  const totalAsteroids = Object.values(result.belts).reduce((sum, belt) => sum + belt.asteroidCount, 0);
+  
   return {
     ...result,
     totalStars: Object.keys(result.stars).length,
     totalGroups: Object.keys(result.groups).length,
+    totalBelts: Object.keys(result.belts).length,
+    totalAsteroids,
     generatedAt: new Date(),
   };
 }

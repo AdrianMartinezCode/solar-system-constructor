@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, Position } from '../types';
+import { Star, Group, GroupChild, Position, AsteroidBelt } from '../types';
 import { createPRNG, PRNG } from '../../prng';
 
 /**
@@ -46,6 +46,20 @@ interface GeneratorConfig {
   numGroups: [number, number];      // [min, max] number of groups
   nestingProbability: number;       // Probability a group becomes child of another
   groupPositionSigma: number;       // Standard deviation for 3D Gaussian group positions
+  
+  // Asteroid Belt parameters
+  enableAsteroidBelts: boolean;               // Master switch for asteroid belt generation
+  maxBeltsPerSystem: number;                  // Maximum number of belts per system (0-5+)
+  beltPlacementMode: 'none' | 'betweenPlanets' | 'outerBelt' | 'both';
+  beltAsteroidGeometricP: number;             // Controls asteroid count per belt (like planetGeometricP)
+  beltMinCount: number;                       // Minimum asteroids per belt
+  beltMaxCount: number;                       // Maximum asteroids per belt (for stability)
+  beltThickness: number;                      // Vertical spread (standard deviation)
+  beltColorVariation: number;                 // 0-1, color variation within belt
+  beltInnerGapScale: number;                  // Fraction of gap for inner radius (0-1)
+  beltOuterGapScale: number;                  // Fraction of gap for outer radius (0-1)
+  beltOuterMultiplier: number;                // For outer belts: factor × outermost planet orbit
+  beltEccentricityRange: [number, number];    // [min, max] eccentricity for belts
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -72,6 +86,20 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   numGroups: [3, 7],
   nestingProbability: 0.2,
   groupPositionSigma: 50.0,
+  
+  // Asteroid belt defaults (disabled by default)
+  enableAsteroidBelts: false,
+  maxBeltsPerSystem: 2,
+  beltPlacementMode: 'betweenPlanets',
+  beltAsteroidGeometricP: 0.3,  // Similar density to moons
+  beltMinCount: 50,
+  beltMaxCount: 1000,
+  beltThickness: 0.5,
+  beltColorVariation: 0.2,
+  beltInnerGapScale: 0.4,
+  beltOuterGapScale: 0.6,
+  beltOuterMultiplier: 1.5,
+  beltEccentricityRange: [0, 0.1],
 };
 
 // ============================================================================
@@ -287,7 +315,7 @@ class PhysicsGenerator {
   /**
    * Generate mass using log-normal distribution
    */
-  generateMass(type: NodeType): number {
+  generateMass(type: NodeType | 'asteroid'): number {
     const baseMass = this.rng.logNormal(
       this.config.massMu,
       this.config.massSigma
@@ -301,6 +329,8 @@ class PhysicsGenerator {
         return baseMass * 10;
       case 'moon':
         return baseMass;
+      case 'asteroid':
+        return baseMass * 0.01; // Asteroids are tiny
       default:
         return baseMass;
     }
@@ -324,7 +354,7 @@ class PhysicsGenerator {
   /**
    * Generate color based on mass (spectral classification)
    */
-  generateColor(mass: number, type: NodeType): string {
+  generateColor(mass: number, type: NodeType | 'asteroid'): string {
     if (type === 'star') {
       if (mass > 600) return '#9BB0FF';      // Blue-white (O, B)
       if (mass > 200) return '#CAD7FF';      // White (A)
@@ -334,6 +364,10 @@ class PhysicsGenerator {
     } else if (type === 'planet') {
       // Varied planet colors
       const colors = ['#4A90E2', '#E25822', '#8B7355', '#C0A080', '#A0C0E0'];
+      return this.rng.choice(colors);
+    } else if (type === 'asteroid') {
+      // Asteroids are rocky grays and browns
+      const colors = ['#8B7355', '#A0826D', '#6B5D52', '#998877', '#7A6A5C'];
       return this.rng.choice(colors);
     } else {
       // Moons are typically gray
@@ -438,6 +472,7 @@ interface SystemData {
   stars: Star[];
   rootIds: string[];
   groups: Group[];
+  belts: AsteroidBelt[];
 }
 
 class StarDataGenerator {
@@ -475,6 +510,7 @@ class StarDataGenerator {
       stars,
       rootIds,
       groups: [],
+      belts: [],
     };
   }
   
@@ -611,6 +647,12 @@ class StarDataGenerator {
     const color = this.physics.generateColor(mass, node.type);
     const name = this.generateName(node.type);
     
+    // Determine body type based on node type
+    let bodyType: 'star' | 'planet' | 'moon' | undefined;
+    if (node.type === 'star') bodyType = 'star';
+    else if (node.type === 'planet') bodyType = 'planet';
+    else if (node.type === 'moon') bodyType = 'moon';
+    
     // Generate elliptical orbit parameters
     const eccentricity = this.physics.generateEccentricity();
     const inclination = this.physics.generateInclination();
@@ -625,6 +667,7 @@ class StarDataGenerator {
       color,
       children: [],
       parentId,
+      bodyType,
       orbitalDistance,
       orbitalSpeed,
       orbitalPhase,
@@ -791,6 +834,222 @@ class GroupGenerator {
 }
 
 // ============================================================================
+// Asteroid Belt Generator
+// ============================================================================
+
+class AsteroidBeltGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+  private physics: PhysicsGenerator;
+  
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+    this.physics = new PhysicsGenerator(config, rng);
+  }
+  
+  /**
+   * Generate asteroid belts for a given system
+   * @param stars - All stars in the system
+   * @param centerStarId - The central star ID
+   * @returns Array of AsteroidBelt objects and new asteroid Star objects
+   */
+  generate(stars: Star[], centerStarId: string): { belts: AsteroidBelt[]; asteroids: Star[] } {
+    if (!this.config.enableAsteroidBelts || this.config.beltPlacementMode === 'none') {
+      return { belts: [], asteroids: [] };
+    }
+    
+    const belts: AsteroidBelt[] = [];
+    const asteroids: Star[] = [];
+    
+    // Find planets orbiting the center star
+    const planets = stars.filter(s => s.parentId === centerStarId && s.bodyType !== 'star');
+    
+    // Sort planets by orbital distance
+    const sortedPlanets = [...planets].sort((a, b) => a.orbitalDistance - b.orbitalDistance);
+    
+    let beltsCreated = 0;
+    
+    // Generate belts based on placement mode
+    if ((this.config.beltPlacementMode === 'betweenPlanets' || this.config.beltPlacementMode === 'both') 
+        && sortedPlanets.length >= 2) {
+      // Create belts in gaps between planets
+      for (let i = 0; i < sortedPlanets.length - 1 && beltsCreated < this.config.maxBeltsPerSystem; i++) {
+        // Decide whether to place a belt in this gap (50% chance)
+        if (this.rng.bool(0.5)) {
+          const innerPlanet = sortedPlanets[i];
+          const outerPlanet = sortedPlanets[i + 1];
+          const belt = this.createBeltBetweenPlanets(innerPlanet, outerPlanet, centerStarId, beltsCreated);
+          const beltAsteroids = this.generateAsteroidsForBelt(belt);
+          
+          belts.push(belt);
+          asteroids.push(...beltAsteroids);
+          beltsCreated++;
+        }
+      }
+    }
+    
+    if ((this.config.beltPlacementMode === 'outerBelt' || this.config.beltPlacementMode === 'both') 
+        && beltsCreated < this.config.maxBeltsPerSystem
+        && sortedPlanets.length > 0) {
+      // Create a Kuiper-like outer belt
+      const outermostPlanet = sortedPlanets[sortedPlanets.length - 1];
+      const belt = this.createOuterBelt(outermostPlanet, centerStarId, beltsCreated);
+      const beltAsteroids = this.generateAsteroidsForBelt(belt);
+      
+      belts.push(belt);
+      asteroids.push(...beltAsteroids);
+      beltsCreated++;
+    }
+    
+    return { belts, asteroids };
+  }
+  
+  /**
+   * Create a belt between two planets
+   */
+  private createBeltBetweenPlanets(innerPlanet: Star, outerPlanet: Star, parentId: string, index: number): AsteroidBelt {
+    const r1 = innerPlanet.orbitalDistance;
+    const r2 = outerPlanet.orbitalDistance;
+    const gap = r2 - r1;
+    
+    // Place belt in the middle portion of the gap
+    const innerRadius = r1 + gap * this.config.beltInnerGapScale;
+    const outerRadius = r1 + gap * this.config.beltOuterGapScale;
+    
+    return this.createBelt(parentId, innerRadius, outerRadius, index, 'Main Belt');
+  }
+  
+  /**
+   * Create an outer belt beyond the last planet
+   */
+  private createOuterBelt(outermostPlanet: Star, parentId: string, index: number): AsteroidBelt {
+    const rMax = outermostPlanet.orbitalDistance;
+    const innerRadius = rMax * this.config.beltOuterMultiplier;
+    const outerRadius = innerRadius * 1.5; // Belt width is 50% of inner radius
+    
+    return this.createBelt(parentId, innerRadius, outerRadius, index, 'Kuiper Belt');
+  }
+  
+  /**
+   * Create a belt with given parameters
+   */
+  private createBelt(parentId: string, innerRadius: number, outerRadius: number, index: number, namePrefix: string): AsteroidBelt {
+    const beltId = uuidv4();
+    
+    // Generate belt properties
+    const eccentricity = this.rng.uniform(
+      this.config.beltEccentricityRange[0],
+      this.config.beltEccentricityRange[1]
+    );
+    const inclination = this.rng.uniform(0, (this.config.inclinationMax ?? 0) * 0.5); // Belts have lower inclination
+    
+    // Determine asteroid count using geometric distribution
+    const baseCount = this.rng.geometric(this.config.beltAsteroidGeometricP);
+    const asteroidCount = Math.max(
+      this.config.beltMinCount,
+      Math.min(this.config.beltMaxCount, baseCount)
+    );
+    
+    // Generate belt color (grayish-brown)
+    const baseColor = '#8B7355';
+    
+    return {
+      id: beltId,
+      name: `${namePrefix} ${index + 1}`,
+      parentId,
+      innerRadius,
+      outerRadius,
+      thickness: this.config.beltThickness,
+      eccentricity,
+      inclination,
+      asteroidCount,
+      asteroidIds: [], // Will be populated when asteroids are created
+      color: baseColor,
+      seed: this.rng.randInt(0, 2147483647),
+    };
+  }
+  
+  /**
+   * Generate individual asteroids for a belt
+   */
+  private generateAsteroidsForBelt(belt: AsteroidBelt): Star[] {
+    const asteroids: Star[] = [];
+    
+    // Fork RNG for this specific belt to ensure determinism
+    const beltRng = this.rng.fork(`belt-${belt.id}`);
+    const beltPhysics = new PhysicsGenerator(this.config, beltRng);
+    
+    for (let i = 0; i < belt.asteroidCount; i++) {
+      const asteroidId = uuidv4();
+      
+      // Sample position within the belt
+      const radialDistance = beltRng.uniform(belt.innerRadius, belt.outerRadius);
+      const angle = beltRng.uniform(0, 360);
+      const verticalOffset = beltRng.normal(0, belt.thickness);
+      
+      // Generate physical properties for small rocky body
+      const mass = beltPhysics.generateMass('asteroid');
+      const radius = beltPhysics.generateRadius(mass);
+      const baseColor = beltPhysics.generateColor(mass, 'asteroid');
+      
+      // Apply color variation
+      const color = this.varyColor(baseColor, this.config.beltColorVariation, beltRng);
+      
+      // Calculate orbital speed
+      const speed = beltPhysics.calculateOrbitalSpeed(radialDistance);
+      
+      const asteroid: Star = {
+        id: asteroidId,
+        name: `${belt.name} Asteroid ${i + 1}`,
+        mass,
+        radius,
+        color,
+        children: [],
+        parentId: belt.parentId,
+        bodyType: 'asteroid',
+        parentBeltId: belt.id,
+        orbitalDistance: radialDistance,
+        orbitalSpeed: speed,
+        orbitalPhase: angle,
+        // Add slight eccentricity and inclination variation
+        eccentricity: belt.eccentricity > 0 ? beltRng.uniform(0, belt.eccentricity * 1.2) : undefined,
+        orbitRotX: belt.inclination + beltRng.uniform(-2, 2), // Small variation around belt inclination
+        orbitOffsetY: verticalOffset !== 0 ? verticalOffset : undefined,
+      };
+      
+      asteroids.push(asteroid);
+      belt.asteroidIds.push(asteroidId);
+    }
+    
+    return asteroids;
+  }
+  
+  /**
+   * Vary a hex color by a given amount
+   */
+  private varyColor(hexColor: string, variation: number, rng: RandomGenerator): string {
+    // Parse hex color
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    // Apply variation
+    const vary = (value: number) => {
+      const delta = rng.uniform(-variation * 50, variation * 50);
+      return Math.max(0, Math.min(255, Math.round(value + delta)));
+    };
+    
+    const newR = vary(r);
+    const newG = vary(g);
+    const newB = vary(b);
+    
+    // Convert back to hex
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  }
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -807,6 +1066,7 @@ export function generateSolarSystem(
   rootIds: string[];
   groups: Record<string, Group>;
   rootGroupIds: string[];
+  belts: Record<string, AsteroidBelt>;
 } {
   const fullConfig = { ...DEFAULT_CONFIG, ...config };
   
@@ -818,6 +1078,7 @@ export function generateSolarSystem(
   const lsystemRng = new RandomGenerator(masterRng.fork('lsystem'));
   const starDataRng = new RandomGenerator(masterRng.fork('stardata'));
   const groupRng = new RandomGenerator(masterRng.fork('groups'));
+  const beltRng = new RandomGenerator(masterRng.fork('belts'));
   
   // 1. Generate L-System topology
   const lsystem = new LSystemGenerator(fullConfig, lsystemRng);
@@ -840,7 +1101,30 @@ export function generateSolarSystem(
     }
   });
   
-  // 4. Generate groups (optional)
+  // 4. Generate asteroid belts (if enabled)
+  const beltGen = new AsteroidBeltGenerator(fullConfig, beltRng);
+  const beltMap: Record<string, AsteroidBelt> = {};
+  
+  // For each root system, generate belts
+  systemData.rootIds.forEach(rootId => {
+    const { belts, asteroids } = beltGen.generate(systemData.stars, rootId);
+    
+    // Add belts to the map
+    belts.forEach(belt => {
+      beltMap[belt.id] = belt;
+    });
+    
+    // Add asteroids to the star map
+    asteroids.forEach(asteroid => {
+      starMap[asteroid.id] = asteroid;
+      // Add asteroid to parent's children array
+      if (asteroid.parentId && starMap[asteroid.parentId]) {
+        starMap[asteroid.parentId].children.push(asteroid.id);
+      }
+    });
+  });
+  
+  // 5. Generate groups (optional)
   const groupGen = new GroupGenerator(fullConfig, groupRng);
   const groupList = groupGen.generate(systemData.rootIds);
   
@@ -858,6 +1142,7 @@ export function generateSolarSystem(
     rootIds: systemData.rootIds,
     groups: groupMap,
     rootGroupIds,
+    belts: beltMap,
   };
 }
 
@@ -876,11 +1161,13 @@ export function generateMultipleSystems(
   rootIds: string[];
   groups: Record<string, Group>;
   rootGroupIds: string[];
+  belts: Record<string, AsteroidBelt>;
 } {
   const fullConfig = { ...DEFAULT_CONFIG, ...config, enableGrouping: true };
   
   const allStars: Record<string, Star> = {};
   const allRootIds: string[] = [];
+  const allBelts: Record<string, AsteroidBelt> = {};
   
   // Use seed to create deterministic sequence for multiple systems
   const actualSeed = seed ?? Date.now();
@@ -892,6 +1179,7 @@ export function generateMultipleSystems(
     const systemSeed = masterRng.int(0, 2147483647);
     const system = generateSolarSystem(systemSeed, { ...fullConfig, enableGrouping: false });
     Object.assign(allStars, system.stars);
+    Object.assign(allBelts, system.belts);
     allRootIds.push(...system.rootIds);
   }
   
@@ -914,6 +1202,7 @@ export function generateMultipleSystems(
     rootIds: allRootIds,
     groups: groupMap,
     rootGroupIds,
+    belts: allBelts,
   };
 }
 

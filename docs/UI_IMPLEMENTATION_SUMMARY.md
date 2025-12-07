@@ -91,6 +91,12 @@ A complete **React UI panel** for configuring and running the procedural generat
 - ✅ Target Galaxy Count (slider 1-20) - shown if enabled
 - ✅ Group Structure Mode (select) - shown if enabled
 
+### Asteroid Belt Controls
+- ✅ Enable Asteroid Belts (checkbox)
+- ✅ Asteroid Belt Density (slider 0-1) - shown if enabled
+- ✅ Max Belts Per System (slider 0-5) - shown if enabled
+- ✅ Placement Mode (select: none/betweenPlanets/outerBelt/both) - shown if enabled
+
 ### Actions
 - ✅ **Generate Universe** (primary button)
 - ✅ **Reset to Defaults** (secondary button)
@@ -99,6 +105,8 @@ A complete **React UI panel** for configuring and running the procedural generat
 ### Status Display
 - ✅ Total Stars count
 - ✅ Total Groups count
+- ✅ Asteroid Belts count
+- ✅ Total Asteroids count
 - ✅ Generated timestamp
 - ✅ Hidden until first generation
 

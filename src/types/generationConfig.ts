@@ -25,6 +25,13 @@ export interface GenerationConfig {
   enableGroups: boolean;
   targetGalaxyCount: number;
   groupStructureMode: "flat" | "galaxyCluster" | "deepHierarchy";
+  
+  // Asteroid Belts
+  enableAsteroidBelts: boolean;
+  beltDensity: number; // 0..1 (controls asteroid count per belt)
+  maxBeltsPerSystem: number;
+  beltPlacementMode: "none" | "betweenPlanets" | "outerBelt" | "both";
+  beltStylePreset?: "none" | "mainBelt" | "kuiper" | "heavyDebris";
 }
 
 export interface GeneratedUniverse {
@@ -32,11 +39,14 @@ export interface GeneratedUniverse {
   rootIds: string[];
   groups: Record<string, Group>;
   rootGroupIds: string[];
+  belts: Record<string, AsteroidBelt>;
   totalStars: number;
   totalGroups: number;
+  totalBelts: number;
+  totalAsteroids: number;
   generatedAt: Date;
 }
 
 // Re-export types from main types file
-import type { Star, Group } from './index';
+import type { Star, Group, AsteroidBelt } from './index';
 

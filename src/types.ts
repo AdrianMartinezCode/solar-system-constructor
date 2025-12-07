@@ -7,6 +7,12 @@ export interface Star {
   children: string[];
   parentId: string | null;
   
+  // Body type discriminant for identifying different celestial body types
+  bodyType?: 'star' | 'planet' | 'moon' | 'asteroid';
+  
+  // Reference to parent asteroid belt (if this is an asteroid)
+  parentBeltId?: string;
+  
   // Legacy circular orbit parameters (maintained for backward compatibility)
   orbitalDistance: number;
   orbitalSpeed: number;
@@ -26,6 +32,32 @@ export interface Star {
   orbitRotX?: number;  // Rotation around X axis (inclination-like)
   orbitRotY?: number;  // Rotation around Y axis
   orbitRotZ?: number;  // Rotation around Z axis (longitude of ascending node-like)
+}
+
+// Asteroid belt entity representing a collection of many small bodies
+export interface AsteroidBelt {
+  id: string;
+  name: string;
+  parentId: string; // The star or planet this belt orbits
+  
+  // Belt geometry
+  innerRadius: number;     // Inner edge of the belt
+  outerRadius: number;     // Outer edge of the belt
+  thickness: number;       // Vertical spread (standard deviation for Y offsets)
+  
+  // Belt orbital parameters (shared by all asteroids in the belt)
+  eccentricity: number;    // 0 for circular, >0 for elliptical belts
+  inclination: number;     // Degrees of tilt from parent's orbital plane
+  
+  // Asteroid population
+  asteroidCount: number;   // Number of asteroids in this belt
+  asteroidIds: string[];   // IDs of all asteroids belonging to this belt
+  
+  // Visual properties
+  color?: string;          // Optional belt color hint
+  
+  // Generation seed (for reproducible belt generation)
+  seed?: string | number;
 }
 
 export interface Position {

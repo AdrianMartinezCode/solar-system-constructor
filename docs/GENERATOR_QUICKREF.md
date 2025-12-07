@@ -14,6 +14,7 @@ useSystemStore.setState({
   rootIds: system.rootIds,
   groups: system.groups,
   rootGroupIds: system.rootGroupIds,
+  belts: system.belts,
 });
 ```
 
@@ -78,6 +79,30 @@ generateMultipleSystems(20, {
 });
 ```
 
+### Asteroid Belts Enabled
+```typescript
+generateSolarSystem({
+  enableAsteroidBelts: true,
+  maxBeltsPerSystem: 2,
+  beltPlacementMode: 'both',           // Between planets + outer belt
+  beltAsteroidGeometricP: 0.3,         // Moderate density
+  beltMinCount: 50,
+  beltMaxCount: 1000,
+});
+```
+
+### Solar-Like System with Main Belt
+```typescript
+generateSolarSystem({
+  starProbabilities: [1.0, 0, 0],      // Single star
+  planetGeometricP: 0.4,
+  enableAsteroidBelts: true,
+  maxBeltsPerSystem: 1,
+  beltPlacementMode: 'betweenPlanets',
+  beltDensity: 0.4,
+});
+```
+
 ## Configuration Parameters
 
 | Parameter | Type | Default | Description |
@@ -96,6 +121,14 @@ generateMultipleSystems(20, {
 | `numGroups` | `[number, number]` | `[3, 7]` | Min/max group count |
 | `nestingProbability` | `number` | `0.2` | Group nesting chance |
 | `groupPositionSigma` | `number` | `50.0` | 3D spread of groups |
+| `enableAsteroidBelts` | `boolean` | `false` | Enable asteroid belt generation |
+| `maxBeltsPerSystem` | `number` | `2` | Max belts per system (0-5+) |
+| `beltPlacementMode` | `string` | `'betweenPlanets'` | Placement strategy |
+| `beltAsteroidGeometricP` | `number` | `0.3` | Asteroid count param |
+| `beltMinCount` | `number` | `50` | Min asteroids per belt |
+| `beltMaxCount` | `number` | `1000` | Max asteroids per belt |
+| `beltThickness` | `number` | `0.5` | Vertical spread (σ) |
+| `beltEccentricityRange` | `[number, number]` | `[0, 0.1]` | Min/max eccentricity |
 
 ## Tips
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, NestingLevel } from '../types';
+import { Star, Group, GroupChild, NestingLevel, AsteroidBelt } from '../types';
 import { saveSystem, loadSystem } from '../utils/persistence';
 import { createExampleSystem } from '../utils/exampleData';
 import { findHeaviestStar } from '../utils/physics';
@@ -11,6 +11,10 @@ interface SystemStore {
   selectedStarId: string | null;
   time: number;
   timeScale: number; // Global simulation speed multiplier (0-50)
+  
+  // Asteroid belt management
+  belts: Record<string, AsteroidBelt>;
+  selectedBeltId: string | null;
   
   // Group management
   groups: Record<string, Group>;
@@ -49,6 +53,7 @@ interface SystemStore {
   // UI operations
   selectStar: (id: string | null) => void;
   selectGroup: (id: string | null) => void;
+  selectBelt: (id: string | null) => void;
   setNestingLevel: (level: NestingLevel) => void;
   setTimeScale: (value: number) => void;
   
@@ -68,6 +73,10 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   selectedStarId: null,
   time: 0,
   timeScale: 1.0, // Default to normal speed (1x)
+  
+  // Belt state
+  belts: {},
+  selectedBeltId: null,
   
   // Group state
   groups: {},
@@ -273,7 +282,11 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   },
   
   selectStar: (id) => {
-    set({ selectedStarId: id, selectedGroupId: null });
+    set({ selectedStarId: id, selectedGroupId: null, selectedBeltId: null });
+  },
+  
+  selectBelt: (id) => {
+    set({ selectedBeltId: id, selectedStarId: null, selectedGroupId: null });
   },
   
   // Group CRUD operations
@@ -500,7 +513,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   },
   
   selectGroup: (id) => {
-    set({ selectedGroupId: id, selectedStarId: null });
+    set({ selectedGroupId: id, selectedStarId: null, selectedBeltId: null });
   },
   
   setNestingLevel: (level) => {
@@ -530,6 +543,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       rootIds: state.rootIds,
       groups: state.groups,
       rootGroupIds: state.rootGroupIds,
+      belts: state.belts,
     });
   },
   
@@ -541,8 +555,10 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
         rootIds: data.rootIds,
         groups: data.groups || {},
         rootGroupIds: data.rootGroupIds || [],
+        belts: data.belts || {},
         selectedStarId: null,
         selectedGroupId: null,
+        selectedBeltId: null,
         time: 0,
       });
     } else {
@@ -558,8 +574,10 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       rootIds: example.rootIds,
       groups: example.groups || {},
       rootGroupIds: example.rootGroupIds || [],
+      belts: example.belts || {},
       selectedStarId: null,
       selectedGroupId: null,
+      selectedBeltId: null,
       time: 0,
     });
     get().save();

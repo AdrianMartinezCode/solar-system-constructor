@@ -4,6 +4,7 @@ import { OrbitControls, Stars } from '@react-three/drei';
 import { useSystemStore } from '../state/systemStore';
 import { StarObject } from './StarObject';
 import { GroupBox } from './GroupBox';
+import { AsteroidBeltObject } from './AsteroidBeltObject';
 import { BodyCameraController } from './BodyCameraController';
 import { computeVisibleItems } from '../utils/groupUtils';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -34,6 +35,7 @@ export const Scene: React.FC = () => {
   const stars = useSystemStore((state) => state.stars);
   const groups = useSystemStore((state) => state.groups);
   const rootGroupIds = useSystemStore((state) => state.rootGroupIds);
+  const belts = useSystemStore((state) => state.belts);
   const nestingLevel = useSystemStore((state) => state.nestingLevel);
   const time = useSystemStore((state) => state.time);
   const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -48,6 +50,7 @@ export const Scene: React.FC = () => {
   console.log('Total Stars:', Object.keys(stars).length);
   console.log('Root Group IDs:', rootGroupIds);
   console.log('Total Groups:', Object.keys(groups).length);
+  console.log('Total Belts:', Object.keys(belts).length);
   console.log('Nesting Level:', nestingLevel);
   console.log('Visible Items:', visibleItems);
   console.log('Time:', time);
@@ -97,6 +100,11 @@ export const Scene: React.FC = () => {
         // Debug: show a red cube if no items
         <DebugCube />
       )}
+      
+      {/* Render asteroid belts */}
+      {Object.keys(belts).map(beltId => (
+        <AsteroidBeltObject key={`belt-${beltId}`} beltId={beltId} />
+      ))}
       
       <OrbitControls ref={controlsRef} makeDefault />
       

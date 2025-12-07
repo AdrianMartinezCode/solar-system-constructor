@@ -14,14 +14,17 @@ The generator uses a context-free grammar with stochastic production rules:
 A → S P* | S S P* | S S S P*    (1-3 stars per system)
 P → p M*                         (planet with moons)
 M → m                            (moon)
+B → b*                           (asteroid belt with many asteroids)
 ```
 
 Where:
-- **Uppercase symbols** (A, S, P, M) are structural and define the hierarchy
-- **Lowercase symbols** (p, m) become actual Star objects
+- **Uppercase symbols** (A, S, P, M, B) are structural and define the hierarchy
+- **Lowercase symbols** (p, m, b) become actual Star objects
 - **S** represents a star node (structural, not rendered)
 - **p** represents a planet (rendered)
 - **m** represents a moon (rendered)
+- **B** represents an asteroid belt (collection of many asteroids)
+- **b** represents an individual asteroid (rendered as tiny body)
 
 #### Stochastic Parameters
 
@@ -78,9 +81,57 @@ radius = mass^0.4
 | 50-100 | Orange (#FFF4EA) | G, K type |
 | < 50 | Deep red (#FFD2A1) | M type |
 
-Planets get varied colors; moons are gray.
+Planets get varied colors; moons are gray; asteroids are rocky browns and grays.
 
-### 4. Hierarchical Rules
+### 4. Asteroid Belt Generation
+
+After the planet/moon hierarchy is generated, the system performs a **post-processing step** to place asteroid belts:
+
+#### Belt Placement Algorithms
+
+**Between Planets Mode:**
+- Analyzes gaps between adjacent planets
+- Places belts in selected gaps using configurable gap fractions
+- Inner radius = `r1 + gap * beltInnerGapScale`
+- Outer radius = `r1 + gap * beltOuterGapScale`
+- Probability-based selection (50% chance per gap)
+
+**Outer Belt Mode (Kuiper-like):**
+- Places a belt beyond the outermost planet
+- Inner radius = `rMax * beltOuterMultiplier`
+- Outer radius = `innerRadius * 1.5`
+- Mimics Kuiper belt / scattered disk structure
+
+**Both Mode:**
+- Combines both placement strategies
+- Respects `maxBeltsPerSystem` limit
+
+#### Asteroid Generation
+
+For each belt, asteroids are generated with:
+
+- **Count**: Geometric distribution with `beltAsteroidGeometricP`, clamped to `[beltMinCount, beltMaxCount]`
+- **Radial position**: Uniform distribution in `[innerRadius, outerRadius]`
+- **Angular position**: Uniform in `[0, 360°]`
+- **Vertical offset**: Normal distribution with σ = `beltThickness`
+- **Physical properties**:
+  - Very small mass (`baseMass * 0.01`)
+  - Tiny radius (scaled appropriately)
+  - Rocky colors (grays/browns) with slight variation
+- **Orbital parameters**:
+  - Speed follows Kepler's law: `v = k / sqrt(distance)`
+  - Optional eccentricity and inclination inherited from belt
+  - Each asteroid is a full `Star` object with `bodyType: 'asteroid'`
+
+#### Belt Metadata
+
+Each belt is represented by an `AsteroidBelt` object containing:
+- Geometric parameters (inner/outer radius, thickness, inclination, eccentricity)
+- Population data (asteroid count, list of asteroid IDs)
+- Visual hints (color)
+- Deterministic seed for reproducibility
+
+### 5. Hierarchical Rules
 
 #### Center Star Selection
 The **heaviest star** in each system becomes the center (parentId = null). All other bodies orbit it directly or indirectly.
@@ -91,12 +142,13 @@ The **heaviest star** in each system becomes the center (parentId = null). All o
 3. Make heaviest star the root
 4. Companion stars orbit at same distance with evenly spaced phases
 5. Planets orbit the center star
+6. Asteroid belts are placed in gaps between planets or beyond the outer edge
 
 #### Multi-Star Systems
 - **Binary**: 2 stars at same orbital distance, phases 0° and 180°
 - **Ternary**: 3 stars at same orbital distance, phases 0°, 120°, 240°
 
-### 5. Group Generator
+### 6. Group Generator
 
 Optional hierarchical grouping for galaxy-scale structures:
 
@@ -126,6 +178,7 @@ console.log(system.stars);      // Record<string, Star>
 console.log(system.rootIds);    // string[]
 console.log(system.groups);     // Record<string, Group>
 console.log(system.rootGroupIds); // string[]
+console.log(system.belts);      // Record<string, AsteroidBelt>
 ```
 
 ### Custom Configuration
@@ -146,6 +199,12 @@ const config: Partial<GeneratorConfig> = {
   
   // Enable grouping
   enableGrouping: true,
+  
+  // Enable asteroid belts
+  enableAsteroidBelts: true,
+  maxBeltsPerSystem: 2,
+  beltPlacementMode: 'both',
+  beltDensity: 0.6,
 };
 
 const system = generateSolarSystem(config);
@@ -219,6 +278,20 @@ interface GeneratorConfig {
   numGroups: [number, number];      // [min, max]
   nestingProbability: number;       // 0.0 - 1.0
   groupPositionSigma: number;       // 3D spread
+  
+  // Asteroid Belt parameters
+  enableAsteroidBelts: boolean;               // Master switch
+  maxBeltsPerSystem: number;                  // 0-5+ belts per system
+  beltPlacementMode: 'none' | 'betweenPlanets' | 'outerBelt' | 'both';
+  beltAsteroidGeometricP: number;             // Controls asteroid count (like planetGeometricP)
+  beltMinCount: number;                       // Minimum asteroids per belt
+  beltMaxCount: number;                       // Maximum asteroids per belt
+  beltThickness: number;                      // Vertical spread (standard deviation)
+  beltColorVariation: number;                 // 0-1, color variation within belt
+  beltInnerGapScale: number;                  // Fraction of gap for inner radius (0-1)
+  beltOuterGapScale: number;                  // Fraction of gap for outer radius (0-1)
+  beltOuterMultiplier: number;                // For outer belts: factor × outermost orbit
+  beltEccentricityRange: [number, number];    // [min, max] eccentricity for belts
 }
 ```
 
@@ -244,6 +317,20 @@ const DEFAULT_CONFIG = {
   numGroups: [3, 7],
   nestingProbability: 0.2,
   groupPositionSigma: 50.0,
+  
+  // Asteroid belts (disabled by default)
+  enableAsteroidBelts: false,
+  maxBeltsPerSystem: 2,
+  beltPlacementMode: 'betweenPlanets',
+  beltAsteroidGeometricP: 0.3,
+  beltMinCount: 50,
+  beltMaxCount: 1000,
+  beltThickness: 0.5,
+  beltColorVariation: 0.2,
+  beltInnerGapScale: 0.4,
+  beltOuterGapScale: 0.6,
+  beltOuterMultiplier: 1.5,
+  beltEccentricityRange: [0, 0.1],
 };
 ```
 
@@ -269,6 +356,9 @@ if (!validation.valid) {
 - ✅ Children arrays are consistent
 - ✅ Heaviest star is center of each system
 - ✅ Group hierarchy is valid
+- ✅ Belt parent references are valid
+- ✅ Belt radii satisfy `innerRadius < outerRadius`
+- ✅ Asteroids with `bodyType: 'asteroid'` lie within their belt radii
 
 ### Analyze System Statistics
 
@@ -287,9 +377,12 @@ console.log(stats);
 //   ternaryStar: 0,
 //   planets: 8,
 //   moons: 6,
+//   beltCount: 2,
+//   totalAsteroids: 450,
+//   avgAsteroidCountPerBelt: 225,
 //   maxDepth: 2,
 //   avgDepth: 1.2,
-//   minMass: 0.5,
+//   minMass: 0.01,
 //   maxMass: 450.2,
 //   avgMass: 85.3,
 //   ...
@@ -309,6 +402,7 @@ console.log(printSystemStructure(system));
 //   ⭐ Beta Centauri (M=380.5, R=5.67, D=10.0)
 //   🌍 Earth (M=12.3, R=1.85, D=18.0)
 //     🌑 Moon (M=1.2, R=0.68, D=1.8)
+//   ▻ Asteroid Belt 1 (inner=2.5, outer=3.2, asteroids=300)
 //   🌍 Mars (M=8.5, R=1.62, D=32.4)
 ```
 
@@ -353,6 +447,7 @@ const resetWithGenerated = () => {
     rootIds: system.rootIds,
     groups: system.groups,
     rootGroupIds: system.rootGroupIds,
+    belts: system.belts,
     selectedStarId: null,
     selectedGroupId: null,
     time: 0,
@@ -413,13 +508,11 @@ For deterministic generation (seeded random), replace `Math.random()` with a PRN
 
 Potential enhancements:
 1. **Resonance patterns**: Lock planets into orbital resonances (e.g., 2:1, 3:2)
-2. **Asteroid belts**: Add debris fields between planets
-3. **Eccentricity**: Add elliptical orbits (e parameter)
-4. **Inclination**: Add orbital plane tilts
-5. **Stellar evolution**: Time-based star property changes
-6. **Habitable zones**: Mark planets in Goldilocks zone
-7. **Ring systems**: Add Saturn-like rings to planets
-8. **Trojan points**: Add L4/L5 companion objects
+2. **Stellar evolution**: Time-based star property changes
+3. **Habitable zones**: Mark planets in Goldilocks zone
+4. **Ring systems**: Add Saturn-like rings to planets
+5. **Trojan points**: Add L4/L5 companion objects
+6. **Advanced belt features**: Belt gaps (Kirkwood gaps), shepherd moons, belt density variations
 
 ## References
 

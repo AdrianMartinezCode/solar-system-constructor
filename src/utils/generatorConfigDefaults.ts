@@ -23,6 +23,13 @@ export const defaultConfig: GenerationConfig = {
   enableGroups: false,
   targetGalaxyCount: 3,
   groupStructureMode: "flat",
+  
+  // Asteroid belt defaults
+  enableAsteroidBelts: false,
+  beltDensity: 0.5,
+  maxBeltsPerSystem: 2,
+  beltPlacementMode: "betweenPlanets",
+  beltStylePreset: "none",
 };
 
 /**
@@ -43,6 +50,9 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         enableNarySystems: false,
         orbitEccentricityStyle: "circular",
         orbitInclinationMax: 5, // Slight tilt
+        enableAsteroidBelts: false,
+        beltDensity: 0,
+        maxBeltsPerSystem: 0,
       };
       
     case "solarLike":
@@ -57,6 +67,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         orbitEccentricityStyle: "circular",
         orbitInclinationMax: 10, // Low inclinations like our solar system
         orbitOffsetEnabled: false,
+        enableAsteroidBelts: true,
+        beltDensity: 0.4, // Moderate asteroid density
+        maxBeltsPerSystem: 1,
+        beltPlacementMode: "betweenPlanets",
+        beltStylePreset: "mainBelt",
       };
       
     case "crowded":
@@ -71,6 +86,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         orbitEccentricityStyle: "mixed",
         orbitInclinationMax: 25, // More variety
         orbitOffsetEnabled: false,
+        enableAsteroidBelts: true,
+        beltDensity: 0.6,
+        maxBeltsPerSystem: 2,
+        beltPlacementMode: "both",
+        beltStylePreset: "mainBelt",
       };
       
     case "superDenseExperimental":
@@ -88,6 +108,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         orbitEccentricityStyle: "eccentric",
         orbitInclinationMax: 45, // Wild, chaotic orbits
         orbitOffsetEnabled: true,
+        enableAsteroidBelts: true,
+        beltDensity: 0.7, // High asteroid density
+        maxBeltsPerSystem: 3,
+        beltPlacementMode: "both",
+        beltStylePreset: "heavyDebris",
       };
       
     default:
