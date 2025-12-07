@@ -3,7 +3,7 @@ import { useSystemStore } from '../state/systemStore';
 import { useWindowStore } from '../state/windowStore';
 import './SystemOverview.css';
 
-type FilterType = 'all' | 'stars' | 'planets' | 'groups';
+type FilterType = 'all' | 'stars' | 'planets' | 'moons' | 'asteroids' | 'comets' | 'groups';
 type SortType = 'name' | 'mass' | 'distance';
 
 export const SystemOverview: React.FC = () => {
@@ -21,18 +21,18 @@ export const SystemOverview: React.FC = () => {
   // Count objects
   const counts = useMemo(() => {
     const starArray = Object.values(stars);
-    const starsCount = starArray.filter(s => s.parentId === null).length;
-    const planetsCount = starArray.filter(s => s.parentId !== null).length;
-    const moonsCount = starArray.filter(s => {
-      if (!s.parentId) return false;
-      const parent = stars[s.parentId];
-      return parent && parent.parentId !== null;
-    }).length;
+    const starsCount = starArray.filter(s => s.bodyType === 'star' || (s.parentId === null && !s.bodyType)).length;
+    const planetsCount = starArray.filter(s => s.bodyType === 'planet').length;
+    const moonsCount = starArray.filter(s => s.bodyType === 'moon').length;
+    const asteroidsCount = starArray.filter(s => s.bodyType === 'asteroid').length;
+    const cometsCount = starArray.filter(s => s.bodyType === 'comet').length;
     
     return {
       stars: starsCount,
-      planets: planetsCount - moonsCount,
+      planets: planetsCount,
       moons: moonsCount,
+      asteroids: asteroidsCount,
+      comets: cometsCount,
       groups: Object.keys(groups).length,
       total: starArray.length,
     };
@@ -42,19 +42,24 @@ export const SystemOverview: React.FC = () => {
   const filteredObjects = useMemo(() => {
     let results: any[] = [];
 
-    // Get stars
-    if (filter === 'all' || filter === 'stars' || filter === 'planets') {
+    // Get stars/planets/moons/asteroids/comets
+    if (filter === 'all' || filter === 'stars' || filter === 'planets' || filter === 'moons' || filter === 'asteroids' || filter === 'comets') {
       Object.values(stars).forEach(star => {
         const matchesSearch = star.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const isRoot = star.parentId === null;
         
         if (matchesSearch) {
           if (filter === 'all') {
+            results.push({ type: star.bodyType || 'star', data: star });
+          } else if (filter === 'stars' && (star.bodyType === 'star' || (!star.bodyType && star.parentId === null))) {
             results.push({ type: 'star', data: star });
-          } else if (filter === 'stars' && isRoot) {
-            results.push({ type: 'star', data: star });
-          } else if (filter === 'planets' && !isRoot) {
+          } else if (filter === 'planets' && star.bodyType === 'planet') {
             results.push({ type: 'planet', data: star });
+          } else if (filter === 'moons' && star.bodyType === 'moon') {
+            results.push({ type: 'moon', data: star });
+          } else if (filter === 'asteroids' && star.bodyType === 'asteroid') {
+            results.push({ type: 'asteroid', data: star });
+          } else if (filter === 'comets' && star.bodyType === 'comet') {
+            results.push({ type: 'comet', data: star });
           }
         }
       });
@@ -141,6 +146,24 @@ export const SystemOverview: React.FC = () => {
           🌍 Planets
         </button>
         <button
+          className={`filter-btn ${filter === 'moons' ? 'active' : ''}`}
+          onClick={() => setFilter('moons')}
+        >
+          🌑 Moons
+        </button>
+        <button
+          className={`filter-btn ${filter === 'asteroids' ? 'active' : ''}`}
+          onClick={() => setFilter('asteroids')}
+        >
+          🪨 Asteroids
+        </button>
+        <button
+          className={`filter-btn ${filter === 'comets' ? 'active' : ''}`}
+          onClick={() => setFilter('comets')}
+        >
+          ☄️ Comets
+        </button>
+        <button
           className={`filter-btn ${filter === 'groups' ? 'active' : ''}`}
           onClick={() => setFilter('groups')}
         >
@@ -163,10 +186,19 @@ export const SystemOverview: React.FC = () => {
         </div>
 
         <div className="results-list">
-          {filteredObjects.map((obj, idx) => (
+          {filteredObjects.map((obj, idx) => {
+            // Determine icon based on type
+            let icon = '⭐';
+            if (obj.type === 'group') icon = '📁';
+            else if (obj.type === 'planet') icon = '🌍';
+            else if (obj.type === 'moon') icon = '🌑';
+            else if (obj.type === 'asteroid') icon = '🪨';
+            else if (obj.type === 'comet') icon = '☄️';
+            
+            return (
             <div key={`${obj.type}-${obj.data.id}`} className="result-item">
               <div className="result-icon">
-                {obj.type === 'group' ? '📁' : obj.data.parentId === null ? '⭐' : '🌍'}
+                {icon}
               </div>
               <div className="result-info">
                 <div className="result-name">{obj.data.name}</div>
@@ -199,7 +231,8 @@ export const SystemOverview: React.FC = () => {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
           
           {filteredObjects.length === 0 && (
             <div className="no-results">
@@ -226,6 +259,16 @@ export const SystemOverview: React.FC = () => {
             <span className="stat-icon">🌙</span>
             <span className="stat-value">{counts.moons}</span>
             <span className="stat-label">Moons</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-icon">🪨</span>
+            <span className="stat-value">{counts.asteroids}</span>
+            <span className="stat-label">Asteroids</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-icon">☄️</span>
+            <span className="stat-value">{counts.comets}</span>
+            <span className="stat-label">Comets</span>
           </div>
           <div className="stat-item">
             <span className="stat-icon">📁</span>

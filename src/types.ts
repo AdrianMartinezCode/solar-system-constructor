@@ -8,13 +8,16 @@ export interface Star {
   parentId: string | null;
   
   // Body type discriminant for identifying different celestial body types
-  bodyType?: 'star' | 'planet' | 'moon' | 'asteroid';
+  bodyType?: 'star' | 'planet' | 'moon' | 'asteroid' | 'comet';
   
   // Optional planetary ring (primarily for planets)
   ring?: PlanetaryRing;
   
   // Reference to parent asteroid belt (if this is an asteroid)
   parentBeltId?: string;
+  
+  // Optional comet-specific metadata (if this is a comet)
+  comet?: CometMeta;
   
   // Legacy circular orbit parameters (maintained for backward compatibility)
   orbitalDistance: number;
@@ -55,6 +58,26 @@ export interface PlanetaryRing {
   // Optional advanced styling / reproducibility
   warpFactor?: number;
   seed?: string | number;
+}
+
+// Comet-specific metadata for cometary bodies
+export interface CometMeta {
+  // Orbital characterization (beyond what's already on Star)
+  isPeriodic: boolean;              // short/long-period or single-pass
+  perihelionDistance: number;       // closest approach (derived from orbit)
+  aphelionDistance: number;         // farthest distance (derived from orbit)
+  lastPerihelionTime?: number;      // in simulation time units, optional
+  
+  // Visual tail behavior
+  hasTail: boolean;                 // usually true, but allow "dead" comets
+  tailLengthBase: number;           // base scalar for tail length
+  tailWidthBase: number;            // base width / radius
+  tailColor: string;                // hex color for tail
+  tailOpacityBase: number;          // base opacity (0-1)
+  activityFalloffDistance: number;  // distance beyond which tail fades out strongly
+  
+  // Determinism / misc
+  seed?: string | number;           // per-comet seed if needed
 }
 
 // Asteroid belt entity representing a collection of many small bodies

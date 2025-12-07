@@ -55,6 +55,21 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
   } = mapRingProminence(config.ringProminence);
   const ringInnerRadiusRange: [number, number] = [1.3, 1.8];
   const ringOuterRadiusRange: [number, number] = [2.3, 3.8];
+
+  // Map comet parameters
+  const enableComets = config.enableComets;
+  const cometCountRange = mapCometFrequencyToCount(config.cometFrequency);
+  const {
+    cometEccentricityRange,
+    cometSemiMajorAxisRange,
+    shortPeriodCometFraction,
+  } = mapCometOrbitStyle(config.cometOrbitStyle);
+  const {
+    cometActivityDistanceRange,
+    cometTailLengthRange,
+    cometTailOpacityRange,
+  } = mapCometActivity(config.cometActivity);
+  const cometInclinationMax = 45; // Comets can have wild inclinations
   
   return {
     starProbabilities,
@@ -97,6 +112,17 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     ringAlbedoRange,
     ringColorVariation,
     ringDensityRange,
+
+    // Comets
+    enableComets,
+    cometCountRange,
+    cometEccentricityRange,
+    cometInclinationMax,
+    cometSemiMajorAxisRange,
+    shortPeriodCometFraction,
+    cometActivityDistanceRange,
+    cometTailLengthRange,
+    cometTailOpacityRange,
   };
 }
 
@@ -251,6 +277,84 @@ function mapBeltDensityToCounts(density: number): {
 }
 
 /**
+ * Map comet frequency (0-1) to per-system comet count range
+ */
+function mapCometFrequencyToCount(frequency: number): [number, number] {
+  if (frequency === 0) return [0, 0];
+  
+  // Low frequency: 1-2 comets
+  // Medium frequency: 1-4 comets
+  // High frequency: 2-6 comets
+  const minCount = Math.floor(1 + frequency * 1);
+  const maxCount = Math.floor(2 + frequency * 4);
+  
+  return [minCount, maxCount];
+}
+
+/**
+ * Map comet orbit style to orbital parameters
+ */
+function mapCometOrbitStyle(style: GenerationConfig["cometOrbitStyle"]): {
+  cometEccentricityRange: [number, number];
+  cometSemiMajorAxisRange: [number, number];
+  shortPeriodCometFraction: number;
+} {
+  switch (style) {
+    case "rareLong":
+      return {
+        cometEccentricityRange: [0.7, 0.99],
+        cometSemiMajorAxisRange: [2.0, 3.5],
+        shortPeriodCometFraction: 0.1, // Mostly long-period
+      };
+    case "mixed":
+      return {
+        cometEccentricityRange: [0.6, 0.95],
+        cometSemiMajorAxisRange: [1.5, 3.0],
+        shortPeriodCometFraction: 0.4, // Mix of both
+      };
+    case "manyShort":
+      return {
+        cometEccentricityRange: [0.5, 0.9],
+        cometSemiMajorAxisRange: [1.2, 2.5],
+        shortPeriodCometFraction: 0.7, // Mostly short-period
+      };
+    default:
+      return {
+        cometEccentricityRange: [0.7, 0.99],
+        cometSemiMajorAxisRange: [2.0, 3.5],
+        shortPeriodCometFraction: 0.1,
+      };
+  }
+}
+
+/**
+ * Map comet activity (0-1) to tail parameters
+ */
+function mapCometActivity(activity: number): {
+  cometActivityDistanceRange: [number, number];
+  cometTailLengthRange: [number, number];
+  cometTailOpacityRange: [number, number];
+} {
+  const a = Math.max(0, Math.min(1, activity));
+  
+  // Higher activity = longer tails, more opacity, larger active zone
+  return {
+    cometActivityDistanceRange: [
+      3 + a * 3,  // Active from 3-6 units
+      15 + a * 15, // Up to 15-30 units
+    ],
+    cometTailLengthRange: [
+      1 + a * 2,   // 1-3 base length
+      4 + a * 6,   // 4-10 max length
+    ],
+    cometTailOpacityRange: [
+      0.2 + a * 0.2, // 0.2-0.4 min opacity
+      0.4 + a * 0.4, // 0.4-0.8 max opacity
+    ],
+  };
+}
+
+/**
  * Main generation function - bridge to internal generator
  */
 export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
@@ -273,6 +377,7 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     (star) => star.bodyType === 'planet' && star.ring
   ).length;
   const totalRings = totalRingedPlanets; // One ring system per planet for now
+  const totalComets = allStars.filter((star) => star.bodyType === 'comet').length;
   
   return {
     ...result,
@@ -282,6 +387,7 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     totalAsteroids,
     totalRingedPlanets,
     totalRings,
+    totalComets,
     generatedAt: new Date(),
   };
 }

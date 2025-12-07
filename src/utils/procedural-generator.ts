@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing } from '../types';
+import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta } from '../types';
 import { createPRNG, PRNG } from '../../prng';
 
 /**
@@ -73,6 +73,17 @@ interface GeneratorConfig {
   ringAlbedoRange: [number, number];          // Albedo (brightness) range
   ringColorVariation: number;                 // 0-1 color variation strength
   ringDensityRange: [number, number];         // 0-1 density range
+
+  // Comet parameters
+  enableComets: boolean;                       // Master switch for comet generation
+  cometCountRange: [number, number];           // Per-system [min, max] comets
+  cometEccentricityRange: [number, number];    // Typical [0.6, 0.99]
+  cometInclinationMax: number;                 // Max inclination (degrees)
+  cometSemiMajorAxisRange: [number, number];   // Range relative to outermost planet distance
+  shortPeriodCometFraction: number;            // 0–1, fraction that have smaller semi-major axis
+  cometActivityDistanceRange: [number, number]; // Distances controlling tail strength
+  cometTailLengthRange: [number, number];      // Base tail length
+  cometTailOpacityRange: [number, number];     // Base opacity
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -126,6 +137,17 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   ringAlbedoRange: [0.4, 1.0],
   ringColorVariation: 0.25,
   ringDensityRange: [0.2, 0.9],
+
+  // Comet defaults (disabled by default)
+  enableComets: false,
+  cometCountRange: [1, 3],            // Few comets per system by default
+  cometEccentricityRange: [0.6, 0.99], // Highly eccentric orbits
+  cometInclinationMax: 45,             // Can have wild inclinations
+  cometSemiMajorAxisRange: [1.5, 3.0], // Relative to outermost planet distance
+  shortPeriodCometFraction: 0.3,       // 30% are short-period comets
+  cometActivityDistanceRange: [5, 20], // Tail active within this range
+  cometTailLengthRange: [2, 8],        // Base tail length range
+  cometTailOpacityRange: [0.3, 0.7],   // Base tail opacity range
 };
 
 // ============================================================================
@@ -341,7 +363,7 @@ class PhysicsGenerator {
   /**
    * Generate mass using log-normal distribution
    */
-  generateMass(type: NodeType | 'asteroid'): number {
+  generateMass(type: NodeType | 'asteroid' | 'comet'): number {
     const baseMass = this.rng.logNormal(
       this.config.massMu,
       this.config.massSigma
@@ -357,6 +379,8 @@ class PhysicsGenerator {
         return baseMass;
       case 'asteroid':
         return baseMass * 0.01; // Asteroids are tiny
+      case 'comet':
+        return baseMass * 0.005; // Comets are even smaller
       default:
         return baseMass;
     }
@@ -380,7 +404,7 @@ class PhysicsGenerator {
   /**
    * Generate color based on mass (spectral classification)
    */
-  generateColor(mass: number, type: NodeType | 'asteroid'): string {
+  generateColor(mass: number, type: NodeType | 'asteroid' | 'comet'): string {
     if (type === 'star') {
       if (mass > 600) return '#9BB0FF';      // Blue-white (O, B)
       if (mass > 200) return '#CAD7FF';      // White (A)
@@ -394,6 +418,10 @@ class PhysicsGenerator {
     } else if (type === 'asteroid') {
       // Asteroids are rocky grays and browns
       const colors = ['#8B7355', '#A0826D', '#6B5D52', '#998877', '#7A6A5C'];
+      return this.rng.choice(colors);
+    } else if (type === 'comet') {
+      // Comets are icy/rocky - bluish-gray, white-gray tones
+      const colors = ['#B0C4DE', '#D3D3D3', '#C0D6E4', '#A8C5DD', '#E0E8F0'];
       return this.rng.choice(colors);
     } else {
       // Moons are typically gray
@@ -1222,6 +1250,213 @@ class PlanetaryRingGenerator {
 }
 
 // ============================================================================
+// Comet Generator
+// ============================================================================
+
+class CometGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+  private physics: PhysicsGenerator;
+
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+    this.physics = new PhysicsGenerator(config, rng);
+  }
+
+  /**
+   * Generate comets for a given system
+   * @param stars - All stars in the system
+   * @param centerStarId - The central star ID
+   * @returns Array of comet Star objects
+   */
+  generate(stars: Star[], centerStarId: string): Star[] {
+    if (!this.config.enableComets) {
+      return [];
+    }
+
+    const comets: Star[] = [];
+
+    // Find planets orbiting the center star to determine outermost orbit
+    const planets = stars.filter(
+      (s) => s.parentId === centerStarId && s.bodyType === 'planet'
+    );
+
+    if (planets.length === 0) {
+      // No planets, use a default distance
+      return comets;
+    }
+
+    // Find outermost planet distance
+    const maxPlanetDistance = planets.reduce(
+      (max, p) => Math.max(max, p.orbitalDistance),
+      0
+    );
+
+    // Sample number of comets
+    const cometCount = this.rng.randInt(
+      this.config.cometCountRange[0],
+      this.config.cometCountRange[1]
+    );
+
+    // Generate each comet
+    for (let i = 0; i < cometCount; i++) {
+      const comet = this.createComet(i, centerStarId, maxPlanetDistance);
+      comets.push(comet);
+    }
+
+    return comets;
+  }
+
+  /**
+   * Create a single comet
+   */
+  private createComet(
+    index: number,
+    parentId: string,
+    maxPlanetDistance: number
+  ): Star {
+    // Fork RNG for this comet
+    const cometRng = this.rng.fork(`comet-${index}`);
+    const cometPhysics = new PhysicsGenerator(this.config, cometRng);
+
+    // Determine if this is a short-period comet
+    const isShortPeriod = cometRng.bool(this.config.shortPeriodCometFraction);
+
+    // Sample semi-major axis relative to outermost planet
+    const semiMajorAxisMultiplier = cometRng.uniform(
+      this.config.cometSemiMajorAxisRange[0],
+      this.config.cometSemiMajorAxisRange[1]
+    );
+    const semiMajorAxis = isShortPeriod
+      ? maxPlanetDistance * semiMajorAxisMultiplier * 0.5 // Short-period: closer
+      : maxPlanetDistance * semiMajorAxisMultiplier;
+
+    // Sample high eccentricity
+    const eccentricity = cometRng.uniform(
+      this.config.cometEccentricityRange[0],
+      this.config.cometEccentricityRange[1]
+    );
+
+    // Calculate perihelion and aphelion
+    const perihelionDistance = semiMajorAxis * (1 - eccentricity);
+    const aphelionDistance = semiMajorAxis * (1 + eccentricity);
+
+    // Sample inclination
+    const inclinationX = cometRng.uniform(
+      -this.config.cometInclinationMax,
+      this.config.cometInclinationMax
+    );
+    const inclinationY = cometRng.uniform(
+      -this.config.cometInclinationMax * 0.5,
+      this.config.cometInclinationMax * 0.5
+    );
+    const inclinationZ = cometRng.uniform(0, 360);
+
+    // Generate physical properties (small icy body)
+    const mass = cometPhysics.generateMass('comet');
+    const radius = cometPhysics.generateRadius(mass);
+    const color = cometPhysics.generateColor(mass, 'comet');
+
+    // Calculate orbital speed (using semi-major axis)
+    const orbitalSpeed = cometPhysics.calculateOrbitalSpeed(semiMajorAxis);
+
+    // Random orbital phase
+    const orbitalPhase = cometRng.uniform(0, 360);
+
+    // Generate tail properties
+    const hasTail = cometRng.bool(0.95); // 95% have visible tails
+    const tailLengthBase = cometRng.uniform(
+      this.config.cometTailLengthRange[0],
+      this.config.cometTailLengthRange[1]
+    );
+    const tailWidthBase = tailLengthBase * 0.15; // Tail width proportional to length
+    const tailOpacityBase = cometRng.uniform(
+      this.config.cometTailOpacityRange[0],
+      this.config.cometTailOpacityRange[1]
+    );
+
+    // Tail color - bluish-white (ion tail) or yellowish (dust tail)
+    const tailColors = ['#87CEEB', '#B0E0E6', '#F5DEB3', '#FFE4B5'];
+    const tailColor = cometRng.choice(tailColors);
+
+    // Activity falloff distance (tail fades beyond this)
+    const activityFalloffDistance = cometRng.uniform(
+      this.config.cometActivityDistanceRange[0],
+      this.config.cometActivityDistanceRange[1]
+    );
+
+    // Create comet metadata
+    const cometMeta: CometMeta = {
+      isPeriodic: isShortPeriod,
+      perihelionDistance,
+      aphelionDistance,
+      hasTail,
+      tailLengthBase,
+      tailWidthBase,
+      tailColor,
+      tailOpacityBase,
+      activityFalloffDistance,
+      seed: cometRng.randInt(0, 2147483647),
+    };
+
+    // Generate a name
+    const name = this.generateCometName(index);
+
+    const cometId = uuidv4();
+
+    return {
+      id: cometId,
+      name,
+      mass,
+      radius,
+      color,
+      children: [],
+      parentId,
+      bodyType: 'comet',
+      comet: cometMeta,
+      orbitalDistance: semiMajorAxis, // Use semi-major axis as base distance
+      orbitalSpeed,
+      orbitalPhase,
+      semiMajorAxis,
+      eccentricity,
+      orbitRotX: inclinationX,
+      orbitRotY: inclinationY,
+      orbitRotZ: inclinationZ,
+    };
+  }
+
+  /**
+   * Generate a comet name
+   */
+  private generateCometName(index: number): string {
+    const prefixes = [
+      'Halley',
+      'Hale-Bopp',
+      'Hyakutake',
+      'NEAT',
+      'LINEAR',
+      'SOHO',
+      'McNaught',
+      'Lovejoy',
+      'ISON',
+      'Encke',
+      'Swift-Tuttle',
+      'Tempel',
+    ];
+    
+    if (index < prefixes.length) {
+      return `Comet ${prefixes[index]}`;
+    }
+    
+    // Generate alphanumeric designation
+    const year = 2020 + (index % 20);
+    const letter = String.fromCharCode(65 + (index % 26));
+    return `Comet ${year}${letter}${index}`;
+  }
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -1252,6 +1487,7 @@ export function generateSolarSystem(
   const groupRng = new RandomGenerator(masterRng.fork('groups'));
   const beltRng = new RandomGenerator(masterRng.fork('belts'));
   const ringRng = new RandomGenerator(masterRng.fork('rings'));
+  const cometRng = new RandomGenerator(masterRng.fork('comets'));
   
   // 1. Generate L-System topology
   const lsystem = new LSystemGenerator(fullConfig, lsystemRng);
@@ -1302,8 +1538,23 @@ export function generateSolarSystem(
   systemData.rootIds.forEach((rootId) => {
     ringGen.generate(systemData.stars, rootId);
   });
+
+  // 6. Generate comets (if enabled)
+  const cometGen = new CometGenerator(fullConfig, cometRng);
+  systemData.rootIds.forEach((rootId) => {
+    const comets = cometGen.generate(systemData.stars, rootId);
+    
+    // Add comets to the star map
+    comets.forEach((comet) => {
+      starMap[comet.id] = comet;
+      // Add comet to parent's children array
+      if (comet.parentId && starMap[comet.parentId]) {
+        starMap[comet.parentId].children.push(comet.id);
+      }
+    });
+  });
   
-  // 6. Generate groups (optional)
+  // 7. Generate groups (optional)
   const groupGen = new GroupGenerator(fullConfig, groupRng);
   const groupList = groupGen.generate(systemData.rootIds);
   

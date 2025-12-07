@@ -36,6 +36,12 @@ export const defaultConfig: GenerationConfig = {
   ringFrequency: 0.2,
   ringProminence: 0.6,
   ringStylePreset: "none",
+
+  // Comet defaults
+  enableComets: false,
+  cometFrequency: 0.2,
+  cometOrbitStyle: "rareLong",
+  cometActivity: 0.6,
 };
 
 /**
@@ -64,6 +70,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         ringFrequency: 0,
         ringProminence: 0.3,
         ringStylePreset: "none",
+
+        enableComets: false,
+        cometFrequency: 0,
+        cometOrbitStyle: "rareLong",
+        cometActivity: 0.3,
       };
       
     case "solarLike":
@@ -88,6 +99,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         ringFrequency: 0.3,   // Occasional ringed planets
         ringProminence: 0.7,  // Fairly visible like Saturn
         ringStylePreset: "solarLike",
+
+        enableComets: true,
+        cometFrequency: 0.3,  // Few long-period comets
+        cometOrbitStyle: "rareLong",
+        cometActivity: 0.5,
       };
       
     case "crowded":
@@ -112,6 +128,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         ringFrequency: 0.6,   // Many ringed worlds
         ringProminence: 0.6,
         ringStylePreset: "dramatic",
+
+        enableComets: true,
+        cometFrequency: 0.5,  // Moderate number of comets
+        cometOrbitStyle: "mixed",
+        cometActivity: 0.7,
       };
       
     case "superDenseExperimental":
@@ -139,6 +160,11 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         ringFrequency: 0.9,
         ringProminence: 0.9,
         ringStylePreset: "dramatic",
+
+        enableComets: true,
+        cometFrequency: 0.8,   // Many comets
+        cometOrbitStyle: "manyShort",
+        cometActivity: 0.9,    // Very active tails
       };
       
     default:

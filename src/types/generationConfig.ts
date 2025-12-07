@@ -38,6 +38,12 @@ export interface GenerationConfig {
   ringFrequency: number;  // 0..1 likelihood of planets having rings
   ringProminence: number; // 0..1 visual prominence (thickness/opacity)
   ringStylePreset?: "none" | "rare" | "solarLike" | "dramatic";
+
+  // Comets
+  enableComets: boolean;
+  cometFrequency: number;      // 0..1; maps to per-system comet count / probabilities
+  cometOrbitStyle: "rareLong" | "mixed" | "manyShort";
+  cometActivity: number;       // 0..1; maps to tail length/opacity ranges
 }
 
 export interface GeneratedUniverse {
@@ -52,6 +58,7 @@ export interface GeneratedUniverse {
   totalAsteroids: number;
   totalRingedPlanets: number;
   totalRings: number;
+  totalComets: number;
   generatedAt: Date;
 }
 

@@ -5,6 +5,7 @@ import { calculateOrbitalPosition, generateOrbitPath } from '../utils/physics';
 import { OrbitRing } from './OrbitRing';
 import * as THREE from 'three';
 import { PlanetaryRingObject } from './PlanetaryRingObject';
+import { CometObject } from './CometObject';
 
 interface StarObjectProps {
   starId: string;
@@ -55,44 +56,51 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
         </group>
       )}
       
-      {/* Star mesh with glow */}
-      <mesh ref={meshRef} onClick={handleClick}>
-        <sphereGeometry args={[star.radius, 32, 32]} />
-        <meshStandardMaterial 
-          color={star.color}
-          emissive={star.color}
-          emissiveIntensity={1.5}
-          metalness={0.2}
-          roughness={0.4}
-        />
-      </mesh>
-      
-      {/* Outer glow layer */}
-      <mesh>
-        <sphereGeometry args={[star.radius * 1.1, 32, 32]} />
-        <meshBasicMaterial 
-          color={star.color}
-          transparent
-          opacity={0.3}
-        />
-      </mesh>
-      
-      {/* Selection indicator */}
-      {isSelected && (
-        <mesh>
-          <sphereGeometry args={[star.radius * 1.3, 32, 32]} />
-          <meshBasicMaterial 
-            color="#ffffff" 
-            transparent 
-            opacity={0.3}
-            wireframe
-          />
-        </mesh>
-      )}
-      
-      {/* Planetary ring (if this body has a ring definition) */}
-      {star.ring && star.bodyType === 'planet' && (
-        <PlanetaryRingObject planetId={starId} />
+      {/* Comet rendering (if this is a comet) - handles its own geometry and tail */}
+      {star.bodyType === 'comet' ? (
+        <CometObject cometId={starId} />
+      ) : (
+        <>
+          {/* Star/Planet/Moon mesh with glow */}
+          <mesh ref={meshRef} onClick={handleClick}>
+            <sphereGeometry args={[star.radius, 32, 32]} />
+            <meshStandardMaterial 
+              color={star.color}
+              emissive={star.color}
+              emissiveIntensity={1.5}
+              metalness={0.2}
+              roughness={0.4}
+            />
+          </mesh>
+          
+          {/* Outer glow layer */}
+          <mesh>
+            <sphereGeometry args={[star.radius * 1.1, 32, 32]} />
+            <meshBasicMaterial 
+              color={star.color}
+              transparent
+              opacity={0.3}
+            />
+          </mesh>
+          
+          {/* Selection indicator */}
+          {isSelected && (
+            <mesh>
+              <sphereGeometry args={[star.radius * 1.3, 32, 32]} />
+              <meshBasicMaterial 
+                color="#ffffff" 
+                transparent 
+                opacity={0.3}
+                wireframe
+              />
+            </mesh>
+          )}
+          
+          {/* Planetary ring (if this body has a ring definition) */}
+          {star.ring && star.bodyType === 'planet' && (
+            <PlanetaryRingObject planetId={starId} />
+          )}
+        </>
       )}
       
       {/* Render children recursively */}

@@ -145,6 +145,8 @@ export function analyzeSystem(data: {
     stars: 0,
     planets: 0,
     moons: 0,
+    asteroids: 0,
+    comets: 0,
     
     // Multi-star systems
     singleStar: 0,
@@ -167,11 +169,17 @@ export function analyzeSystem(data: {
     // Ring statistics
     ringedPlanets: 0,
     totalRings: 0,
+    
+    // Comet orbital stats
+    minCometEccentricity: Infinity,
+    maxCometEccentricity: -Infinity,
+    avgCometEccentricity: 0,
   };
   
   const depths: number[] = [];
   let totalMass = 0;
   let totalRadius = 0;
+  let cometEccentricities: number[] = [];
   
   // Analyze each star
   Object.values(data.stars).forEach((star: any) => {
@@ -183,6 +191,24 @@ export function analyzeSystem(data: {
     stats.minRadius = Math.min(stats.minRadius, star.radius);
     stats.maxRadius = Math.max(stats.maxRadius, star.radius);
     
+    // Count by body type
+    if (star.bodyType === 'star' || (!star.bodyType && star.parentId === null)) {
+      stats.stars++;
+    } else if (star.bodyType === 'planet') {
+      stats.planets++;
+    } else if (star.bodyType === 'moon') {
+      stats.moons++;
+    } else if (star.bodyType === 'asteroid') {
+      stats.asteroids++;
+    } else if (star.bodyType === 'comet') {
+      stats.comets++;
+      if (star.eccentricity !== undefined) {
+        cometEccentricities.push(star.eccentricity);
+        stats.minCometEccentricity = Math.min(stats.minCometEccentricity, star.eccentricity);
+        stats.maxCometEccentricity = Math.max(stats.maxCometEccentricity, star.eccentricity);
+      }
+    }
+    
     // Calculate depth
     let depth = 0;
     let current = star;
@@ -193,8 +219,8 @@ export function analyzeSystem(data: {
     depths.push(depth);
     stats.maxDepth = Math.max(stats.maxDepth, depth);
     
-    // Count by hierarchy level
-    if (depth === 0) {
+    // Count by hierarchy level (for systems without bodyType)
+    if (depth === 0 && !star.bodyType) {
       stats.stars++;
       
       // Count companion stars (siblings with same parent)
@@ -208,11 +234,11 @@ export function analyzeSystem(data: {
         else if (companionCount === 1) stats.binaryStar++;
         else if (companionCount === 2) stats.ternaryStar++;
       }
-    } else if (depth === 1) {
-      // Could be companion star or planet
+    } else if (depth === 1 && !star.bodyType) {
+      // Could be companion star or planet (legacy systems without bodyType)
       if (star.mass > 50) stats.stars++;
       else stats.planets++;
-    } else if (depth === 2) {
+    } else if (depth === 2 && !star.bodyType) {
       stats.moons++;
     }
 
@@ -226,6 +252,11 @@ export function analyzeSystem(data: {
   stats.avgMass = totalMass / stats.totalStars;
   stats.avgRadius = totalRadius / stats.totalStars;
   stats.avgDepth = depths.reduce((a, b) => a + b, 0) / depths.length;
+  
+  // Comet eccentricity stats
+  if (cometEccentricities.length > 0) {
+    stats.avgCometEccentricity = cometEccentricities.reduce((a, b) => a + b, 0) / cometEccentricities.length;
+  }
   
   return stats;
 }
@@ -283,6 +314,26 @@ export function validateSystem(data: {
         errors.push(`Star ${star.id} lists ${childId} as child, but child's parentId is ${child.parentId}`);
       }
     });
+  });
+  
+  // Validate comet-specific data
+  Object.values(data.stars).forEach((star: any) => {
+    if (star.bodyType === 'comet') {
+      // Check comet has valid eccentricity (should be high)
+      if (star.eccentricity !== undefined && (star.eccentricity < 0 || star.eccentricity >= 1)) {
+        errors.push(`Comet ${star.id} has invalid eccentricity: ${star.eccentricity} (should be 0 <= e < 1)`);
+      }
+      
+      // Check comet metadata consistency
+      if (star.comet) {
+        const { perihelionDistance, aphelionDistance } = star.comet;
+        if (perihelionDistance !== undefined && aphelionDistance !== undefined) {
+          if (perihelionDistance >= aphelionDistance) {
+            errors.push(`Comet ${star.id} has perihelion >= aphelion: ${perihelionDistance} >= ${aphelionDistance}`);
+          }
+        }
+      }
+    }
   });
   
   // Check group parentIds exist

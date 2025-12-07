@@ -12,6 +12,7 @@ interface GenerationStats {
   totalAsteroids: number;
   totalRingedPlanets: number;
   totalRings: number;
+  totalComets: number;
   generatedAt: string;
 }
 
@@ -61,6 +62,7 @@ export const UniverseGeneratorPanel: React.FC = () => {
         totalAsteroids: result.totalAsteroids,
         totalRingedPlanets: result.totalRingedPlanets,
         totalRings: result.totalRings,
+        totalComets: result.totalComets,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -535,6 +537,85 @@ export const UniverseGeneratorPanel: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Comet Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">Comets ☄️</h3>
+        
+        {/* Enable Comets */}
+        <div className="generator-field">
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableComets}
+              onChange={(e) => updateConfig('enableComets', e.target.checked)}
+            />
+            <span>Enable Comets</span>
+          </label>
+        </div>
+        
+        {config.enableComets && (
+          <>
+            {/* Comet Frequency */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Comet Frequency
+                <span className="generator-value">{(config.cometFrequency * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.cometFrequency}
+                onChange={(e) => updateConfig('cometFrequency', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Rare Visitors</span>
+                <span>Many Visitors</span>
+              </div>
+            </div>
+            
+            {/* Orbit Style */}
+            <div className="generator-field">
+              <label className="generator-label">Orbit Style</label>
+              <select
+                className="generator-select"
+                value={config.cometOrbitStyle}
+                onChange={(e) => updateConfig('cometOrbitStyle', e.target.value as GenerationConfig["cometOrbitStyle"])}
+              >
+                <option value="rareLong">Rare Long-Period (Kuiper/Oort-like)</option>
+                <option value="mixed">Mixed</option>
+                <option value="manyShort">Many Short-Period</option>
+              </select>
+              <small className="generator-hint">Controls eccentricity and semi-major axis distribution</small>
+            </div>
+            
+            {/* Comet Activity */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Comet Activity
+                <span className="generator-value">{(config.cometActivity * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.cometActivity}
+                onChange={(e) => updateConfig('cometActivity', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Dormant</span>
+                <span>Very Active Tails</span>
+              </div>
+              <small className="generator-hint">Controls tail length and brightness</small>
+            </div>
+          </>
+        )}
+      </div>
       
       {/* Actions */}
       <div className="generator-actions">
@@ -586,6 +667,10 @@ export const UniverseGeneratorPanel: React.FC = () => {
             <div className="generator-stat">
               <span className="generator-stat-label">Ringed Planets</span>
               <span className="generator-stat-value">{stats.totalRingedPlanets}</span>
+            </div>
+            <div className="generator-stat">
+              <span className="generator-stat-label">Comets</span>
+              <span className="generator-stat-value">{stats.totalComets}</span>
             </div>
             <div className="generator-stat">
               <span className="generator-stat-label">Generated At</span>
