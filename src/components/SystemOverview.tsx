@@ -3,14 +3,16 @@ import { useSystemStore } from '../state/systemStore';
 import { useWindowStore } from '../state/windowStore';
 import './SystemOverview.css';
 
-type FilterType = 'all' | 'stars' | 'planets' | 'moons' | 'asteroids' | 'comets' | 'lagrangePoints' | 'groups';
+type FilterType = 'all' | 'stars' | 'planets' | 'moons' | 'asteroids' | 'comets' | 'lagrangePoints' | 'disks' | 'groups';
 type SortType = 'name' | 'mass' | 'distance';
 
 export const SystemOverview: React.FC = () => {
   const stars = useSystemStore((state) => state.stars);
   const groups = useSystemStore((state) => state.groups);
+  const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const selectStar = useSystemStore((state) => state.selectStar);
   const selectGroup = useSystemStore((state) => state.selectGroup);
+  const selectProtoplanetaryDisk = useSystemStore((state) => state.selectProtoplanetaryDisk);
   const setCameraMode = useSystemStore((state) => state.setCameraMode);
   const openWindow = useWindowStore((state) => state.openWindow);
   
@@ -27,6 +29,7 @@ export const SystemOverview: React.FC = () => {
     const asteroidsCount = starArray.filter(s => s.bodyType === 'asteroid').length;
     const cometsCount = starArray.filter(s => s.bodyType === 'comet').length;
     const lagrangePointsCount = starArray.filter(s => s.bodyType === 'lagrangePoint').length;
+    const disksCount = Object.keys(protoplanetaryDisks).length;
     
     return {
       stars: starsCount,
@@ -35,10 +38,11 @@ export const SystemOverview: React.FC = () => {
       asteroids: asteroidsCount,
       comets: cometsCount,
       lagrangePoints: lagrangePointsCount,
+      disks: disksCount,
       groups: Object.keys(groups).length,
-      total: starArray.length,
+      total: starArray.length + disksCount,
     };
-  }, [stars, groups]);
+  }, [stars, groups, protoplanetaryDisks]);
 
   // Filter and search objects
   const filteredObjects = useMemo(() => {
@@ -65,6 +69,16 @@ export const SystemOverview: React.FC = () => {
           } else if (filter === 'lagrangePoints' && star.bodyType === 'lagrangePoint') {
             results.push({ type: 'lagrangePoint', data: star });
           }
+        }
+      });
+    }
+
+    // Get protoplanetary disks
+    if (filter === 'all' || filter === 'disks') {
+      Object.values(protoplanetaryDisks).forEach(disk => {
+        const name = disk.name || `Protoplanetary Disk`;
+        if (name.toLowerCase().includes(searchQuery.toLowerCase())) {
+          results.push({ type: 'disk', data: disk });
         }
       });
     }
@@ -100,6 +114,9 @@ export const SystemOverview: React.FC = () => {
     if (obj.type === 'group') {
       selectGroup(obj.data.id);
       openWindow('groupEditor');
+    } else if (obj.type === 'disk') {
+      selectProtoplanetaryDisk(obj.data.id);
+      // Could open a disk editor window here if one exists
     } else {
       selectStar(obj.data.id);
       openWindow('planetEditor');
@@ -107,7 +124,16 @@ export const SystemOverview: React.FC = () => {
   };
 
   const handleFocusCamera = (obj: any) => {
-    if (obj.type !== 'group') {
+    if (obj.type === 'group') {
+      return; // Cannot focus on groups
+    }
+    if (obj.type === 'disk') {
+      // Focus on the central star of the disk
+      selectProtoplanetaryDisk(obj.data.id);
+      if (obj.data.centralStarId) {
+        setCameraMode('body', obj.data.centralStarId);
+      }
+    } else {
       selectStar(obj.data.id);
       setCameraMode('body', obj.data.id);
     }
@@ -168,6 +194,12 @@ export const SystemOverview: React.FC = () => {
           ☄️ Comets
         </button>
         <button
+          className={`filter-btn ${filter === 'disks' ? 'active' : ''}`}
+          onClick={() => setFilter('disks')}
+        >
+          💿 Disks
+        </button>
+        <button
           className={`filter-btn ${filter === 'groups' ? 'active' : ''}`}
           onClick={() => setFilter('groups')}
         >
@@ -198,6 +230,7 @@ export const SystemOverview: React.FC = () => {
             else if (obj.type === 'moon') icon = '🌑';
             else if (obj.type === 'asteroid') icon = '🪨';
             else if (obj.type === 'comet') icon = '☄️';
+            else if (obj.type === 'disk') icon = '💿';
             
             return (
             <div key={`${obj.type}-${obj.data.id}`} className="result-item">
@@ -205,8 +238,8 @@ export const SystemOverview: React.FC = () => {
                 {icon}
               </div>
               <div className="result-info">
-                <div className="result-name">{obj.data.name}</div>
-                {obj.type !== 'group' && obj.data.parentId && (
+                <div className="result-name">{obj.data.name || (obj.type === 'disk' ? 'Protoplanetary Disk' : 'Unknown')}</div>
+                {obj.type !== 'group' && obj.type !== 'disk' && obj.data.parentId && (
                   <div className="result-details">
                     Parent: {stars[obj.data.parentId]?.name || 'Unknown'} | {(obj.data.semiMajorAxis ?? obj.data.orbitalDistance)?.toFixed(2)} AU
                     {obj.data.eccentricity && obj.data.eccentricity > 0 && (
@@ -214,7 +247,12 @@ export const SystemOverview: React.FC = () => {
                     )}
                   </div>
                 )}
-                {obj.type !== 'group' && obj.data.mass && (
+                {obj.type === 'disk' && (
+                  <div className="result-details">
+                    Center: {stars[obj.data.centralStarId]?.name || 'Unknown'} | {obj.data.particleCount?.toLocaleString()} particles
+                  </div>
+                )}
+                {obj.type !== 'group' && obj.type !== 'disk' && obj.data.mass && (
                   <div className="result-details">Mass: {obj.data.mass.toFixed(2)}</div>
                 )}
               </div>
@@ -274,6 +312,13 @@ export const SystemOverview: React.FC = () => {
             <span className="stat-value">{counts.comets}</span>
             <span className="stat-label">Comets</span>
           </div>
+          {counts.disks > 0 && (
+            <div className="stat-item">
+              <span className="stat-icon">💿</span>
+              <span className="stat-value">{counts.disks}</span>
+              <span className="stat-label">Disks</span>
+            </div>
+          )}
           <div className="stat-item">
             <span className="stat-icon">📁</span>
             <span className="stat-value">{counts.groups}</span>

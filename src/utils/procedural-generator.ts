@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta } from '../types';
+import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta, ProtoplanetaryDisk } from '../types';
 import { createPRNG, PRNG } from '../../prng';
 
 /**
@@ -105,6 +105,18 @@ interface GeneratorConfig {
   trojanCountRange: [number, number];          // [min, max] Trojans per L4/L5 point
   trojanMassScale: number;                     // Relative mass scale vs normal asteroids/moons
   trojanColorVariation: number;                // 0-1 color variation for Trojans
+
+  // Protoplanetary Disk parameters (visual-only particle fields)
+  enableProtoplanetaryDisks: boolean;                    // Master switch for disk generation
+  protoplanetaryDiskProbability: number;                 // Base probability (0-1) that a system gets a disk
+  protoplanetaryDiskInnerRadiusRange: [number, number];  // Inner radius range (absolute units)
+  protoplanetaryDiskOuterRadiusRange: [number, number];  // Outer radius multiplier range (× first planet orbit)
+  protoplanetaryDiskThicknessRange: [number, number];    // Half-height thickness range (absolute units)
+  protoplanetaryDiskParticleCountRange: [number, number]; // Particle count range before LOD/smallBodyDetail scaling
+  protoplanetaryDiskOpacityRange: [number, number];      // Opacity range (0-1)
+  protoplanetaryDiskBrightnessRange: [number, number];   // Brightness/emissive intensity range
+  protoplanetaryDiskClumpinessRange: [number, number];   // Clumpiness factor range (0-1)
+  protoplanetaryDiskRotationSpeedMultiplierRange: [number, number]; // Rotation speed multiplier range
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -190,6 +202,18 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   trojanCountRange: [0, 4],
   trojanMassScale: 0.5,
   trojanColorVariation: 0.3,
+
+  // Protoplanetary disks (disabled by default)
+  enableProtoplanetaryDisks: false,
+  protoplanetaryDiskProbability: 0.0,
+  protoplanetaryDiskInnerRadiusRange: [0.5, 1.5],       // Just outside star
+  protoplanetaryDiskOuterRadiusRange: [3.0, 8.0],      // Up to outer planets
+  protoplanetaryDiskThicknessRange: [0.2, 0.8],        // Modest vertical spread
+  protoplanetaryDiskParticleCountRange: [5000, 20000], // Base particle count
+  protoplanetaryDiskOpacityRange: [0.3, 0.7],
+  protoplanetaryDiskBrightnessRange: [0.3, 0.8],
+  protoplanetaryDiskClumpinessRange: [0.2, 0.6],
+  protoplanetaryDiskRotationSpeedMultiplierRange: [0.1, 0.5],
 };
 
 // ============================================================================
@@ -2034,6 +2058,174 @@ class LagrangePointGenerator {
 }
 
 // ============================================================================
+// Protoplanetary Disk Generator (Visual-Only Particle Fields)
+// ============================================================================
+
+/**
+ * Generates protoplanetary disks as visual-only particle fields around stars.
+ * These are NOT Star objects - they are separate entities rendered as GPU particles.
+ */
+class ProtoplanetaryDiskGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+  }
+
+  /**
+   * Generate protoplanetary disks for all systems
+   * @param stars - All stars in the universe
+   * @param rootIds - Root system IDs
+   * @returns Record of ProtoplanetaryDisk objects keyed by ID
+   */
+  generate(
+    stars: Record<string, Star>,
+    rootIds: string[]
+  ): Record<string, ProtoplanetaryDisk> {
+    if (!this.config.enableProtoplanetaryDisks) {
+      return {};
+    }
+
+    const disks: Record<string, ProtoplanetaryDisk> = {};
+
+    // Generate disks for each root system
+    for (const rootId of rootIds) {
+      const disk = this.generateDiskForSystem(stars, rootId);
+      if (disk) {
+        disks[disk.id] = disk;
+      }
+    }
+
+    return disks;
+  }
+
+  /**
+   * Generate a protoplanetary disk for a single system
+   * @param stars - All stars
+   * @param centerStarId - The central star of the system
+   * @returns ProtoplanetaryDisk or null if not generated
+   */
+  private generateDiskForSystem(
+    stars: Record<string, Star>,
+    centerStarId: string
+  ): ProtoplanetaryDisk | null {
+    const centerStar = stars[centerStarId];
+    if (!centerStar) return null;
+
+    // Fork RNG for this system
+    const diskRng = this.rng.fork(`disk-${centerStarId}`);
+
+    // Check probability for having a disk
+    const hasDisk = diskRng.bool(this.config.protoplanetaryDiskProbability);
+    if (!hasDisk) return null;
+
+    // Find the innermost and outermost planets for reference
+    const planets = Object.values(stars).filter(
+      s => s.parentId === centerStarId && s.bodyType === 'planet'
+    );
+
+    // Reference distances
+    const innerRef = centerStar.radius * 2; // Just outside star
+    let outerRef = 10; // Default outer reference
+    if (planets.length > 0) {
+      const sortedByOrbit = planets.sort((a, b) => a.orbitalDistance - b.orbitalDistance);
+      const outermostDistance = sortedByOrbit[sortedByOrbit.length - 1].orbitalDistance;
+      outerRef = Math.max(outerRef, outermostDistance * 1.5);
+    }
+
+    // Sample geometry
+    const innerRadius = diskRng.uniform(
+      this.config.protoplanetaryDiskInnerRadiusRange[0],
+      this.config.protoplanetaryDiskInnerRadiusRange[1]
+    );
+    const outerRadius = diskRng.uniform(
+      this.config.protoplanetaryDiskOuterRadiusRange[0],
+      this.config.protoplanetaryDiskOuterRadiusRange[1]
+    ) * (outerRef / 5); // Scale relative to system size
+    const thickness = diskRng.uniform(
+      this.config.protoplanetaryDiskThicknessRange[0],
+      this.config.protoplanetaryDiskThicknessRange[1]
+    );
+
+    // Sample visual properties
+    const particleCount = Math.floor(diskRng.uniform(
+      this.config.protoplanetaryDiskParticleCountRange[0],
+      this.config.protoplanetaryDiskParticleCountRange[1]
+    ));
+    const opacity = diskRng.uniform(
+      this.config.protoplanetaryDiskOpacityRange[0],
+      this.config.protoplanetaryDiskOpacityRange[1]
+    );
+    const brightness = diskRng.uniform(
+      this.config.protoplanetaryDiskBrightnessRange[0],
+      this.config.protoplanetaryDiskBrightnessRange[1]
+    );
+    const clumpiness = diskRng.uniform(
+      this.config.protoplanetaryDiskClumpinessRange[0],
+      this.config.protoplanetaryDiskClumpinessRange[1]
+    );
+    const rotationSpeedMultiplier = diskRng.uniform(
+      this.config.protoplanetaryDiskRotationSpeedMultiplierRange[0],
+      this.config.protoplanetaryDiskRotationSpeedMultiplierRange[1]
+    );
+
+    // Sample colors - warm dusty colors for the base, hotter/brighter for highlights
+    const baseColors = [
+      '#D4A574', // warm beige
+      '#C9956C', // dusty orange
+      '#B8860B', // dark goldenrod
+      '#CD853F', // peru
+      '#DAA520', // goldenrod
+      '#E6BE8A', // pale gold
+    ];
+    const highlightColors = [
+      '#FFE4B5', // moccasin
+      '#FFDAB9', // peach puff
+      '#FFD700', // gold
+      '#FFA500', // orange
+      '#FF8C00', // dark orange
+      '#FFEBCD', // blanched almond
+    ];
+
+    const baseColor = diskRng.choice(baseColors);
+    const highlightColor = diskRng.choice(highlightColors);
+
+    // Determine style based on thickness and opacity
+    let style: 'thin' | 'moderate' | 'thick' | 'extreme' = 'moderate';
+    if (thickness < 0.3 && opacity < 0.4) {
+      style = 'thin';
+    } else if (thickness > 0.6 || opacity > 0.7) {
+      style = thickness > 0.8 ? 'extreme' : 'thick';
+    }
+
+    // Generate disk ID and seed
+    const diskId = uuidv4();
+    const diskSeed = diskRng.randInt(0, 2147483647);
+
+    return {
+      id: diskId,
+      systemId: centerStarId,
+      centralStarId: centerStarId,
+      innerRadius: Math.max(innerRadius, innerRef), // Ensure outside star
+      outerRadius: Math.max(outerRadius, innerRadius + 1), // Ensure outer > inner
+      thickness,
+      particleCount,
+      baseColor,
+      highlightColor,
+      opacity,
+      brightness,
+      clumpiness,
+      rotationSpeedMultiplier,
+      seed: diskSeed,
+      style,
+      name: `${centerStar.name} Protoplanetary Disk`,
+    };
+  }
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -2051,6 +2243,7 @@ export function generateSolarSystem(
   groups: Record<string, Group>;
   rootGroupIds: string[];
   belts: Record<string, AsteroidBelt>;
+  protoplanetaryDisks: Record<string, ProtoplanetaryDisk>;
 } {
   const fullConfig = { ...DEFAULT_CONFIG, ...config };
   
@@ -2067,6 +2260,7 @@ export function generateSolarSystem(
   const ringRng = new RandomGenerator(masterRng.fork('rings'));
   const cometRng = new RandomGenerator(masterRng.fork('comets'));
   const lagrangeRng = new RandomGenerator(masterRng.fork('lagrange'));
+  const diskRng = new RandomGenerator(masterRng.fork('protoplanetary-disks'));
   
   // 1. Generate L-System topology
   const lsystem = new LSystemGenerator(fullConfig, lsystemRng);
@@ -2169,7 +2363,11 @@ export function generateSolarSystem(
     });
   });
   
-  // 8. Generate groups (optional)
+  // 9. Generate protoplanetary disks (visual-only, if enabled)
+  const diskGen = new ProtoplanetaryDiskGenerator(fullConfig, diskRng);
+  const diskMap = diskGen.generate(starMap, systemData.rootIds);
+  
+  // 10. Generate groups (optional)
   const groupGen = new GroupGenerator(fullConfig, groupRng);
   const groupList = groupGen.generate(systemData.rootIds);
   
@@ -2188,6 +2386,7 @@ export function generateSolarSystem(
     groups: groupMap,
     rootGroupIds,
     belts: beltMap,
+    protoplanetaryDisks: diskMap,
   };
 }
 
@@ -2207,12 +2406,14 @@ export function generateMultipleSystems(
   groups: Record<string, Group>;
   rootGroupIds: string[];
   belts: Record<string, AsteroidBelt>;
+  protoplanetaryDisks: Record<string, ProtoplanetaryDisk>;
 } {
   const fullConfig = { ...DEFAULT_CONFIG, ...config, enableGrouping: true };
   
   const allStars: Record<string, Star> = {};
   const allRootIds: string[] = [];
   const allBelts: Record<string, AsteroidBelt> = {};
+  const allDisks: Record<string, ProtoplanetaryDisk> = {};
   
   // Use seed to create deterministic sequence for multiple systems
   const actualSeed = seed ?? Date.now();
@@ -2225,6 +2426,7 @@ export function generateMultipleSystems(
     const system = generateSolarSystem(systemSeed, { ...fullConfig, enableGrouping: false });
     Object.assign(allStars, system.stars);
     Object.assign(allBelts, system.belts);
+    Object.assign(allDisks, system.protoplanetaryDisks);
     allRootIds.push(...system.rootIds);
   }
   
@@ -2248,6 +2450,7 @@ export function generateMultipleSystems(
     groups: groupMap,
     rootGroupIds,
     belts: allBelts,
+    protoplanetaryDisks: allDisks,
   };
 }
 

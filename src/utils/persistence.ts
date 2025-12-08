@@ -1,4 +1,4 @@
-import { Star, Group } from '../types';
+import { Star, Group, AsteroidBelt, ProtoplanetaryDisk } from '../types';
 
 const STORAGE_KEY = 'nested-solar-system';
 
@@ -7,6 +7,8 @@ export interface SystemData {
   rootIds: string[];
   groups?: Record<string, Group>;
   rootGroupIds?: string[];
+  belts?: Record<string, AsteroidBelt>;
+  protoplanetaryDisks?: Record<string, ProtoplanetaryDisk>;
 }
 
 export function saveSystem(data: SystemData): void {

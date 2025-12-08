@@ -36,9 +36,12 @@ export const Scene: React.FC = () => {
   const groups = useSystemStore((state) => state.groups);
   const rootGroupIds = useSystemStore((state) => state.rootGroupIds);
   const belts = useSystemStore((state) => state.belts);
+  const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const nestingLevel = useSystemStore((state) => state.nestingLevel);
   const time = useSystemStore((state) => state.time);
   const controlsRef = useRef<OrbitControlsImpl>(null);
+  
+  // Note: Protoplanetary disks are now rendered inside StarObject for correct positioning
   
   // Compute which items should be visible based on nesting level
   const visibleItems = useMemo(() => {
@@ -51,6 +54,7 @@ export const Scene: React.FC = () => {
   console.log('Root Group IDs:', rootGroupIds);
   console.log('Total Groups:', Object.keys(groups).length);
   console.log('Total Belts:', Object.keys(belts).length);
+  console.log('Total Protoplanetary Disks:', Object.keys(protoplanetaryDisks).length);
   console.log('Nesting Level:', nestingLevel);
   console.log('Visible Items:', visibleItems);
   console.log('Time:', time);
@@ -105,6 +109,8 @@ export const Scene: React.FC = () => {
       {Object.keys(belts).map(beltId => (
         <AsteroidBeltObject key={`belt-${beltId}`} beltId={beltId} />
       ))}
+      
+      {/* Note: Protoplanetary disks are rendered inside StarObject for correct positioning */}
       
       <OrbitControls 
         ref={controlsRef} 

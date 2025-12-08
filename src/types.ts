@@ -179,3 +179,63 @@ export interface GroupChild {
 // Type for nesting level control
 export type NestingLevel = number | 'max';
 
+/**
+ * Protoplanetary Disk - a visual-only particle field representing
+ * a young circumstellar disk of gas and dust around a star.
+ * 
+ * This is rendered as GPU-friendly particles, NOT as individual Star objects.
+ * The disk is purely visual and does not affect physics.
+ */
+export interface ProtoplanetaryDisk {
+  /** Unique identifier for this disk */
+  id: string;
+  
+  /** System ID that this disk belongs to (for multi-system organization) */
+  systemId: string;
+  
+  /** ID of the central star this disk surrounds */
+  centralStarId: string;
+  
+  // Geometry (in orbital distance units)
+  /** Inner radius of the disk (start of particle distribution) */
+  innerRadius: number;
+  
+  /** Outer radius of the disk (end of particle distribution) */
+  outerRadius: number;
+  
+  /** Half-height thickness of the disk (controls vertical spread) */
+  thickness: number;
+  
+  // Visual parameters
+  /** Target particle count before LOD/smallBodyDetail scaling */
+  particleCount: number;
+  
+  /** Base color for dust/gas (hex string, e.g. warm dusty colors) */
+  baseColor: string;
+  
+  /** Highlight color for hotter/denser regions (hex string) */
+  highlightColor: string;
+  
+  /** Overall opacity (0-1) */
+  opacity: number;
+  
+  /** Brightness/emissive intensity scalar */
+  brightness: number;
+  
+  /** Clumpiness factor (0-1) controlling density variation/noise */
+  clumpiness: number;
+  
+  /** Rotation speed multiplier (scales visual swirl relative to timeScale) */
+  rotationSpeedMultiplier: number;
+  
+  // PRNG and style
+  /** Seed for deterministic particle distribution */
+  seed: string | number;
+  
+  /** Visual style preset */
+  style: 'thin' | 'moderate' | 'thick' | 'extreme';
+  
+  /** Optional display name */
+  name?: string;
+}
+

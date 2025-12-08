@@ -5,6 +5,7 @@ import './StatsPanel.css';
 export const StatsPanel: React.FC = () => {
   const stars = useSystemStore((state) => state.stars);
   const groups = useSystemStore((state) => state.groups);
+  const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const timeScale = useSystemStore((state) => state.timeScale);
   const time = useSystemStore((state) => state.time);
   
@@ -41,6 +42,10 @@ export const StatsPanel: React.FC = () => {
   const rootStars = Object.values(stars).filter(s => !s.parentId).length;
   const planets = Object.values(stars).filter(s => s.parentId).length;
   const groupCount = Object.keys(groups).length;
+  const diskCount = Object.keys(protoplanetaryDisks).length;
+  const totalDiskParticles = Object.values(protoplanetaryDisks).reduce(
+    (sum, disk) => sum + disk.particleCount, 0
+  );
 
   const getTimeLabel = (scale: number): string => {
     if (scale === 0) return 'PAUSED';
@@ -87,6 +92,18 @@ export const StatsPanel: React.FC = () => {
           <span className="stat-label">Groups:</span>
           <span className="stat-value">{groupCount}</span>
         </div>
+        {diskCount > 0 && (
+          <>
+            <div className="stat-row">
+              <span className="stat-label">💿 Disks:</span>
+              <span className="stat-value">{diskCount}</span>
+            </div>
+            <div className="stat-row">
+              <span className="stat-label">Particles:</span>
+              <span className="stat-value">{totalDiskParticles.toLocaleString()}</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="stats-section">
@@ -115,6 +132,8 @@ export const StatsPanel: React.FC = () => {
               stars: rootStars,
               planets,
               groups: groupCount,
+              protoplanetaryDisks: diskCount,
+              diskParticles: totalDiskParticles,
               timeScale,
               simulationTime: time,
             };

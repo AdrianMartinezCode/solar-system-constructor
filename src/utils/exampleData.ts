@@ -88,6 +88,8 @@ export const createExampleSystem = () => {
     rootIds: [centralStarId],
     groups: {}, // Empty groups by default
     rootGroupIds: [], // No root groups by default
+    belts: {}, // Empty asteroid belts by default
+    protoplanetaryDisks: {}, // Empty protoplanetary disks by default
   };
 };
 

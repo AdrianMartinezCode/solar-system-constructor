@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { PlanetaryRingObject } from './PlanetaryRingObject';
 import { CometObject } from './CometObject';
 import { LagrangePointObject } from './LagrangePointObject';
+import { ProtoplanetaryDiskObject } from './ProtoplanetaryDiskObject';
 
 interface StarObjectProps {
   starId: string;
@@ -20,8 +21,16 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
   const time = useSystemStore((state) => state.time);
   const selectedStarId = useSystemStore((state) => state.selectedStarId);
   const selectStar = useSystemStore((state) => state.selectStar);
+  const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   
   const isSelected = selectedStarId === starId;
+  
+  // Find if this star has an associated protoplanetary disk
+  const associatedDiskId = useMemo(() => {
+    return Object.keys(protoplanetaryDisks).find(
+      diskId => protoplanetaryDisks[diskId].centralStarId === starId
+    ) || null;
+  }, [protoplanetaryDisks, starId]);
   
   // Calculate position based on orbital parameters (now supports elliptical orbits)
   const position = useMemo(() => {
@@ -103,6 +112,11 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
           {/* Planetary ring (if this body has a ring definition) */}
           {star.ring && star.bodyType === 'planet' && (
             <PlanetaryRingObject planetId={starId} />
+          )}
+          
+          {/* Protoplanetary disk (if this star has an associated disk) */}
+          {associatedDiskId && (
+            <ProtoplanetaryDiskObject diskId={associatedDiskId} />
           )}
         </>
       )}

@@ -193,6 +193,49 @@
 
 
 ╔═══════════════════════════════════════════════════════════════════════════╗
+║           PHASE 5.6: PROTOPLANETARY DISKS (Visual Fields)                 ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+                                  │
+                  ┌───────────────▼───────────────┐
+                  │  enableProtoplanetaryDisks?   │
+                  └───────┬───────────────┬───────┘
+                        NO               YES
+                          │               │
+                          │   ┌───────────▼───────────────┐
+                          │   │  For each root system:    │
+                          │   │  • Sample disk probability│
+                          │   │  • If no disk → skip      │
+                          │   └───────────┬───────────────┘
+                          │               │
+                          │   ┌───────────▼───────────────┐
+                          │   │  Disk geometry:           │
+                          │   │  • innerRadius ∈ range    │
+                          │   │  • outerRadius ∈ range    │
+                          │   │  • thickness ∈ range      │
+                          │   └───────────┬───────────────┘
+                          │               │
+                          │   ┌───────────▼───────────────┐
+                          │   │  Visual parameters:       │
+                          │   │  • particleCount ∈ range  │
+                          │   │  • baseColor (warm dust)  │
+                          │   │  • highlightColor (hot)   │
+                          │   │  • opacity, brightness    │
+                          │   │  • clumpiness, rotation   │
+                          │   └───────────┬───────────────┘
+                          │               │
+                          └───────────────┴───────────────┐
+                                                          │
+                  ┌───────────────────────────────────────▼
+                  │  Protoplanetary disks stored as       │
+                  │  ProtoplanetaryDisk objects (NOT Star)│
+                  │  in result.protoplanetaryDisks        │
+                  │                                        │
+                  │  Rendered as GPU particles, not       │
+                  │  individual physics bodies             │
+                  └───────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
 ║                   PHASE 6: GROUP GENERATION (Optional)                    ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
                                     │

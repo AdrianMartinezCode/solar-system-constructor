@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, NestingLevel, AsteroidBelt, PlanetaryRing } from '../types';
+import { Star, Group, GroupChild, NestingLevel, AsteroidBelt, PlanetaryRing, ProtoplanetaryDisk } from '../types';
 import { saveSystem, loadSystem } from '../utils/persistence';
 import { createExampleSystem } from '../utils/exampleData';
 import { findHeaviestStar } from '../utils/physics';
@@ -15,6 +15,10 @@ interface SystemStore {
   // Asteroid belt management
   belts: Record<string, AsteroidBelt>;
   selectedBeltId: string | null;
+  
+  // Protoplanetary disk management (visual-only particle fields)
+  protoplanetaryDisks: Record<string, ProtoplanetaryDisk>;
+  selectedProtoplanetaryDiskId: string | null;
   
   // Group management
   groups: Record<string, Group>;
@@ -39,6 +43,12 @@ interface SystemStore {
   // Planetary ring operations (per-planet)
   updateRing: (planetId: string, payload: Partial<PlanetaryRing>) => void;
   removeRing: (planetId: string) => void;
+  
+  // Protoplanetary disk operations
+  setProtoplanetaryDisks: (disks: Record<string, ProtoplanetaryDisk>) => void;
+  selectProtoplanetaryDisk: (id: string | null) => void;
+  updateProtoplanetaryDisk: (id: string, patch: Partial<ProtoplanetaryDisk>) => void;
+  removeProtoplanetaryDisk: (id: string) => void;
   
   // CRUD operations for groups
   addGroup: (payload: Omit<Group, 'id'>) => string;
@@ -81,6 +91,10 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   // Belt state
   belts: {},
   selectedBeltId: null,
+  
+  // Protoplanetary disk state
+  protoplanetaryDisks: {},
+  selectedProtoplanetaryDiskId: null,
   
   // Group state
   groups: {},
@@ -189,6 +203,55 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
           ...state.stars,
           [planetId]: rest,
         },
+      };
+    });
+
+    get().save();
+  },
+
+  // Protoplanetary disk operations
+  setProtoplanetaryDisks: (disks) => {
+    set({ protoplanetaryDisks: disks });
+    get().save();
+  },
+
+  selectProtoplanetaryDisk: (id) => {
+    set({
+      selectedProtoplanetaryDiskId: id,
+      selectedStarId: null,
+      selectedGroupId: null,
+      selectedBeltId: null,
+    });
+  },
+
+  updateProtoplanetaryDisk: (id, patch) => {
+    set((state) => {
+      const disk = state.protoplanetaryDisks[id];
+      if (!disk) return state;
+
+      return {
+        protoplanetaryDisks: {
+          ...state.protoplanetaryDisks,
+          [id]: {
+            ...disk,
+            ...patch,
+          },
+        },
+      };
+    });
+
+    get().save();
+  },
+
+  removeProtoplanetaryDisk: (id) => {
+    set((state) => {
+      const newDisks = { ...state.protoplanetaryDisks };
+      delete newDisks[id];
+
+      return {
+        protoplanetaryDisks: newDisks,
+        selectedProtoplanetaryDiskId:
+          state.selectedProtoplanetaryDiskId === id ? null : state.selectedProtoplanetaryDiskId,
       };
     });
 
@@ -602,6 +665,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       groups: state.groups,
       rootGroupIds: state.rootGroupIds,
       belts: state.belts,
+      protoplanetaryDisks: state.protoplanetaryDisks,
     });
   },
   
@@ -614,9 +678,11 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
         groups: data.groups || {},
         rootGroupIds: data.rootGroupIds || [],
         belts: data.belts || {},
+        protoplanetaryDisks: data.protoplanetaryDisks || {},
         selectedStarId: null,
         selectedGroupId: null,
         selectedBeltId: null,
+        selectedProtoplanetaryDiskId: null,
         time: 0,
       });
     } else {
@@ -633,9 +699,11 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       groups: example.groups || {},
       rootGroupIds: example.rootGroupIds || [],
       belts: example.belts || {},
+      protoplanetaryDisks: example.protoplanetaryDisks || {},
       selectedStarId: null,
       selectedGroupId: null,
       selectedBeltId: null,
+      selectedProtoplanetaryDiskId: null,
       time: 0,
     });
     get().save();

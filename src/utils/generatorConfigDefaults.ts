@@ -58,6 +58,12 @@ export const defaultConfig: GenerationConfig = {
   trojanFrequency: 0.3,
   trojanRichness: 0.5,
   lagrangePairScope: "starPlanet",
+
+  // Protoplanetary disks defaults (disabled by default)
+  enableProtoplanetaryDisks: false,
+  protoplanetaryDiskPresence: 0,
+  protoplanetaryDiskDensity: 0.5,
+  protoplanetaryDiskProminence: 0.5,
 };
 
 /**
@@ -104,6 +110,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         trojanFrequency: 0,
         trojanRichness: 0.3,
         lagrangePairScope: "starPlanet",
+
+        // Protoplanetary disks - disabled for sparse preset
+        enableProtoplanetaryDisks: false,
+        protoplanetaryDiskPresence: 0,
+        protoplanetaryDiskDensity: 0.3,
+        protoplanetaryDiskProminence: 0.3,
       };
       
     case "solarLike":
@@ -146,6 +158,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         trojanFrequency: 0.3,
         trojanRichness: 0.4,
         lagrangePairScope: "starPlanet",
+
+        // Protoplanetary disks - disabled for mature systems (like our solar system)
+        enableProtoplanetaryDisks: false,
+        protoplanetaryDiskPresence: 0,
+        protoplanetaryDiskDensity: 0.5,
+        protoplanetaryDiskProminence: 0.5,
       };
       
     case "crowded":
@@ -188,6 +206,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         trojanFrequency: 0.6,
         trojanRichness: 0.7,
         lagrangePairScope: "starPlanet",
+
+        // Protoplanetary disks - occasional young systems
+        enableProtoplanetaryDisks: true,
+        protoplanetaryDiskPresence: 0.2,  // 20% chance of young systems
+        protoplanetaryDiskDensity: 0.5,
+        protoplanetaryDiskProminence: 0.6,
       };
       
     case "superDenseExperimental":
@@ -233,6 +257,12 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         trojanFrequency: 0.8,
         trojanRichness: 0.9,
         lagrangePairScope: "both",  // Star-planet AND planet-moon pairs
+
+        // Protoplanetary disks - dramatic visual demo with bright disks
+        enableProtoplanetaryDisks: true,
+        protoplanetaryDiskPresence: 0.5,  // 50% chance of young systems
+        protoplanetaryDiskDensity: 0.8,   // High particle count
+        protoplanetaryDiskProminence: 0.9, // Very visible
       };
       
     default:

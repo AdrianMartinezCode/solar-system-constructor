@@ -201,6 +201,69 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     trojanBodyType: 'asteroid', // Default to asteroid Trojans
     trojanCountRange: mapTrojanFrequencyToCountRange(config.trojanFrequency),
     ...mapTrojanRichnessToMassScaleAndVariation(config.trojanRichness),
+
+    // Protoplanetary disks
+    ...mapProtoplanetaryDiskConfig(config),
+  };
+}
+
+/**
+ * Map protoplanetary disk UI config to internal generator config
+ */
+function mapProtoplanetaryDiskConfig(config: GenerationConfig): {
+  enableProtoplanetaryDisks: boolean;
+  protoplanetaryDiskProbability: number;
+  protoplanetaryDiskInnerRadiusRange: [number, number];
+  protoplanetaryDiskOuterRadiusRange: [number, number];
+  protoplanetaryDiskThicknessRange: [number, number];
+  protoplanetaryDiskParticleCountRange: [number, number];
+  protoplanetaryDiskOpacityRange: [number, number];
+  protoplanetaryDiskBrightnessRange: [number, number];
+  protoplanetaryDiskClumpinessRange: [number, number];
+  protoplanetaryDiskRotationSpeedMultiplierRange: [number, number];
+} {
+  const presence = config.protoplanetaryDiskPresence ?? 0;
+  const density = config.protoplanetaryDiskDensity ?? 0.5;
+  const prominence = config.protoplanetaryDiskProminence ?? 0.5;
+
+  // Map presence (0-1) to probability (0-0.7)
+  // 0 → 0.0, 0.5 → 0.3, 1.0 → 0.7
+  const probability = presence * 0.7;
+
+  // Map density (0-1) to particle count range
+  // Low density: 3k-8k, High density: 15k-40k
+  const baseParticleMin = 3000 + density * 12000;
+  const baseParticleMax = 8000 + density * 32000;
+
+  // Map prominence (0-1) to visual parameters
+  const thicknessRange: [number, number] = [
+    0.15 + prominence * 0.15,
+    0.4 + prominence * 0.5,
+  ];
+  const opacityRange: [number, number] = [
+    0.2 + prominence * 0.2,
+    0.5 + prominence * 0.4,
+  ];
+  const brightnessRange: [number, number] = [
+    0.2 + prominence * 0.2,
+    0.5 + prominence * 0.5,
+  ];
+  const clumpinessRange: [number, number] = [
+    0.2 + prominence * 0.1,
+    0.5 + prominence * 0.3,
+  ];
+
+  return {
+    enableProtoplanetaryDisks: config.enableProtoplanetaryDisks ?? false,
+    protoplanetaryDiskProbability: probability,
+    protoplanetaryDiskInnerRadiusRange: [0.5, 1.5],
+    protoplanetaryDiskOuterRadiusRange: [3.0, 8.0],
+    protoplanetaryDiskThicknessRange: thicknessRange,
+    protoplanetaryDiskParticleCountRange: [baseParticleMin, baseParticleMax],
+    protoplanetaryDiskOpacityRange: opacityRange,
+    protoplanetaryDiskBrightnessRange: brightnessRange,
+    protoplanetaryDiskClumpinessRange: clumpinessRange,
+    protoplanetaryDiskRotationSpeedMultiplierRange: [0.1, 0.5],
   };
 }
 
@@ -550,6 +613,13 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   const totalSmallBodyBelts = totalMainBelts + totalKuiperBelts;
   const totalSmallBodies = totalMainBeltAsteroids + totalKuiperObjects;
   
+  // ============================================================================
+  // Protoplanetary Disk Stats
+  // ============================================================================
+  const allDisks = Object.values(result.protoplanetaryDisks || {});
+  const totalProtoplanetaryDisks = allDisks.length;
+  const totalProtoplanetaryDiskParticles = allDisks.reduce((sum, disk) => sum + disk.particleCount, 0);
+  
   return {
     ...result,
     totalStars: Object.keys(result.stars).length,
@@ -569,6 +639,10 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     totalMainBelts,
     totalKuiperBelts,
     totalMainBeltAsteroids,
+    // Protoplanetary disk stats
+    protoplanetaryDisks: result.protoplanetaryDisks,
+    totalProtoplanetaryDisks,
+    totalProtoplanetaryDiskParticles,
     generatedAt: new Date(),
   };
 }

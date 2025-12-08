@@ -22,6 +22,9 @@ interface GenerationStats {
   totalMainBelts?: number;
   totalKuiperBelts?: number;
   totalMainBeltAsteroids?: number;
+  // Protoplanetary disk stats
+  totalProtoplanetaryDisks?: number;
+  totalProtoplanetaryDiskParticles?: number;
   generatedAt: string;
 }
 
@@ -56,8 +59,12 @@ export const UniverseGeneratorPanel: React.FC = () => {
         rootIds: result.rootIds,
         groups: result.groups,
         rootGroupIds: result.rootGroupIds,
+        belts: result.belts,
+        protoplanetaryDisks: result.protoplanetaryDisks || {},
         selectedStarId: null,
         selectedGroupId: null,
+        selectedBeltId: null,
+        selectedProtoplanetaryDiskId: null,
       });
       
       // Save to localStorage
@@ -81,6 +88,9 @@ export const UniverseGeneratorPanel: React.FC = () => {
         totalMainBelts: result.totalMainBelts || 0,
         totalKuiperBelts: result.totalKuiperBelts || 0,
         totalMainBeltAsteroids: result.totalMainBeltAsteroids || 0,
+        // Protoplanetary disk stats
+        totalProtoplanetaryDisks: result.totalProtoplanetaryDisks || 0,
+        totalProtoplanetaryDiskParticles: result.totalProtoplanetaryDiskParticles || 0,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -587,6 +597,91 @@ export const UniverseGeneratorPanel: React.FC = () => {
             </div>
           </>
         )}
+        
+        {/* Divider for Protoplanetary Disks */}
+        <div style={{ borderTop: '1px solid #3a3a3a', margin: '16px 0', paddingTop: '12px' }}>
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableProtoplanetaryDisks}
+              onChange={(e) => updateConfig('enableProtoplanetaryDisks', e.target.checked)}
+            />
+            <span>💿 Protoplanetary Disks (visual, young systems)</span>
+          </label>
+          <small className="generator-hint" style={{ display: 'block', marginTop: '4px' }}>
+            GPU particle fields representing gas/dust around young stars
+          </small>
+        </div>
+        
+        {config.enableProtoplanetaryDisks && (
+          <>
+            {/* Disk Presence */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Disk Presence
+                <span className="generator-value">{(config.protoplanetaryDiskPresence * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.protoplanetaryDiskPresence}
+                onChange={(e) => updateConfig('protoplanetaryDiskPresence', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>None</span>
+                <span>Frequent Young Disks</span>
+              </div>
+              <small className="generator-hint">How often systems have a protoplanetary disk</small>
+            </div>
+            
+            {/* Disk Density */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Disk Density
+                <span className="generator-value">{(config.protoplanetaryDiskDensity * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.protoplanetaryDiskDensity}
+                onChange={(e) => updateConfig('protoplanetaryDiskDensity', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Sparse</span>
+                <span>Very Dense</span>
+              </div>
+              <small className="generator-hint">Number of disk particles (affects performance)</small>
+            </div>
+            
+            {/* Disk Prominence */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Disk Prominence
+                <span className="generator-value">{(config.protoplanetaryDiskProminence * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.protoplanetaryDiskProminence}
+                onChange={(e) => updateConfig('protoplanetaryDiskProminence', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Subtle Haze</span>
+                <span>Bright, Thick Disk</span>
+              </div>
+              <small className="generator-hint">Brightness and thickness of the disk</small>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Planetary Ring Controls */}
@@ -920,6 +1015,22 @@ export const UniverseGeneratorPanel: React.FC = () => {
                 <span className="generator-stat-label">Trojan Bodies</span>
                 <span className="generator-stat-value">{stats.totalTrojanBodies}</span>
               </div>
+            )}
+            {(stats.totalProtoplanetaryDisks ?? 0) > 0 && (
+              <>
+                <div className="generator-stat" style={{ borderTop: '1px solid #3a3a3a', paddingTop: '8px', marginTop: '8px' }}>
+                  <span className="generator-stat-label">💿 Protoplanetary Disks</span>
+                  <span className="generator-stat-value">{stats.totalProtoplanetaryDisks}</span>
+                </div>
+                <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                  <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#e6be8a' }}>
+                    ↳ Disk Particles (approx)
+                  </span>
+                  <span className="generator-stat-value" style={{ fontSize: '0.9em' }}>
+                    {(stats.totalProtoplanetaryDiskParticles ?? 0).toLocaleString()}
+                  </span>
+                </div>
+              </>
             )}
             <div className="generator-stat">
               <span className="generator-stat-label">Generated At</span>

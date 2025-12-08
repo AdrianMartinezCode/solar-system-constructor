@@ -229,7 +229,40 @@ Additional ring properties are sampled from configurable ranges:
 
 Each ring also receives an optional `seed` to support deterministic sub-patterns if needed later.
 
-### 6. Hierarchical Rules
+### 6.7 Protoplanetary Disks (Visual Particle Fields)
+
+After small bodies, planetary rings, comets, and Lagrange points are generated, the system can optionally add **protoplanetary disks** - visual-only particle fields representing young circumstellar disks of gas and dust:
+
+#### Key Distinction from Other Small Bodies
+
+Unlike asteroid belts and Kuiper belt objects, protoplanetary disks are **NOT** individual `Star` objects. They are:
+- Stored in a separate `protoplanetaryDisks: Record<string, ProtoplanetaryDisk>` collection
+- Rendered as GPU-efficient particle systems (thousands of particles per disk)
+- Visual-only with no physics simulation overhead
+
+#### Disk Probability and Generation
+
+Each root system has a configurable probability of having a disk:
+- `enableProtoplanetaryDisks: boolean` - master switch
+- `protoplanetaryDiskProbability: number` - per-system probability (0-1)
+
+#### Disk Geometry
+
+For each disk, the generator samples:
+- `innerRadius` ∈ `protoplanetaryDiskInnerRadiusRange` - just outside the star
+- `outerRadius` ∈ `protoplanetaryDiskOuterRadiusRange` - scaled by system size
+- `thickness` ∈ `protoplanetaryDiskThicknessRange` - vertical half-height
+
+#### Visual Parameters
+
+Each disk has visual properties sampled from configuration ranges:
+- `particleCount` - number of GPU particles
+- `baseColor` / `highlightColor` - warm dusty colors
+- `opacity`, `brightness`, `clumpiness`, `rotationSpeedMultiplier`
+
+See `docs/PROTOPLANETARY_DISK_IMPLEMENTATION.md` for complete details.
+
+### 6.8 Hierarchical Rules
 
 #### Center Star Selection
 The **heaviest star** in each system becomes the center (parentId = null). All other bodies orbit it directly or indirectly.
@@ -243,6 +276,7 @@ The **heaviest star** in each system becomes the center (parentId = null). All o
 6. Main asteroid belts are placed in gaps between planets or beyond the outer edge
 7. Kuiper belt is placed in the trans-Neptunian region (if enabled)
 8. Planetary rings, comets, and Lagrange points are added as configured
+9. Protoplanetary disks are generated for young systems (visual-only)
 
 #### Multi-Star Systems
 - **Binary**: 2 stars at same orbital distance, phases 0° and 180°
@@ -664,6 +698,11 @@ Potential enhancements:
 3. **Habitable zones**: Mark planets in Goldilocks zone
 4. **Advanced belt and ring features**: Belt gaps (Kirkwood gaps), shepherd moons, belt density variations, fine-grained ring substructures
 5. **Three-body orbital dynamics**: More sophisticated Lagrange point stability and Trojan orbital variations
+6. **Protoplanetary disk enhancements**: Temperature gradients, dust clearing gaps, planet-forming bands
+
+### Recently Implemented
+
+- ✅ **Protoplanetary Disks**: Visual-only GPU particle fields representing young circumstellar disks (see `PROTOPLANETARY_DISK_IMPLEMENTATION.md`)
 
 ## References
 

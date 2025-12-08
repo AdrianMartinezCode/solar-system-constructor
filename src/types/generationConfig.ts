@@ -71,6 +71,12 @@ export interface GenerationConfig {
   trojanFrequency: number;     // 0..1 slider controlling how often Trojans appear
   trojanRichness: number;      // 0..1 slider controlling how many Trojans per L4/L5
   lagrangePairScope: "starPlanet" | "planetMoon" | "both"; // Which pairs to consider
+
+  // Protoplanetary Disks (visual-only particle fields)
+  enableProtoplanetaryDisks: boolean;          // Master switch for disk generation
+  protoplanetaryDiskPresence: number;          // 0..1 slider mapping to probability of having a disk
+  protoplanetaryDiskDensity: number;           // 0..1 slider mapping to particle count
+  protoplanetaryDiskProminence: number;        // 0..1 slider mapping to opacity/brightness/thickness
 }
 
 export interface GeneratedUniverse {
@@ -110,9 +116,22 @@ export interface GeneratedUniverse {
   /** Breakdown: number of main belt asteroids */
   totalMainBeltAsteroids?: number;
   
+  // ============================================================================
+  // Protoplanetary Disks (visual-only particle fields)
+  // ============================================================================
+  
+  /** All protoplanetary disks keyed by ID */
+  protoplanetaryDisks?: Record<string, ProtoplanetaryDisk>;
+  
+  /** Total number of protoplanetary disks generated */
+  totalProtoplanetaryDisks?: number;
+  
+  /** Approximate total visual particles across all disks (after LOD scaling) */
+  totalProtoplanetaryDiskParticles?: number;
+  
   generatedAt: Date;
 }
 
 // Re-export types from main types file
-import type { Star, Group, AsteroidBelt } from './index';
+import type { Star, Group, AsteroidBelt, ProtoplanetaryDisk } from '../types';
 

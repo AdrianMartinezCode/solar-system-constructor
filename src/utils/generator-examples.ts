@@ -182,6 +182,32 @@ export function generateFullDebrisSystem(seed?: string | number) {
 }
 
 /**
+ * Young system with protoplanetary disk
+ * Represents a star in the early stages of planet formation
+ */
+export const YOUNG_SYSTEM_CONFIG: Partial<GeneratorConfig> = {
+  starProbabilities: [0.85, 0.12, 0.03],
+  planetGeometricP: 0.5,  // Fewer planets (still forming)
+  moonGeometricP: 0.5,    // Fewer moons
+  orbitGrowth: 1.7,
+  enableGrouping: false,
+  // Enable protoplanetary disks
+  enableProtoplanetaryDisks: true,
+  protoplanetaryDiskProbability: 0.8,  // High probability for young systems
+  protoplanetaryDiskInnerRadiusRange: [0.5, 1.5],
+  protoplanetaryDiskOuterRadiusRange: [4.0, 10.0],
+  protoplanetaryDiskThicknessRange: [0.3, 0.8],
+  protoplanetaryDiskParticleCountRange: [10000, 25000],
+  protoplanetaryDiskOpacityRange: [0.4, 0.7],
+  protoplanetaryDiskBrightnessRange: [0.4, 0.8],
+  protoplanetaryDiskClumpinessRange: [0.3, 0.6],
+  protoplanetaryDiskRotationSpeedMultiplierRange: [0.15, 0.4],
+  // Disable other debris (disks dominate in young systems)
+  enableAsteroidBelts: false,
+  enableKuiperBelt: false,
+};
+
+/**
  * Performance-friendly debris system with lower small body counts.
  * Useful for testing or lower-end hardware while still having
  * visually interesting belts.
@@ -217,6 +243,13 @@ export function generatePerformanceDebrisSystem(seed?: string | number) {
   return generateSolarSystem(seed, PERFORMANCE_DEBRIS_CONFIG);
 }
 
+/**
+ * Generate a young system with a prominent protoplanetary disk
+ */
+export function generateYoungSystem(seed?: string | number) {
+  return generateSolarSystem(seed, YOUNG_SYSTEM_CONFIG);
+}
+
 // ============================================================================
 // Analysis Utilities
 // ============================================================================
@@ -230,6 +263,7 @@ export function analyzeSystem(data: {
   groups: Record<string, any>;
   rootGroupIds: string[];
   belts?: Record<string, any>;
+  protoplanetaryDisks?: Record<string, any>;
 }) {
   const stats = {
     totalStars: Object.keys(data.stars).length,
@@ -255,6 +289,15 @@ export function analyzeSystem(data: {
     totalSmallBodyBelts: 0,     // Total number of belts (main + Kuiper)
     totalMainBelts: 0,          // Number of main asteroid belts
     totalKuiperBelts: 0,        // Number of Kuiper belts
+    
+    // ============================================================================
+    // Protoplanetary Disk Stats
+    // ============================================================================
+    totalProtoplanetaryDisks: 0,
+    totalProtoplanetaryDiskParticles: 0,
+    avgDiskInnerRadius: 0,
+    avgDiskOuterRadius: 0,
+    avgDiskThickness: 0,
     
     // Multi-star systems
     singleStar: 0,
@@ -381,6 +424,18 @@ export function analyzeSystem(data: {
   }
   stats.totalSmallBodies = stats.mainBeltAsteroids + stats.kuiperBeltObjects;
   
+  // Calculate protoplanetary disk stats
+  if (data.protoplanetaryDisks) {
+    const allDisks = Object.values(data.protoplanetaryDisks);
+    stats.totalProtoplanetaryDisks = allDisks.length;
+    stats.totalProtoplanetaryDiskParticles = allDisks.reduce((sum: number, d: any) => sum + (d.particleCount || 0), 0);
+    if (allDisks.length > 0) {
+      stats.avgDiskInnerRadius = allDisks.reduce((sum: number, d: any) => sum + (d.innerRadius || 0), 0) / allDisks.length;
+      stats.avgDiskOuterRadius = allDisks.reduce((sum: number, d: any) => sum + (d.outerRadius || 0), 0) / allDisks.length;
+      stats.avgDiskThickness = allDisks.reduce((sum: number, d: any) => sum + (d.thickness || 0), 0) / allDisks.length;
+    }
+  }
+  
   return stats;
 }
 
@@ -393,6 +448,7 @@ export function validateSystem(data: {
   groups: Record<string, any>;
   rootGroupIds: string[];
   belts?: Record<string, any>;
+  protoplanetaryDisks?: Record<string, any>;
 }): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
@@ -565,6 +621,41 @@ export function validateSystem(data: {
       }
     }
   });
+  
+  // Validate protoplanetary disks
+  if (data.protoplanetaryDisks) {
+    Object.values(data.protoplanetaryDisks).forEach((disk: any) => {
+      // Validate disk geometry
+      if (disk.innerRadius <= 0) {
+        errors.push(`Protoplanetary disk ${disk.id} has non-positive innerRadius: ${disk.innerRadius}`);
+      }
+      if (disk.outerRadius <= disk.innerRadius) {
+        errors.push(`Protoplanetary disk ${disk.id} has outerRadius <= innerRadius: ${disk.outerRadius} <= ${disk.innerRadius}`);
+      }
+      if (disk.thickness < 0) {
+        errors.push(`Protoplanetary disk ${disk.id} has negative thickness: ${disk.thickness}`);
+      }
+      
+      // Validate visual parameters
+      if (disk.particleCount < 0) {
+        errors.push(`Protoplanetary disk ${disk.id} has negative particleCount: ${disk.particleCount}`);
+      }
+      if (disk.opacity < 0 || disk.opacity > 1) {
+        errors.push(`Protoplanetary disk ${disk.id} has opacity outside [0,1]: ${disk.opacity}`);
+      }
+      if (disk.brightness < 0) {
+        errors.push(`Protoplanetary disk ${disk.id} has negative brightness: ${disk.brightness}`);
+      }
+      if (disk.clumpiness < 0 || disk.clumpiness > 1) {
+        errors.push(`Protoplanetary disk ${disk.id} has clumpiness outside [0,1]: ${disk.clumpiness}`);
+      }
+      
+      // Validate central star reference
+      if (disk.centralStarId && !data.stars[disk.centralStarId]) {
+        errors.push(`Protoplanetary disk ${disk.id} references non-existent central star: ${disk.centralStarId}`);
+      }
+    });
+  }
   
   return {
     valid: errors.length === 0,
