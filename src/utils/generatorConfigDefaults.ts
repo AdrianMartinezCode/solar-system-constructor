@@ -24,12 +24,21 @@ export const defaultConfig: GenerationConfig = {
   targetGalaxyCount: 3,
   groupStructureMode: "flat",
   
-  // Asteroid belt defaults
+  // Small Body Belts - global quality control
+  smallBodyDetail: "medium", // Balanced default
+  
+  // Asteroid belt defaults (main belt, inner)
   enableAsteroidBelts: false,
   beltDensity: 0.5,
   maxBeltsPerSystem: 2,
   beltPlacementMode: "betweenPlanets",
   beltStylePreset: "none",
+
+  // Kuiper belt defaults (outer, icy)
+  enableKuiperBelt: false,
+  kuiperBeltDensity: 0.5,
+  kuiperBeltDistanceStyle: "classical",
+  kuiperBeltInclination: 0.3,
 
   // Planetary rings defaults
   enablePlanetaryRings: false,
@@ -69,9 +78,16 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         enableNarySystems: false,
         orbitEccentricityStyle: "circular",
         orbitInclinationMax: 5, // Slight tilt
+        
+        // Small Body Belts - disabled for sparse preset
+        smallBodyDetail: "low",
         enableAsteroidBelts: false,
         beltDensity: 0,
         maxBeltsPerSystem: 0,
+        enableKuiperBelt: false,
+        kuiperBeltDensity: 0,
+        kuiperBeltDistanceStyle: "classical",
+        kuiperBeltInclination: 0.2,
 
         enablePlanetaryRings: false,
         ringFrequency: 0,
@@ -102,11 +118,18 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         orbitEccentricityStyle: "circular",
         orbitInclinationMax: 10, // Low inclinations like our solar system
         orbitOffsetEnabled: false,
+        
+        // Small Body Belts - moderate detail, realistic solar system
+        smallBodyDetail: "medium",
         enableAsteroidBelts: true,
         beltDensity: 0.4, // Moderate asteroid density
         maxBeltsPerSystem: 1,
         beltPlacementMode: "betweenPlanets",
         beltStylePreset: "mainBelt",
+        enableKuiperBelt: true,
+        kuiperBeltDensity: 0.3,     // Moderate KBO density
+        kuiperBeltDistanceStyle: "classical",
+        kuiperBeltInclination: 0.3, // Classical scattered disc
 
         enablePlanetaryRings: true,
         ringFrequency: 0.3,   // Occasional ringed planets
@@ -137,11 +160,18 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         orbitEccentricityStyle: "mixed",
         orbitInclinationMax: 25, // More variety
         orbitOffsetEnabled: false,
+        
+        // Small Body Belts - higher detail for more systems
+        smallBodyDetail: "high",
         enableAsteroidBelts: true,
         beltDensity: 0.6,
         maxBeltsPerSystem: 2,
         beltPlacementMode: "both",
         beltStylePreset: "mainBelt",
+        enableKuiperBelt: true,
+        kuiperBeltDensity: 0.5,     // Higher KBO density
+        kuiperBeltDistanceStyle: "wide",
+        kuiperBeltInclination: 0.5, // More scattered
 
         enablePlanetaryRings: true,
         ringFrequency: 0.6,   // Many ringed worlds
@@ -175,11 +205,18 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         orbitEccentricityStyle: "eccentric",
         orbitInclinationMax: 45, // Wild, chaotic orbits
         orbitOffsetEnabled: true,
+        
+        // Small Body Belts - ultra detail but clamped for performance
+        smallBodyDetail: "ultra",
         enableAsteroidBelts: true,
         beltDensity: 0.7, // High asteroid density
         maxBeltsPerSystem: 3,
         beltPlacementMode: "both",
         beltStylePreset: "heavyDebris",
+        enableKuiperBelt: true,
+        kuiperBeltDensity: 0.7,     // Dense Kuiper belt
+        kuiperBeltDistanceStyle: "wide",
+        kuiperBeltInclination: 0.8, // Highly scattered
 
         enablePlanetaryRings: true,
         ringFrequency: 0.9,

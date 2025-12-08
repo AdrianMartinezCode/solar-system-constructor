@@ -4,6 +4,17 @@
 
 Robust asteroid belt support has been successfully added to the Solar System Constructor. The feature is **production-ready**, fully integrated with existing systems, and maintains backward compatibility.
 
+## Unified Small Body Belts Concept
+
+As of the latest update, **asteroid belts and Kuiper belt objects are unified as "Small Body Belts"** in the editor and UI. Both belt types share the same underlying `AsteroidBelt` data structure and rendering infrastructure, with `beltType` distinguishing 'main' (rocky, inner) from 'kuiper' (icy, outer) belts.
+
+### Key Unification Points:
+- **Single data model**: Both types use `AsteroidBelt` interface (alias: `SmallBodyBelt`)
+- **Unified UI section**: "Small Body Belts & Fields" in the Universe Generator Panel
+- **Global quality control**: `smallBodyDetail` slider affects both belt types
+- **Aggregated stats**: `totalSmallBodies`, `totalSmallBodyBelts` in generation results
+- **Shared rendering**: `AsteroidBeltObject` component handles both types with LOD optimization
+
 ## Implementation Complete ✓
 
 All requirements from the specification have been implemented:

@@ -91,11 +91,18 @@ A complete **React UI panel** for configuring and running the procedural generat
 - ✅ Target Galaxy Count (slider 1-20) - shown if enabled
 - ✅ Group Structure Mode (select) - shown if enabled
 
-### Asteroid Belt Controls
-- ✅ Enable Asteroid Belts (checkbox)
-- ✅ Asteroid Belt Density (slider 0-1) - shown if enabled
-- ✅ Max Belts Per System (slider 0-5) - shown if enabled
-- ✅ Placement Mode (select: none/betweenPlanets/outerBelt/both) - shown if enabled
+### Small Body Belts & Fields (Unified Section)
+- ✅ **Small Body Detail** (select: low/medium/high/ultra) - global quality/performance control
+- ✅ **🪨 Main Asteroid Belts** (inner, rocky):
+  - Enable checkbox
+  - Main Belt Density (slider 0-1) - shown if enabled
+  - Max Belts Per System (slider 0-5) - shown if enabled
+  - Placement Mode (select) - shown if enabled
+- ✅ **❄️ Kuiper Belt Objects** (outer, icy):
+  - Enable checkbox
+  - Kuiper Belt Density (slider 0-1) - shown if enabled
+  - Distance Style (select: tight/classical/wide) - shown if enabled
+  - Inclination / Thickness (slider 0-1) - shown if enabled
 
 ### Planetary Ring Controls
 - ✅ Enable Planetary Rings (checkbox)
@@ -110,9 +117,14 @@ A complete **React UI panel** for configuring and running the procedural generat
 ### Status Display
 - ✅ Total Stars count
 - ✅ Total Groups count
-- ✅ Asteroid Belts count
-- ✅ Total Asteroids count
+- ✅ **Small Body Belts** (unified count)
+- ✅ **Small Bodies (total)** with breakdown:
+  - ↳ Main Belt asteroids
+  - ↳ Kuiper Belt Objects ❄️
 - ✅ Ringed Planets count
+- ✅ Comets count
+- ✅ Lagrange Points (if any)
+- ✅ Trojan Bodies (if any)
 - ✅ Generated timestamp
 - ✅ Hidden until first generation
 

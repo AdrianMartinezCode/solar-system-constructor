@@ -76,6 +76,51 @@ export const MINIMAL_CONFIG: Partial<GeneratorConfig> = {
   enableGrouping: false,
 };
 
+/**
+ * Solar-like system with Kuiper belt
+ */
+export const KUIPER_BELT_CONFIG: Partial<GeneratorConfig> = {
+  starProbabilities: [0.8, 0.15, 0.05],
+  planetGeometricP: 0.4,
+  moonGeometricP: 0.3,
+  orbitGrowth: 1.8,
+  enableGrouping: false,
+  enableKuiperBelt: true,
+  kuiperBeltDensity: 0.5,
+  kuiperBeltRadialRange: [2.0, 3.5],
+  kuiperBeltInclinationSigma: 1.5,
+  kuiperBeltEccentricityRange: [0.0, 0.15],
+  kuiperBeltAsteroidGeometricP: 0.25,
+  kuiperBeltMinCount: 100,
+  kuiperBeltMaxCount: 1500,
+};
+
+/**
+ * Dense system with both main belts and Kuiper belt
+ */
+export const FULL_DEBRIS_CONFIG: Partial<GeneratorConfig> = {
+  starProbabilities: [0.7, 0.25, 0.05],
+  planetGeometricP: 0.35,
+  moonGeometricP: 0.25,
+  orbitGrowth: 1.7,
+  enableGrouping: false,
+  // Main asteroid belts
+  enableAsteroidBelts: true,
+  maxBeltsPerSystem: 2,
+  beltPlacementMode: 'both',
+  beltAsteroidGeometricP: 0.3,
+  beltMinCount: 100,
+  beltMaxCount: 800,
+  // Kuiper belt
+  enableKuiperBelt: true,
+  kuiperBeltDensity: 0.6,
+  kuiperBeltRadialRange: [2.5, 4.0],
+  kuiperBeltInclinationSigma: 2.0,
+  kuiperBeltAsteroidGeometricP: 0.22,
+  kuiperBeltMinCount: 200,
+  kuiperBeltMaxCount: 1500,
+};
+
 // ============================================================================
 // Example Generation Functions
 // ============================================================================
@@ -122,6 +167,56 @@ export function generateMinimalSystem(seed?: string | number) {
   return generateSolarSystem(seed, MINIMAL_CONFIG);
 }
 
+/**
+ * Generate a system with Kuiper belt objects
+ */
+export function generateKuiperRichSystem(seed?: string | number) {
+  return generateSolarSystem(seed, KUIPER_BELT_CONFIG);
+}
+
+/**
+ * Generate a system with both asteroid belts and Kuiper belt
+ */
+export function generateFullDebrisSystem(seed?: string | number) {
+  return generateSolarSystem(seed, FULL_DEBRIS_CONFIG);
+}
+
+/**
+ * Performance-friendly debris system with lower small body counts.
+ * Useful for testing or lower-end hardware while still having
+ * visually interesting belts.
+ */
+export const PERFORMANCE_DEBRIS_CONFIG: Partial<GeneratorConfig> = {
+  starProbabilities: [0.8, 0.15, 0.05],
+  planetGeometricP: 0.4,
+  moonGeometricP: 0.3,
+  orbitGrowth: 1.8,
+  enableGrouping: false,
+  // Main asteroid belts with lower counts
+  enableAsteroidBelts: true,
+  maxBeltsPerSystem: 1,
+  beltPlacementMode: 'betweenPlanets',
+  beltAsteroidGeometricP: 0.5,  // Higher p = fewer asteroids
+  beltMinCount: 50,
+  beltMaxCount: 200,
+  // Kuiper belt with lower counts
+  enableKuiperBelt: true,
+  kuiperBeltDensity: 0.3,
+  kuiperBeltRadialRange: [2.0, 3.0],
+  kuiperBeltInclinationSigma: 1.0,
+  kuiperBeltAsteroidGeometricP: 0.4,
+  kuiperBeltMinCount: 50,
+  kuiperBeltMaxCount: 300,
+};
+
+/**
+ * Generate a performance-friendly debris system.
+ * Lower small body counts but still visually interesting.
+ */
+export function generatePerformanceDebrisSystem(seed?: string | number) {
+  return generateSolarSystem(seed, PERFORMANCE_DEBRIS_CONFIG);
+}
+
 // ============================================================================
 // Analysis Utilities
 // ============================================================================
@@ -134,6 +229,7 @@ export function analyzeSystem(data: {
   rootIds: string[];
   groups: Record<string, any>;
   rootGroupIds: string[];
+  belts?: Record<string, any>;
 }) {
   const stats = {
     totalStars: Object.keys(data.stars).length,
@@ -146,9 +242,19 @@ export function analyzeSystem(data: {
     planets: 0,
     moons: 0,
     asteroids: 0,
+    mainBeltAsteroids: 0,
+    kuiperBeltObjects: 0,
     comets: 0,
     lagrangePoints: 0,
     trojanBodies: 0,
+    
+    // ============================================================================
+    // Unified Small Body Stats
+    // ============================================================================
+    totalSmallBodies: 0,        // Sum of main belt + Kuiper belt
+    totalSmallBodyBelts: 0,     // Total number of belts (main + Kuiper)
+    totalMainBelts: 0,          // Number of main asteroid belts
+    totalKuiperBelts: 0,        // Number of Kuiper belts
     
     // Multi-star systems
     singleStar: 0,
@@ -202,6 +308,12 @@ export function analyzeSystem(data: {
       stats.moons++;
     } else if (star.bodyType === 'asteroid') {
       stats.asteroids++;
+      // Distinguish main belt vs Kuiper belt
+      if (star.asteroidSubType === 'kuiperBelt') {
+        stats.kuiperBeltObjects++;
+      } else if (star.asteroidSubType === 'mainBelt') {
+        stats.mainBeltAsteroids++;
+      }
     } else if (star.bodyType === 'comet') {
       stats.comets++;
       if (star.eccentricity !== undefined) {
@@ -260,6 +372,15 @@ export function analyzeSystem(data: {
     stats.avgCometEccentricity = cometEccentricities.reduce((a, b) => a + b, 0) / cometEccentricities.length;
   }
   
+  // Calculate unified small body stats
+  if (data.belts) {
+    const allBelts = Object.values(data.belts);
+    stats.totalSmallBodyBelts = allBelts.length;
+    stats.totalMainBelts = allBelts.filter((b: any) => b.beltType === 'main' || !b.beltType).length;
+    stats.totalKuiperBelts = allBelts.filter((b: any) => b.beltType === 'kuiper').length;
+  }
+  stats.totalSmallBodies = stats.mainBeltAsteroids + stats.kuiperBeltObjects;
+  
   return stats;
 }
 
@@ -271,6 +392,7 @@ export function validateSystem(data: {
   rootIds: string[];
   groups: Record<string, any>;
   rootGroupIds: string[];
+  belts?: Record<string, any>;
 }): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
@@ -337,6 +459,46 @@ export function validateSystem(data: {
       }
     }
   });
+  
+  // Validate asteroid belt data (including Kuiper belts)
+  if (data.belts) {
+    Object.values(data.belts).forEach((belt: any) => {
+      // Validate belt geometry
+      if (belt.innerRadius >= belt.outerRadius) {
+        errors.push(`Belt ${belt.id} has innerRadius >= outerRadius: ${belt.innerRadius} >= ${belt.outerRadius}`);
+      }
+      if (belt.thickness < 0) {
+        errors.push(`Belt ${belt.id} has negative thickness: ${belt.thickness}`);
+      }
+      
+      // Validate Kuiper belts specifically
+      if (belt.beltType === 'kuiper') {
+        // Verify Kuiper belts have icy properties
+        if (!belt.isIcy) {
+          errors.push(`Kuiper belt ${belt.id} should have isIcy=true`);
+        }
+        // Verify KBOs have correct subtype
+        belt.asteroidIds.forEach((asteroidId: string) => {
+          const asteroid = data.stars[asteroidId];
+          if (asteroid && asteroid.asteroidSubType !== 'kuiperBelt') {
+            errors.push(`Asteroid ${asteroidId} in Kuiper belt ${belt.id} should have asteroidSubType='kuiperBelt'`);
+          }
+        });
+      }
+      
+      // Verify all asteroid IDs reference valid stars
+      belt.asteroidIds.forEach((asteroidId: string) => {
+        const asteroid = data.stars[asteroidId];
+        if (!asteroid) {
+          errors.push(`Belt ${belt.id} references non-existent asteroid: ${asteroidId}`);
+        } else if (asteroid.bodyType !== 'asteroid') {
+          errors.push(`Belt ${belt.id} references non-asteroid body ${asteroidId} (type: ${asteroid.bodyType})`);
+        } else if (asteroid.parentBeltId !== belt.id) {
+          errors.push(`Asteroid ${asteroidId} parentBeltId mismatch (expected: ${belt.id}, got: ${asteroid.parentBeltId})`);
+        }
+      });
+    });
+  }
   
   // Check group parentIds exist
   Object.values(data.groups).forEach((group: any) => {

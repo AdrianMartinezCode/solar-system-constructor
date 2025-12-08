@@ -257,7 +257,8 @@ Provides high-level navigation and object management for large universes.
 │  │ earth                                          [✕] │  │
 │  └────────────────────────────────────────────────────┘  │
 │                                                          │
-│  Filters: [All▼] [⭐Stars] [🌍Planets] [🌙Moons] [📁Groups] │
+│  Filters: [All▼] [⭐Stars] [🌍Planets] [🌙Moons]          │
+│           [🪨SmallBodies] [📁Groups]                      │
 │  Sort: [Name▼]                                           │
 │  ───────────────────────────────────────────────────────  │
 │                                                          │
@@ -272,7 +273,8 @@ Provides high-level navigation and object management for large universes.
 │  ───────────────────────────────────────────────────────  │
 │  All Systems Summary:                                    │
 │  ⭐ 15 Stars  |  🌍 43 Planets  |  🌙 87 Moons           │
-│  📁 0 Groups  |  👁️ 145 Total Objects                   │
+│  🪨 Small Bodies: 1200 (Main: 400, Kuiper: 800)         │
+│  📁 0 Groups  |  👁️ 1345 Total Objects                  │
 │  ───────────────────────────────────────────────────────  │
 │                                                          │
 │  Quick Actions:                                          │
@@ -283,9 +285,11 @@ Provides high-level navigation and object management for large universes.
 
 **Features**:
 - **Instant Search**: Filter by name, type, or parent
-- **Type Filters**: Quick toggles for stars/planets/moons/groups
+- **Type Filters**: Quick toggles for stars/planets/moons/small bodies/groups
+  - **Small Bodies** filter includes both main belt asteroids and Kuiper belt objects
+  - Optional subfilters: "Main Belt only" / "Kuiper only" when small bodies selected
 - **Results List**: Click to select in 3D, eye icon to focus camera
-- **Statistics**: Real-time count of all objects
+- **Statistics**: Real-time count of all objects with unified small body counts
 - **Quick Actions**: Common operations without opening other panels
 
 **Size**: 350px × 500px (resizable, min 300×400, max 500×800)

@@ -7,6 +7,47 @@ import type { GeneratorConfig } from './procedural-generator';
 import { generateSolarSystem, generateMultipleSystems } from './procedural-generator';
 
 /**
+ * Small body detail level scale factors.
+ * These modify the effective asteroid/KBO counts based on user's quality preference.
+ */
+const SMALL_BODY_DETAIL_SCALES: Record<GenerationConfig['smallBodyDetail'], {
+  countScale: number;
+  geometricPAdjust: number;
+  minCountScale: number;
+  maxCountScale: number;
+  label: string;
+}> = {
+  low: {
+    countScale: 0.3,
+    geometricPAdjust: 0.2,  // Higher p = fewer objects
+    minCountScale: 0.5,
+    maxCountScale: 0.3,
+    label: 'Low (fast)',
+  },
+  medium: {
+    countScale: 0.6,
+    geometricPAdjust: 0,    // No adjustment
+    minCountScale: 0.7,
+    maxCountScale: 0.6,
+    label: 'Medium',
+  },
+  high: {
+    countScale: 1.0,
+    geometricPAdjust: -0.1, // Lower p = more objects
+    minCountScale: 1.0,
+    maxCountScale: 1.0,
+    label: 'High',
+  },
+  ultra: {
+    countScale: 1.5,
+    geometricPAdjust: -0.15,
+    minCountScale: 1.2,
+    maxCountScale: 1.5,
+    label: 'Ultra (expensive)',
+  },
+};
+
+/**
  * Convert UI config to internal generator config
  */
 function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig> {
@@ -36,10 +77,16 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
   const numGroups = mapGroupCount(config.targetGalaxyCount, config.groupStructureMode);
   const nestingProbability = mapNestingProbability(config.groupStructureMode);
   
-  // Map asteroid belt parameters
+  // Get small body detail scale factors
+  const detailScale = SMALL_BODY_DETAIL_SCALES[config.smallBodyDetail];
+  
+  // Map asteroid belt parameters (scaled by smallBodyDetail)
   const enableAsteroidBelts = config.enableAsteroidBelts;
-  const beltAsteroidGeometricP = 0.8 - (config.beltDensity * 0.6); // Same pattern as planets/moons
-  const { beltMinCount, beltMaxCount } = mapBeltDensityToCounts(config.beltDensity);
+  const baseBeltGeometricP = 0.8 - (config.beltDensity * 0.6);
+  const beltAsteroidGeometricP = Math.min(0.9, Math.max(0.1, baseBeltGeometricP + detailScale.geometricPAdjust));
+  const { beltMinCount: baseBeltMinCount, beltMaxCount: baseBeltMaxCount } = mapBeltDensityToCounts(config.beltDensity);
+  const beltMinCount = Math.floor(baseBeltMinCount * detailScale.minCountScale);
+  const beltMaxCount = Math.floor(baseBeltMaxCount * detailScale.maxCountScale);
   const maxBeltsPerSystem = config.maxBeltsPerSystem;
   const beltPlacementMode = config.beltPlacementMode;
   
@@ -70,6 +117,17 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     cometTailOpacityRange,
   } = mapCometActivity(config.cometActivity);
   const cometInclinationMax = 45; // Comets can have wild inclinations
+
+  // Map Kuiper belt parameters (scaled by smallBodyDetail)
+  const enableKuiperBelt = config.enableKuiperBelt;
+  const baseKuiperGeometricP = 0.8 - (config.kuiperBeltDensity * 0.65);
+  const kuiperBeltAsteroidGeometricP = Math.min(0.9, Math.max(0.1, baseKuiperGeometricP + detailScale.geometricPAdjust));
+  const { kuiperBeltMinCount: baseKuiperMinCount, kuiperBeltMaxCount: baseKuiperMaxCount } = mapKuiperDensityToCounts(config.kuiperBeltDensity);
+  const kuiperBeltMinCount = Math.floor(baseKuiperMinCount * detailScale.minCountScale);
+  const kuiperBeltMaxCount = Math.floor(baseKuiperMaxCount * detailScale.maxCountScale);
+  const kuiperBeltRadialRange = mapKuiperDistanceStyle(config.kuiperBeltDistanceStyle);
+  const kuiperBeltInclinationSigma = mapKuiperInclination(config.kuiperBeltInclination);
+  const kuiperBeltEccentricityRange: [number, number] = [0.0, 0.15]; // Slightly eccentric
   
   return {
     starProbabilities,
@@ -123,6 +181,16 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
     cometActivityDistanceRange,
     cometTailLengthRange,
     cometTailOpacityRange,
+
+    // Kuiper belt
+    enableKuiperBelt,
+    kuiperBeltDensity: config.kuiperBeltDensity,
+    kuiperBeltRadialRange,
+    kuiperBeltInclinationSigma,
+    kuiperBeltEccentricityRange,
+    kuiperBeltAsteroidGeometricP,
+    kuiperBeltMinCount,
+    kuiperBeltMaxCount,
 
     // Lagrange points / Trojans
     enableLagrangePoints: config.enableLagrangePoints,
@@ -372,6 +440,47 @@ function mapTrojanFrequencyToEnable(frequency: number): boolean {
 }
 
 /**
+ * Map Kuiper belt density (0-1) to min/max KBO counts
+ */
+function mapKuiperDensityToCounts(density: number): {
+  kuiperBeltMinCount: number;
+  kuiperBeltMaxCount: number;
+} {
+  // Scale KBO counts based on density
+  // Low density: 100-800 KBOs
+  // High density: 300-1500 KBOs
+  const minCount = Math.floor(100 + density * 200);
+  const maxCount = Math.floor(800 + density * 700);
+  
+  return { kuiperBeltMinCount: minCount, kuiperBeltMaxCount: maxCount };
+}
+
+/**
+ * Map Kuiper belt distance style to radial range multipliers
+ */
+function mapKuiperDistanceStyle(style: GenerationConfig["kuiperBeltDistanceStyle"]): [number, number] {
+  switch (style) {
+    case "tight":
+      return [1.5, 2.5];  // Closer to outermost planet
+    case "classical":
+      return [2.0, 3.5];  // Classical Kuiper belt range
+    case "wide":
+      return [2.5, 4.5];  // Wide/scattered disk
+    default:
+      return [2.0, 3.5];
+  }
+}
+
+/**
+ * Map Kuiper belt inclination slider (0-1) to sigma value
+ */
+function mapKuiperInclination(inclination: number): number {
+  // Map 0-1 to inclination sigma
+  // 0 = thin disc (0.5), 1 = highly scattered (3.0)
+  return 0.5 + inclination * 2.5;
+}
+
+/**
  * Map trojan frequency (0-1) to per-L-point trojan count range
  */
 function mapTrojanFrequencyToCountRange(frequency: number): [number, number] {
@@ -429,6 +538,17 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   const totalLagrangePoints = allStars.filter((star) => star.bodyType === 'lagrangePoint').length;
   const totalLagrangeMarkers = totalLagrangePoints; // Same count
   const totalTrojanBodies = allStars.filter((star) => star.lagrangeHostId !== undefined).length;
+  const totalKuiperObjects = allStars.filter((star) => star.asteroidSubType === 'kuiperBelt').length;
+  const totalMainBeltAsteroids = allStars.filter((star) => star.asteroidSubType === 'mainBelt').length;
+  
+  // ============================================================================
+  // Unified Small Body Stats
+  // ============================================================================
+  const allBelts = Object.values(result.belts);
+  const totalMainBelts = allBelts.filter((belt) => belt.beltType === 'main' || !belt.beltType).length;
+  const totalKuiperBelts = allBelts.filter((belt) => belt.beltType === 'kuiper').length;
+  const totalSmallBodyBelts = totalMainBelts + totalKuiperBelts;
+  const totalSmallBodies = totalMainBeltAsteroids + totalKuiperObjects;
   
   return {
     ...result,
@@ -442,7 +562,21 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     totalLagrangePoints,
     totalLagrangeMarkers,
     totalTrojanBodies,
+    totalKuiperObjects,
+    // Unified small body stats
+    totalSmallBodyBelts,
+    totalSmallBodies,
+    totalMainBelts,
+    totalKuiperBelts,
+    totalMainBeltAsteroids,
     generatedAt: new Date(),
   };
+}
+
+/**
+ * Get the label for a small body detail level
+ */
+export function getSmallBodyDetailLabel(detail: GenerationConfig['smallBodyDetail']): string {
+  return SMALL_BODY_DETAIL_SCALES[detail].label;
 }
 

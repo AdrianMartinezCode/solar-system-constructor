@@ -16,6 +16,9 @@ export interface Star {
   // Reference to parent asteroid belt (if this is an asteroid)
   parentBeltId?: string;
   
+  // Optional asteroid subtype (for distinguishing main belt from Kuiper belt objects)
+  asteroidSubType?: 'mainBelt' | 'kuiperBelt' | 'generic';
+  
   // Optional comet-specific metadata (if this is a comet)
   comet?: CometMeta;
   
@@ -96,7 +99,14 @@ export interface LagrangePointMeta {
   label?: string;                   // Optional display label (e.g. "Earth L4")
 }
 
-// Asteroid belt entity representing a collection of many small bodies
+/**
+ * Asteroid belt entity representing a collection of many small bodies.
+ * This is the unified data model for both main asteroid belts and Kuiper belt objects.
+ * Use `beltType` to distinguish between 'main' (rocky, inner) and 'kuiper' (icy, outer) belts.
+ * 
+ * The UI presents these as a unified "Small Body Belts" family while preserving
+ * the physical distinctions (position, composition, colors) internally.
+ */
 export interface AsteroidBelt {
   id: string;
   name: string;
@@ -118,9 +128,30 @@ export interface AsteroidBelt {
   // Visual properties
   color?: string;          // Optional belt color hint
   
+  // Belt type discriminator (for distinguishing main belt from Kuiper belt)
+  // Both types are conceptually part of the unified "Small Body Belts" system
+  beltType?: 'main' | 'kuiper';
+  
+  // Optional belt metadata
+  regionLabel?: string;        // e.g. "Main Belt", "Kuiper Belt"
+  isIcy?: boolean;             // true for Kuiper-type belts (bluish icy colors)
+  inclinationSigma?: number;   // Extra vertical scatter / inclination noise
+  radialRangeHint?: [number, number]; // For documentation/debugging
+  
+  // Performance / LOD hints
+  lodLevel?: number;           // Current LOD level (0=full detail, higher=reduced)
+  visible?: boolean;           // Visibility toggle for UI control
+  
   // Generation seed (for reproducible belt generation)
   seed?: string | number;
 }
+
+/**
+ * Type alias for unified "Small Body Belt" concept.
+ * Both asteroid belts and Kuiper belts are represented by this same type.
+ * This alias exists for semantic clarity in the UI and editor code.
+ */
+export type SmallBodyBelt = AsteroidBelt;
 
 export interface Position {
   x: number;

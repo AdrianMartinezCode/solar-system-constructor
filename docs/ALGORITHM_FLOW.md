@@ -150,6 +150,49 @@
 
 
 ╔═══════════════════════════════════════════════════════════════════════════╗
+║              PHASE 5.5: SMALL BODY BELTS (Asteroids & Kuiper)             ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+                                   │
+                   ┌───────────────▼───────────────┐
+                   │  enableAsteroidBelts?         │
+                   │  or enableKuiperBelt?         │
+                   └───────┬───────────────┬───────┘
+                         NO               YES
+                           │               │
+                           │   ┌───────────▼───────────────┐
+                           │   │  smallBodyDetail setting: │
+                           │   │  • low:    0.3× counts    │
+                           │   │  • medium: 0.6× counts    │
+                           │   │  • high:   1.0× counts    │
+                           │   │  • ultra:  1.5× counts    │
+                           │   └───────────┬───────────────┘
+                           │               │
+                           │   ┌───────────▼───────────────┐
+                           │   │  Main Asteroid Belts:     │
+                           │   │  • Count ~ Geometric(p)   │
+                           │   │  • Rocky colors           │
+                           │   │  • beltType = 'main'      │
+                           │   └───────────┬───────────────┘
+                           │               │
+                           │   ┌───────────▼───────────────┐
+                           │   │  Kuiper Belt Objects:     │
+                           │   │  • Count ~ Geometric(p)   │
+                           │   │  • Icy blue-white colors  │
+                           │   │  • beltType = 'kuiper'    │
+                           │   │  • Higher inclination     │
+                           │   └───────────┬───────────────┘
+                           │               │
+                           └───────────────┴───────────────┐
+                                                           │
+                   ┌───────────────────────────────────────▼
+                   │  Small bodies stored as Star objects   │
+                   │  with bodyType: 'asteroid'             │
+                   │  and asteroidSubType: 'mainBelt' or   │
+                   │  'kuiperBelt'                          │
+                   └───────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
 ║                   PHASE 6: GROUP GENERATION (Optional)                    ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
                                     │
@@ -279,10 +322,11 @@ Phase 2: Physical Properties        O(n)  for each body
 Phase 3: Orbital Assignment         O(n)  for each body
 Phase 4: Center Selection           O(k log k)  where k = stars per system
 Phase 5: Children Population        O(n)  single pass
+Phase 5.5: Small Body Belts         O(b)  where b = total belt asteroids
 Phase 6: Group Generation           O(g + s)  where g = groups, s = systems
 Validation:                         O(n + g)  traverse hierarchies
 
-Total:                              O(n + k log k) ≈ O(n)  for typical systems
+Total:                              O(n + b + k log k) ≈ O(n + b)  for typical systems
 ```
 
 ## Space Complexity

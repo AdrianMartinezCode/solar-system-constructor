@@ -217,6 +217,31 @@ moonGeometricP = 0.8 - (moonDensity * 0.6)
 
 ---
 
+## Small Body Detail Mapping
+
+The `smallBodyDetail` control provides a global quality/performance knob for all small body belts (asteroid belts + Kuiper belt):
+
+```typescript
+const SMALL_BODY_DETAIL_SCALES = {
+  low:    { countScale: 0.3, minScale: 0.5, maxScale: 0.3 },   // ~100-300 per belt
+  medium: { countScale: 0.6, minScale: 0.7, maxScale: 0.6 },   // ~300-600 per belt
+  high:   { countScale: 1.0, minScale: 1.0, maxScale: 1.0 },   // ~600-1000 per belt
+  ultra:  { countScale: 1.5, minScale: 1.2, maxScale: 1.5 },   // ~1000-1500+ per belt
+};
+
+// Both main belt and Kuiper belt counts are scaled by this factor
+effectiveBeltMinCount = Math.floor(baseBeltMinCount * detailScale.minScale);
+effectiveBeltMaxCount = Math.floor(baseBeltMaxCount * detailScale.maxScale);
+```
+
+The UI exposes this as a dropdown in the "Small Body Belts & Fields" section:
+- **Low (fast)**: Minimal objects, good for testing or low-end hardware
+- **Medium**: Balanced default
+- **High**: Dense belts with full detail
+- **Ultra (expensive ⚠️)**: Maximum density, may impact performance
+
+---
+
 ## Scale Mode Mapping
 
 ```typescript

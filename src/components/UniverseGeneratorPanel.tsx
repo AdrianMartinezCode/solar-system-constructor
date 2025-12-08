@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
 import type { GenerationConfig } from '../types/generationConfig';
 import { defaultConfig, getPresetConfig, generateRandomSeed } from '../utils/generatorConfigDefaults';
-import { generateUniverse } from '../utils/generatorBridge';
+import { generateUniverse, getSmallBodyDetailLabel } from '../utils/generatorBridge';
 import './UniverseGeneratorPanel.css';
 
 interface GenerationStats {
@@ -15,6 +15,13 @@ interface GenerationStats {
   totalComets: number;
   totalLagrangePoints?: number;
   totalTrojanBodies?: number;
+  totalKuiperObjects?: number;
+  // Unified small body stats
+  totalSmallBodyBelts?: number;
+  totalSmallBodies?: number;
+  totalMainBelts?: number;
+  totalKuiperBelts?: number;
+  totalMainBeltAsteroids?: number;
   generatedAt: string;
 }
 
@@ -67,6 +74,13 @@ export const UniverseGeneratorPanel: React.FC = () => {
         totalComets: result.totalComets,
         totalLagrangePoints: result.totalLagrangePoints || 0,
         totalTrojanBodies: result.totalTrojanBodies || 0,
+        totalKuiperObjects: result.totalKuiperObjects || 0,
+        // Unified small body stats
+        totalSmallBodyBelts: result.totalSmallBodyBelts || 0,
+        totalSmallBodies: result.totalSmallBodies || 0,
+        totalMainBelts: result.totalMainBelts || 0,
+        totalKuiperBelts: result.totalKuiperBelts || 0,
+        totalMainBeltAsteroids: result.totalMainBeltAsteroids || 0,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -402,19 +416,43 @@ export const UniverseGeneratorPanel: React.FC = () => {
         )}
       </div>
       
-      {/* Asteroid Belt Controls */}
+      {/* Small Body Belts & Fields (Unified section for Asteroid Belts + Kuiper Belt) */}
       <div className="generator-section">
-        <h3 className="generator-section-title">Asteroid Belts</h3>
+        <h3 className="generator-section-title">🪨 Small Body Belts & Fields</h3>
+        <small className="generator-hint">Asteroid belts and Kuiper belt objects - unified debris system</small>
         
-        {/* Enable Asteroid Belts */}
-        <div className="generator-field">
+        {/* Small Body Detail (Global Quality Control) */}
+        <div className="generator-field" style={{ marginTop: '12px' }}>
+          <label className="generator-label">
+            Small Body Detail
+            <span className="generator-value" style={{ 
+              color: config.smallBodyDetail === 'ultra' ? '#ff9500' : undefined 
+            }}>
+              {getSmallBodyDetailLabel(config.smallBodyDetail)}
+            </span>
+          </label>
+          <select
+            className="generator-select"
+            value={config.smallBodyDetail}
+            onChange={(e) => updateConfig('smallBodyDetail', e.target.value as GenerationConfig["smallBodyDetail"])}
+          >
+            <option value="low">Low (fast rendering)</option>
+            <option value="medium">Medium (balanced)</option>
+            <option value="high">High (detailed)</option>
+            <option value="ultra">Ultra (expensive ⚠️)</option>
+          </select>
+          <small className="generator-hint">Controls object count and rendering quality for all belts</small>
+        </div>
+        
+        {/* Divider for Main Asteroid Belts */}
+        <div style={{ borderTop: '1px solid #3a3a3a', margin: '16px 0', paddingTop: '12px' }}>
           <label className="generator-checkbox">
             <input
               type="checkbox"
               checked={config.enableAsteroidBelts}
               onChange={(e) => updateConfig('enableAsteroidBelts', e.target.checked)}
             />
-            <span>Enable Asteroid Belts</span>
+            <span>🪨 Main Asteroid Belts (inner, rocky)</span>
           </label>
         </div>
         
@@ -423,7 +461,7 @@ export const UniverseGeneratorPanel: React.FC = () => {
             {/* Belt Density */}
             <div className="generator-field">
               <label className="generator-label">
-                Asteroid Belt Density
+                Main Belt Density
                 <span className="generator-value">{(config.beltDensity * 100).toFixed(0)}%</span>
               </label>
               <input
@@ -471,9 +509,81 @@ export const UniverseGeneratorPanel: React.FC = () => {
               >
                 <option value="none">None</option>
                 <option value="betweenPlanets">Between Planets</option>
-                <option value="outerBelt">Outer Belt (Kuiper-like)</option>
+                <option value="outerBelt">Outer Belt</option>
                 <option value="both">Both</option>
               </select>
+            </div>
+          </>
+        )}
+        
+        {/* Divider for Kuiper Belt */}
+        <div style={{ borderTop: '1px solid #3a3a3a', margin: '16px 0', paddingTop: '12px' }}>
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableKuiperBelt}
+              onChange={(e) => updateConfig('enableKuiperBelt', e.target.checked)}
+            />
+            <span>❄️ Kuiper Belt Objects (outer, icy)</span>
+          </label>
+        </div>
+        
+        {config.enableKuiperBelt && (
+          <>
+            {/* Kuiper Density */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Kuiper Belt Density
+                <span className="generator-value">{(config.kuiperBeltDensity * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.1"
+                value={config.kuiperBeltDensity}
+                onChange={(e) => updateConfig('kuiperBeltDensity', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Few Icy Objects</span>
+                <span>Dense Belt</span>
+              </div>
+            </div>
+            
+            {/* Distance Style */}
+            <div className="generator-field">
+              <label className="generator-label">Distance Style</label>
+              <select
+                className="generator-select"
+                value={config.kuiperBeltDistanceStyle}
+                onChange={(e) => updateConfig('kuiperBeltDistanceStyle', e.target.value as GenerationConfig["kuiperBeltDistanceStyle"])}
+              >
+                <option value="tight">Tight (near outer planets)</option>
+                <option value="classical">Classical Kuiper Belt</option>
+                <option value="wide">Wide / Scattered Disk</option>
+              </select>
+            </div>
+            
+            {/* Kuiper Inclination */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Inclination / Thickness
+                <span className="generator-value">{(config.kuiperBeltInclination * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.1"
+                value={config.kuiperBeltInclination}
+                onChange={(e) => updateConfig('kuiperBeltInclination', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Thin Disc</span>
+                <span>Highly Scattered</span>
+              </div>
             </div>
           </>
         )}
@@ -621,6 +731,7 @@ export const UniverseGeneratorPanel: React.FC = () => {
         )}
       </div>
 
+
       {/* Lagrange Points / Trojans Controls */}
       <div className="generator-section">
         <h3 className="generator-section-title">Lagrange Points / Trojans 🔺</h3>
@@ -755,14 +866,41 @@ export const UniverseGeneratorPanel: React.FC = () => {
               <span className="generator-stat-label">Total Groups</span>
               <span className="generator-stat-value">{stats.totalGroups}</span>
             </div>
-            <div className="generator-stat">
-              <span className="generator-stat-label">Asteroid Belts</span>
-              <span className="generator-stat-value">{stats.totalBelts}</span>
-            </div>
-            <div className="generator-stat">
-              <span className="generator-stat-label">Total Asteroids</span>
-              <span className="generator-stat-value">{stats.totalAsteroids}</span>
-            </div>
+            
+            {/* Unified Small Bodies Stats */}
+            {((stats.totalSmallBodies ?? 0) > 0 || (stats.totalSmallBodyBelts ?? 0) > 0) && (
+              <>
+                <div className="generator-stat" style={{ borderTop: '1px solid #3a3a3a', paddingTop: '8px', marginTop: '8px' }}>
+                  <span className="generator-stat-label">🪨 Small Body Belts</span>
+                  <span className="generator-stat-value">{stats.totalSmallBodyBelts ?? 0}</span>
+                </div>
+                <div className="generator-stat">
+                  <span className="generator-stat-label">Small Bodies (total)</span>
+                  <span className="generator-stat-value">{stats.totalSmallBodies ?? 0}</span>
+                </div>
+                {(stats.totalMainBeltAsteroids ?? 0) > 0 && (
+                  <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                    <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#888' }}>
+                      ↳ Main Belt
+                    </span>
+                    <span className="generator-stat-value" style={{ fontSize: '0.9em' }}>
+                      {stats.totalMainBeltAsteroids}
+                    </span>
+                  </div>
+                )}
+                {(stats.totalKuiperObjects ?? 0) > 0 && (
+                  <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                    <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#88ccff' }}>
+                      ↳ Kuiper Belt ❄️
+                    </span>
+                    <span className="generator-stat-value" style={{ fontSize: '0.9em' }}>
+                      {stats.totalKuiperObjects}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+            
             <div className="generator-stat">
               <span className="generator-stat-label">Ringed Planets</span>
               <span className="generator-stat-value">{stats.totalRingedPlanets}</span>

@@ -131,7 +131,64 @@ Each belt is represented by an `AsteroidBelt` object containing:
 - Visual hints (color)
 - Deterministic seed for reproducibility
 
-### 5. Planetary Rings (Per-Planet Ring Systems)
+### 5. Kuiper Belt Generation (Trans-Neptunian Icy Objects)
+
+After main asteroid belts are generated, the system performs a **separate post-processing step** to place Kuiper Belt Objects (KBOs) in the trans-Neptunian region:
+
+#### Kuiper Belt Placement
+
+**Algorithm:**
+1. Check if `enableKuiperBelt` is true (skip if disabled)
+2. Find outermost planet distance `rMax`
+3. Calculate Kuiper belt radii:
+   - `innerRadius = rMax * kuiperBeltRadialRange[0]`
+   - `outerRadius = rMax * kuiperBeltRadialRange[1]`
+4. Create a single Kuiper belt beyond all planets
+
+**Default radial range:** `[2.0, 3.5]` means the Kuiper belt spans from 2× to 3.5× the outermost planet's distance.
+
+#### KBO Generation
+
+For the Kuiper belt, icy bodies are generated with:
+
+- **Count**: Geometric distribution with `kuiperBeltAsteroidGeometricP`, clamped to `[kuiperBeltMinCount, kuiperBeltMaxCount]`
+  - Default: 100-1500 KBOs (more than main belt for scattered disk appearance)
+  - Lower geometric P (0.25 vs 0.3) means more objects on average
+- **Radial position**: Uniform distribution in `[innerRadius, outerRadius]`
+- **Angular position**: Uniform in `[0, 360°]`
+- **Vertical offset**: Normal distribution with σ = `kuiperBeltInclinationSigma`
+  - Default: 1.5 (vs 0.5 for main belt) creates thicker, more scattered disc
+- **Inclination variation**: Additional normal scatter applied per-object
+  - Creates the characteristic "scattered disk" appearance
+- **Physical properties**:
+  - Very small mass (same as main belt asteroids)
+  - Tiny radius (scaled appropriately)
+  - **Icy colors** (bluish-grays: `#B0C4DE`, `#D3D3D3`, `#E0F3FF`, `#A8C5DD`, etc.)
+  - Distinct from rocky main belt browns
+- **Orbital parameters**:
+  - Speed follows Kepler's law: `v = k / sqrt(distance)`
+  - Eccentricity sampled from `kuiperBeltEccentricityRange` (default `[0.0, 0.15]`)
+  - Higher inclinations create scattered, 3D distribution
+  - Each KBO is a full `Star` object with:
+    - `bodyType: 'asteroid'`
+    - `asteroidSubType: 'kuiperBelt'` for identification
+
+#### Kuiper Belt Metadata
+
+The Kuiper belt is represented by an `AsteroidBelt` object with special fields:
+- `beltType: 'kuiper'` - distinguishes from main belt
+- `isIcy: true` - marks icy composition
+- `inclinationSigma: number` - higher vertical scatter parameter
+- `radialRangeHint: [number, number]` - for documentation/debugging
+- Standard belt fields (inner/outer radius, thickness, asteroid IDs, seed)
+
+#### Determinism
+
+- Kuiper belt generation uses a dedicated PRNG fork: `masterRng.fork('kuiper')`
+- Per-KBO forks: `kuiperRng.fork('kuiper-object-${i}')` ensure full reproducibility
+- Same seed always produces identical Kuiper belt structure
+
+### 6. Planetary Rings (Per-Planet Ring Systems)
 
 After planets are generated and assigned physical/orbital properties, the system performs a **per-planet post-processing step** to assign planetary rings:
 
@@ -183,7 +240,9 @@ The **heaviest star** in each system becomes the center (parentId = null). All o
 3. Make heaviest star the root
 4. Companion stars orbit at same distance with evenly spaced phases
 5. Planets orbit the center star
-6. Asteroid belts are placed in gaps between planets or beyond the outer edge
+6. Main asteroid belts are placed in gaps between planets or beyond the outer edge
+7. Kuiper belt is placed in the trans-Neptunian region (if enabled)
+8. Planetary rings, comets, and Lagrange points are added as configured
 
 #### Multi-Star Systems
 - **Binary**: 2 stars at same orbital distance, phases 0° and 180°
@@ -246,6 +305,12 @@ const config: Partial<GeneratorConfig> = {
   maxBeltsPerSystem: 2,
   beltPlacementMode: 'both',
   beltDensity: 0.6,
+  
+  // Enable Kuiper belt
+  enableKuiperBelt: true,
+  kuiperBeltDensity: 0.5,
+  kuiperBeltRadialRange: [2.0, 3.5],
+  kuiperBeltInclinationSigma: 1.5,
 };
 
 const system = generateSolarSystem(config);
@@ -334,6 +399,16 @@ interface GeneratorConfig {
   beltOuterMultiplier: number;                // For outer belts: factor × outermost orbit
   beltEccentricityRange: [number, number];    // [min, max] eccentricity for belts
 
+  // Kuiper Belt parameters (trans-Neptunian icy objects)
+  enableKuiperBelt: boolean;                  // Master switch for Kuiper belt
+  kuiperBeltDensity: number;                  // 0-1 density slider (mapped to KBO count)
+  kuiperBeltRadialRange: [number, number];    // Radial multipliers × outermost planet distance
+  kuiperBeltInclinationSigma: number;         // Vertical scatter / inclination noise (higher than main belt)
+  kuiperBeltEccentricityRange: [number, number]; // [min, max] eccentricity for KBOs
+  kuiperBeltAsteroidGeometricP: number;       // Controls KBO count (like beltAsteroidGeometricP)
+  kuiperBeltMinCount: number;                 // Minimum KBOs per belt
+  kuiperBeltMaxCount: number;                 // Maximum KBOs per belt
+
   // Planetary ring parameters (per-planet ring systems)
   enablePlanetaryRings: boolean;              // Master switch for rings
   ringedPlanetProbability: number;            // Base probability that a planet has rings
@@ -385,6 +460,16 @@ const DEFAULT_CONFIG = {
   beltOuterGapScale: 0.6,
   beltOuterMultiplier: 1.5,
   beltEccentricityRange: [0, 0.1],
+
+  // Kuiper belt defaults (disabled by default)
+  enableKuiperBelt: false,
+  kuiperBeltDensity: 0.5,
+  kuiperBeltRadialRange: [2.0, 3.5],          // 2-3.5× outermost planet distance
+  kuiperBeltInclinationSigma: 1.5,            // Higher scatter than main belt
+  kuiperBeltEccentricityRange: [0.0, 0.15],   // Slightly more eccentric
+  kuiperBeltAsteroidGeometricP: 0.25,         // Lower p = more objects
+  kuiperBeltMinCount: 100,
+  kuiperBeltMaxCount: 1500,
 
   // Planetary rings (disabled by default)
   enablePlanetaryRings: false,

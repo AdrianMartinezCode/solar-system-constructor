@@ -61,6 +61,16 @@ interface GeneratorConfig {
   beltOuterMultiplier: number;                // For outer belts: factor × outermost planet orbit
   beltEccentricityRange: [number, number];    // [min, max] eccentricity for belts
 
+  // Kuiper Belt parameters (trans-Neptunian region)
+  enableKuiperBelt: boolean;                  // Master switch for Kuiper belt generation
+  kuiperBeltDensity: number;                  // 0-1 density slider mapped to KBO count
+  kuiperBeltRadialRange: [number, number];    // Radial multipliers relative to outermost planet
+  kuiperBeltInclinationSigma: number;         // Vertical scatter / inclination noise (higher than main belt)
+  kuiperBeltEccentricityRange: [number, number]; // Slightly larger eccentricity for scattered feel
+  kuiperBeltAsteroidGeometricP: number;       // Separate geometric parameter for KBO counts
+  kuiperBeltMinCount: number;                 // Minimum KBOs per belt
+  kuiperBeltMaxCount: number;                 // Maximum KBOs per belt
+
   // Planetary ring parameters (per-planet rings)
   enablePlanetaryRings: boolean;              // Master switch for ring generation
   ringedPlanetProbability: number;            // Base probability that a given planet gets rings
@@ -135,6 +145,16 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   beltOuterGapScale: 0.6,
   beltOuterMultiplier: 1.5,
   beltEccentricityRange: [0, 0.1],
+
+  // Kuiper belt defaults (disabled by default)
+  enableKuiperBelt: false,
+  kuiperBeltDensity: 0.5,
+  kuiperBeltRadialRange: [2.0, 3.5],          // 2-3.5× outermost planet distance
+  kuiperBeltInclinationSigma: 1.5,            // Higher scatter than main belt
+  kuiperBeltEccentricityRange: [0.0, 0.15],   // Slightly more eccentric
+  kuiperBeltAsteroidGeometricP: 0.25,         // Lower p = more objects
+  kuiperBeltMinCount: 100,
+  kuiperBeltMaxCount: 1500,
 
   // Planetary rings (disabled by default)
   enablePlanetaryRings: false,
@@ -270,13 +290,6 @@ class RandomGenerator {
    */
   bool(p: number = 0.5): boolean {
     return this.rng.bool(p);
-  }
-  
-  /**
-   * Create a forked RNG with a label
-   */
-  fork(label: string): RandomGenerator {
-    return new RandomGenerator(this.rng.fork(label));
   }
 }
 
@@ -432,8 +445,9 @@ class PhysicsGenerator {
   
   /**
    * Generate color based on mass (spectral classification)
+   * For asteroids, can distinguish between main belt (rocky) and Kuiper belt (icy) via optional hint
    */
-  generateColor(mass: number, type: NodeType | 'asteroid' | 'comet'): string {
+  generateColor(mass: number, type: NodeType | 'asteroid' | 'comet', isIcy?: boolean): string {
     if (type === 'star') {
       if (mass > 600) return '#9BB0FF';      // Blue-white (O, B)
       if (mass > 200) return '#CAD7FF';      // White (A)
@@ -445,9 +459,15 @@ class PhysicsGenerator {
       const colors = ['#4A90E2', '#E25822', '#8B7355', '#C0A080', '#A0C0E0'];
       return this.rng.choice(colors);
     } else if (type === 'asteroid') {
-      // Asteroids are rocky grays and browns
-      const colors = ['#8B7355', '#A0826D', '#6B5D52', '#998877', '#7A6A5C'];
-      return this.rng.choice(colors);
+      if (isIcy) {
+        // Kuiper Belt Objects - icy/bluish colors
+        const colors = ['#B0C4DE', '#D3D3D3', '#E0F3FF', '#A8C5DD', '#E0E8F0', '#C9D9E8'];
+        return this.rng.choice(colors);
+      } else {
+        // Main belt asteroids - rocky grays and browns
+        const colors = ['#8B7355', '#A0826D', '#6B5D52', '#998877', '#7A6A5C'];
+        return this.rng.choice(colors);
+      }
     } else if (type === 'comet') {
       // Comets are icy/rocky - bluish-gray, white-gray tones
       const colors = ['#B0C4DE', '#D3D3D3', '#C0D6E4', '#A8C5DD', '#E0E8F0'];
@@ -1000,7 +1020,7 @@ class AsteroidBeltGenerator {
     const innerRadius = r1 + gap * this.config.beltInnerGapScale;
     const outerRadius = r1 + gap * this.config.beltOuterGapScale;
     
-    return this.createBelt(parentId, innerRadius, outerRadius, index, 'Main Belt');
+    return this.createBelt(parentId, innerRadius, outerRadius, index, 'Main Belt', 'main');
   }
   
   /**
@@ -1011,13 +1031,20 @@ class AsteroidBeltGenerator {
     const innerRadius = rMax * this.config.beltOuterMultiplier;
     const outerRadius = innerRadius * 1.5; // Belt width is 50% of inner radius
     
-    return this.createBelt(parentId, innerRadius, outerRadius, index, 'Kuiper Belt');
+    return this.createBelt(parentId, innerRadius, outerRadius, index, 'Outer Belt', 'main');
   }
   
   /**
    * Create a belt with given parameters
    */
-  private createBelt(parentId: string, innerRadius: number, outerRadius: number, index: number, namePrefix: string): AsteroidBelt {
+  private createBelt(
+    parentId: string,
+    innerRadius: number,
+    outerRadius: number,
+    index: number,
+    namePrefix: string,
+    beltType: 'main' | 'kuiper'
+  ): AsteroidBelt {
     const beltId = uuidv4();
     
     // Generate belt properties
@@ -1034,8 +1061,8 @@ class AsteroidBeltGenerator {
       Math.min(this.config.beltMaxCount, baseCount)
     );
     
-    // Generate belt color (grayish-brown)
-    const baseColor = '#8B7355';
+    // Generate belt color (grayish-brown for main, bluish for Kuiper)
+    const baseColor = beltType === 'kuiper' ? '#A8C5DD' : '#8B7355';
     
     return {
       id: beltId,
@@ -1049,6 +1076,9 @@ class AsteroidBeltGenerator {
       asteroidCount,
       asteroidIds: [], // Will be populated when asteroids are created
       color: baseColor,
+      beltType,
+      regionLabel: namePrefix,
+      isIcy: beltType === 'kuiper',
       seed: this.rng.randInt(0, 2147483647),
     };
   }
@@ -1074,7 +1104,7 @@ class AsteroidBeltGenerator {
       // Generate physical properties for small rocky body
       const mass = beltPhysics.generateMass('asteroid');
       const radius = beltPhysics.generateRadius(mass);
-      const baseColor = beltPhysics.generateColor(mass, 'asteroid');
+      const baseColor = beltPhysics.generateColor(mass, 'asteroid', belt.isIcy);
       
       // Apply color variation
       const color = this.varyColor(baseColor, this.config.beltColorVariation, beltRng);
@@ -1082,9 +1112,15 @@ class AsteroidBeltGenerator {
       // Calculate orbital speed
       const speed = beltPhysics.calculateOrbitalSpeed(radialDistance);
       
+      // Determine asteroid subtype based on belt type
+      const asteroidSubType: 'mainBelt' | 'kuiperBelt' | undefined = 
+        belt.beltType === 'kuiper' ? 'kuiperBelt' :
+        belt.beltType === 'main' ? 'mainBelt' :
+        undefined;
+      
       const asteroid: Star = {
         id: asteroidId,
-        name: `${belt.name} Asteroid ${i + 1}`,
+        name: `${belt.name} ${belt.beltType === 'kuiper' ? 'Object' : 'Asteroid'} ${i + 1}`,
         mass,
         radius,
         color,
@@ -1092,6 +1128,7 @@ class AsteroidBeltGenerator {
         parentId: belt.parentId,
         bodyType: 'asteroid',
         parentBeltId: belt.id,
+        asteroidSubType,
         orbitalDistance: radialDistance,
         orbitalSpeed: speed,
         orbitalPhase: angle,
@@ -1106,6 +1143,194 @@ class AsteroidBeltGenerator {
     }
     
     return asteroids;
+  }
+  
+  /**
+   * Vary a hex color by a given amount
+   */
+  private varyColor(hexColor: string, variation: number, rng: RandomGenerator): string {
+    // Parse hex color
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    // Apply variation
+    const vary = (value: number) => {
+      const delta = rng.uniform(-variation * 50, variation * 50);
+      return Math.max(0, Math.min(255, Math.round(value + delta)));
+    };
+    
+    const newR = vary(r);
+    const newG = vary(g);
+    const newB = vary(b);
+    
+    // Convert back to hex
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  }
+}
+
+// ============================================================================
+// Kuiper Belt Generator
+// ============================================================================
+
+class KuiperBeltGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+  private physics: PhysicsGenerator;
+  
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+    this.physics = new PhysicsGenerator(config, rng);
+  }
+  
+  /**
+   * Generate Kuiper belt for a given system (trans-Neptunian region)
+   * @param stars - All stars in the system
+   * @param centerStarId - The central star ID
+   * @returns AsteroidBelt object representing the Kuiper belt and KBO Star objects
+   */
+  generate(stars: Star[], centerStarId: string): { belts: AsteroidBelt[]; asteroids: Star[] } {
+    if (!this.config.enableKuiperBelt) {
+      return { belts: [], asteroids: [] };
+    }
+    
+    // Find planets orbiting the center star
+    const planets = stars.filter(s => s.parentId === centerStarId && s.bodyType === 'planet');
+    
+    if (planets.length === 0) {
+      // No planets, skip Kuiper belt generation
+      return { belts: [], asteroids: [] };
+    }
+    
+    // Find outermost planet
+    const sortedPlanets = [...planets].sort((a, b) => a.orbitalDistance - b.orbitalDistance);
+    const outermostPlanet = sortedPlanets[sortedPlanets.length - 1];
+    const rMax = outermostPlanet.orbitalDistance;
+    
+    // Calculate Kuiper belt radii
+    const innerRadius = rMax * this.config.kuiperBeltRadialRange[0];
+    const outerRadius = rMax * this.config.kuiperBeltRadialRange[1];
+    
+    // Create the Kuiper belt
+    const belt = this.createKuiperBelt(centerStarId, innerRadius, outerRadius);
+    const kbos = this.generateKBOsForBelt(belt);
+    
+    return { belts: [belt], asteroids: kbos };
+  }
+  
+  /**
+   * Create a Kuiper belt with given parameters
+   */
+  private createKuiperBelt(parentId: string, innerRadius: number, outerRadius: number): AsteroidBelt {
+    const beltId = uuidv4();
+    
+    // Generate belt properties
+    const eccentricity = this.rng.uniform(
+      this.config.kuiperBeltEccentricityRange[0],
+      this.config.kuiperBeltEccentricityRange[1]
+    );
+    const inclination = this.rng.uniform(0, (this.config.inclinationMax ?? 0) * 0.3); // Lower base inclination
+    
+    // Determine KBO count using geometric distribution
+    const baseCount = this.rng.geometric(this.config.kuiperBeltAsteroidGeometricP);
+    const kboCount = Math.max(
+      this.config.kuiperBeltMinCount,
+      Math.min(this.config.kuiperBeltMaxCount, baseCount)
+    );
+    
+    // Thickness is higher for Kuiper belt (more scattered)
+    const thickness = this.config.kuiperBeltInclinationSigma;
+    
+    return {
+      id: beltId,
+      name: 'Kuiper Belt',
+      parentId,
+      innerRadius,
+      outerRadius,
+      thickness,
+      eccentricity,
+      inclination,
+      asteroidCount: kboCount,
+      asteroidIds: [],
+      color: '#A8C5DD', // Icy bluish color
+      beltType: 'kuiper',
+      regionLabel: 'Kuiper Belt',
+      isIcy: true,
+      inclinationSigma: this.config.kuiperBeltInclinationSigma,
+      radialRangeHint: [innerRadius, outerRadius],
+      seed: this.rng.randInt(0, 2147483647),
+    };
+  }
+  
+  /**
+   * Generate individual Kuiper Belt Objects for a belt
+   */
+  private generateKBOsForBelt(belt: AsteroidBelt): Star[] {
+    const kbos: Star[] = [];
+    
+    // Fork RNG for this specific belt to ensure determinism
+    const beltRng = this.rng.fork(`kuiper-belt-${belt.id}`);
+    const beltPhysics = new PhysicsGenerator(this.config, beltRng);
+    
+    for (let i = 0; i < belt.asteroidCount; i++) {
+      // Fork RNG per KBO for determinism
+      const kboRng = beltRng.fork(`kuiper-object-${i}`);
+      const kboPhysics = new PhysicsGenerator(this.config, kboRng);
+      
+      const kboId = uuidv4();
+      
+      // Sample position within the belt
+      const radialDistance = kboRng.uniform(belt.innerRadius, belt.outerRadius);
+      const angle = kboRng.uniform(0, 360);
+      
+      // Vertical offset with higher scatter (thicker disc)
+      const verticalOffset = kboRng.normal(0, belt.thickness);
+      
+      // Generate physical properties for small icy body
+      const mass = kboPhysics.generateMass('asteroid');
+      const radius = kboPhysics.generateRadius(mass);
+      const baseColor = kboPhysics.generateColor(mass, 'asteroid', true); // Icy colors
+      
+      // Apply color variation
+      const color = this.varyColor(baseColor, this.config.beltColorVariation, kboRng);
+      
+      // Calculate orbital speed
+      const speed = kboPhysics.calculateOrbitalSpeed(radialDistance);
+      
+      // Sample eccentricity from Kuiper belt range
+      const eccentricity = kboRng.uniform(
+        this.config.kuiperBeltEccentricityRange[0],
+        this.config.kuiperBeltEccentricityRange[1]
+      );
+      
+      // Higher inclination variation for scattered objects
+      const inclinationVariation = kboRng.normal(0, belt.inclinationSigma || 1.5);
+      
+      const kbo: Star = {
+        id: kboId,
+        name: `Kuiper Belt Object ${i + 1}`,
+        mass,
+        radius,
+        color,
+        children: [],
+        parentId: belt.parentId,
+        bodyType: 'asteroid',
+        parentBeltId: belt.id,
+        asteroidSubType: 'kuiperBelt',
+        orbitalDistance: radialDistance,
+        orbitalSpeed: speed,
+        orbitalPhase: angle,
+        eccentricity: eccentricity > 0 ? eccentricity : undefined,
+        orbitRotX: belt.inclination + inclinationVariation,
+        orbitOffsetY: verticalOffset !== 0 ? verticalOffset : undefined,
+      };
+      
+      kbos.push(kbo);
+      belt.asteroidIds.push(kboId);
+    }
+    
+    return kbos;
   }
   
   /**
@@ -1838,6 +2063,7 @@ export function generateSolarSystem(
   const starDataRng = new RandomGenerator(masterRng.fork('stardata'));
   const groupRng = new RandomGenerator(masterRng.fork('groups'));
   const beltRng = new RandomGenerator(masterRng.fork('belts'));
+  const kuiperRng = new RandomGenerator(masterRng.fork('kuiper'));
   const ringRng = new RandomGenerator(masterRng.fork('rings'));
   const cometRng = new RandomGenerator(masterRng.fork('comets'));
   const lagrangeRng = new RandomGenerator(masterRng.fork('lagrange'));
@@ -1886,13 +2112,34 @@ export function generateSolarSystem(
     });
   });
 
-  // 5. Generate planetary rings (if enabled)
+  // 5. Generate Kuiper belts (if enabled)
+  const kuiperGen = new KuiperBeltGenerator(fullConfig, kuiperRng);
+  
+  systemData.rootIds.forEach(rootId => {
+    const { belts, asteroids } = kuiperGen.generate(systemData.stars, rootId);
+    
+    // Add Kuiper belts to the map
+    belts.forEach(belt => {
+      beltMap[belt.id] = belt;
+    });
+    
+    // Add KBOs to the star map
+    asteroids.forEach(kbo => {
+      starMap[kbo.id] = kbo;
+      // Add KBO to parent's children array
+      if (kbo.parentId && starMap[kbo.parentId]) {
+        starMap[kbo.parentId].children.push(kbo.id);
+      }
+    });
+  });
+
+  // 6. Generate planetary rings (if enabled)
   const ringGen = new PlanetaryRingGenerator(fullConfig, ringRng);
   systemData.rootIds.forEach((rootId) => {
     ringGen.generate(systemData.stars, rootId);
   });
 
-  // 6. Generate comets (if enabled)
+  // 7. Generate comets (if enabled)
   const cometGen = new CometGenerator(fullConfig, cometRng);
   systemData.rootIds.forEach((rootId) => {
     const comets = cometGen.generate(systemData.stars, rootId);
@@ -1907,7 +2154,7 @@ export function generateSolarSystem(
     });
   });
   
-  // 7. Generate Lagrange points and Trojans (if enabled)
+  // 8. Generate Lagrange points and Trojans (if enabled)
   const lagrangeGen = new LagrangePointGenerator(fullConfig, lagrangeRng);
   systemData.rootIds.forEach((rootId) => {
     const lagrangeBodies = lagrangeGen.generate(starMap, rootId);

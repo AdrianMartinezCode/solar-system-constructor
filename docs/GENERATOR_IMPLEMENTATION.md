@@ -215,15 +215,45 @@ function GenerateSystemButton() {
 - In-place sorting
 - Minimal object allocation
 
+## Unified Small Body Belts
+
+Asteroid belts and Kuiper belt objects are unified as "Small Body Belts" in the generator:
+
+### Architecture
+- Both belt types use the same `AsteroidBelt` data structure
+- `beltType` discriminator: `'main'` (inner, rocky) vs `'kuiper'` (outer, icy)
+- Single `AsteroidBeltGenerator` class handles main belts
+- `KuiperBeltGenerator` creates Kuiper belts with icy properties
+- Both share the `AsteroidBeltObject` component for rendering
+
+### Performance Control: `smallBodyDetail`
+A global quality/performance knob that scales all belt object counts:
+
+| Level | Count Scale | Use Case |
+|-------|-------------|----------|
+| `low` | 0.3× | Fast rendering, testing |
+| `medium` | 0.6× | Balanced default |
+| `high` | 1.0× | Full detail |
+| `ultra` | 1.5× | Maximum density (expensive) |
+
+### LOD System (Rendering)
+The `AsteroidBeltObject` component implements automatic LOD:
+- **Near**: Full instances, per-frame updates
+- **Medium**: 1:2 subsampling, throttled updates
+- **Far**: 1:5 subsampling, ~5fps updates  
+- **Very Far**: 1:10 subsampling, ~3fps updates
+
+LOD level is determined by camera distance AND the `smallBodyDetail` setting.
+
 ## Configuration Presets
 
-| Preset | Star Prob | Planet P | Moon P | Growth | Description |
-|--------|-----------|----------|--------|--------|-------------|
-| Simple | [0.9, 0.08, 0.02] | 0.5 | 0.4 | 1.6 | Single stars, few bodies |
-| Multi-star | [0.3, 0.5, 0.2] | 0.35 | 0.25 | 1.8 | Binary/ternary focus |
-| Moon-rich | [0.7, 0.25, 0.05] | 0.3 | 0.15 | 1.5 | Lots of moons |
-| Sparse | [0.8, 0.15, 0.05] | 0.6 | 0.5 | 2.2 | Wide orbits, few bodies |
-| Galaxy | [0.65, 0.25, 0.1] | 0.4 | 0.3 | 1.8 | Multiple systems + groups |
+| Preset | Star Prob | Planet P | Moon P | Growth | smallBodyDetail |
+|--------|-----------|----------|--------|--------|-----------------|
+| Simple | [0.9, 0.08, 0.02] | 0.5 | 0.4 | 1.6 | medium |
+| Multi-star | [0.3, 0.5, 0.2] | 0.35 | 0.25 | 1.8 | medium |
+| Moon-rich | [0.7, 0.25, 0.05] | 0.3 | 0.15 | 1.5 | medium |
+| Sparse | [0.8, 0.15, 0.05] | 0.6 | 0.5 | 2.2 | low |
+| Galaxy | [0.65, 0.25, 0.1] | 0.4 | 0.3 | 1.8 | high |
 
 ## Key Formulas
 

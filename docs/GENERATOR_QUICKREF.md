@@ -79,7 +79,28 @@ generateMultipleSystems(20, {
 });
 ```
 
-### Asteroid Belts Enabled
+### Small Body Belts (Asteroid + Kuiper) with Performance Control
+```typescript
+// Low detail for fast rendering
+generateSolarSystem({
+  enableAsteroidBelts: true,
+  enableKuiperBelt: true,
+  smallBodyDetail: 'low',  // Reduces counts across all belts
+  maxBeltsPerSystem: 2,
+  beltPlacementMode: 'both',
+});
+
+// High detail for dense debris fields
+generateSolarSystem({
+  enableAsteroidBelts: true,
+  enableKuiperBelt: true,
+  smallBodyDetail: 'high',
+  maxBeltsPerSystem: 3,
+  beltPlacementMode: 'both',
+});
+```
+
+### Asteroid Belts Only
 ```typescript
 generateSolarSystem({
   enableAsteroidBelts: true,
@@ -129,14 +150,38 @@ generateSolarSystem({
 | `numGroups` | `[number, number]` | `[3, 7]` | Min/max group count |
 | `nestingProbability` | `number` | `0.2` | Group nesting chance |
 | `groupPositionSigma` | `number` | `50.0` | 3D spread of groups |
-| `enableAsteroidBelts` | `boolean` | `false` | Enable asteroid belt generation |
-| `maxBeltsPerSystem` | `number` | `2` | Max belts per system (0-5+) |
-| `beltPlacementMode` | `string` | `'betweenPlanets'` | Placement strategy |
-| `beltAsteroidGeometricP` | `number` | `0.3` | Asteroid count param |
+
+### Small Body Belts (Unified)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `smallBodyDetail` | `'low'\|'medium'\|'high'\|'ultra'` | `'medium'` | **Global quality/performance control for all belts** |
+| `enableAsteroidBelts` | `boolean` | `false` | Enable main asteroid belt generation |
+| `enableKuiperBelt` | `boolean` | `false` | Enable Kuiper belt (outer, icy) generation |
+| `maxBeltsPerSystem` | `number` | `2` | Max main belts per system (0-5+) |
+| `beltPlacementMode` | `string` | `'betweenPlanets'` | Main belt placement strategy |
+| `beltAsteroidGeometricP` | `number` | `0.3` | Asteroid count param (scaled by smallBodyDetail) |
 | `beltMinCount` | `number` | `50` | Min asteroids per belt |
 | `beltMaxCount` | `number` | `1000` | Max asteroids per belt |
 | `beltThickness` | `number` | `0.5` | Vertical spread (σ) |
 | `beltEccentricityRange` | `[number, number]` | `[0, 0.1]` | Min/max eccentricity |
+| `kuiperBeltDensity` | `number` | `0.5` | Kuiper belt density (0-1) |
+| `kuiperBeltRadialRange` | `[number, number]` | `[2.0, 3.5]` | Radial range × outermost planet |
+| `kuiperBeltInclinationSigma` | `number` | `1.5` | Vertical scatter (higher than main belt) |
+
+### smallBodyDetail Mapping
+
+| Level | Count Scale | Min/Max Multiplier | Label |
+|-------|-------------|-------------------|-------|
+| `low` | 0.3× | 0.5× / 0.3× | Low (fast) |
+| `medium` | 0.6× | 0.7× / 0.6× | Medium |
+| `high` | 1.0× | 1.0× / 1.0× | High |
+| `ultra` | 1.5× | 1.2× / 1.5× | Ultra (expensive) |
+
+### Other Features
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
 | `enablePlanetaryRings` | `boolean` | `false` | Enable per-planet ring systems |
 | `ringedPlanetProbability` | `number` | `0.1` | Base probability a planet has rings |
 
