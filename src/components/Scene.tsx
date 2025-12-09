@@ -5,7 +5,6 @@ import { useSystemStore } from '../state/systemStore';
 import { StarObject } from './StarObject';
 import { GroupBox } from './GroupBox';
 import { AsteroidBeltObject } from './AsteroidBeltObject';
-import { SmallBodyFieldObject } from './SmallBodyFieldObject';
 import { BodyCameraController } from './BodyCameraController';
 import { computeVisibleItems } from '../utils/groupUtils';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -57,6 +56,16 @@ export const Scene: React.FC = () => {
   console.log('Total Groups:', Object.keys(groups).length);
   console.log('Total Belts (legacy):', Object.keys(belts).length);
   console.log('Total Small Body Fields:', Object.keys(smallBodyFields).length);
+  if (Object.keys(smallBodyFields).length > 0) {
+    console.log('Small Body Fields:', Object.values(smallBodyFields).map(f => ({
+      name: f.name,
+      type: f.beltType,
+      particleCount: f.particleCount,
+      hostStarId: f.hostStarId,
+      innerRadius: f.innerRadius,
+      outerRadius: f.outerRadius,
+    })));
+  }
   console.log('Total Protoplanetary Disks:', Object.keys(protoplanetaryDisks).length);
   console.log('Nesting Level:', nestingLevel);
   console.log('Visible Items:', visibleItems);
@@ -113,12 +122,7 @@ export const Scene: React.FC = () => {
         <AsteroidBeltObject key={`belt-${beltId}`} beltId={beltId} />
       ))}
       
-      {/* Render small body fields (new GPU particle-based belts) */}
-      {Object.keys(smallBodyFields).map(fieldId => (
-        <SmallBodyFieldObject key={`field-${fieldId}`} fieldId={fieldId} />
-      ))}
-      
-      {/* Note: Protoplanetary disks are rendered inside StarObject for correct positioning */}
+      {/* Note: Small body fields and protoplanetary disks are rendered inside StarObject for correct positioning */}
       
       <OrbitControls 
         ref={controlsRef} 

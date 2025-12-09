@@ -53,6 +53,23 @@ export const UniverseGeneratorPanel: React.FC = () => {
     try {
       const result = generateUniverse(config);
       
+      console.log('[UniverseGeneratorPanel] Generation result:', {
+        totalStars: Object.keys(result.stars).length,
+        totalBelts: Object.keys(result.belts || {}).length,
+        totalSmallBodyFields: Object.keys(result.smallBodyFields || {}).length,
+        totalProtoplanetaryDisks: Object.keys(result.protoplanetaryDisks || {}).length,
+      });
+      
+      if (result.smallBodyFields) {
+        console.log('[UniverseGeneratorPanel] Small body fields:', Object.values(result.smallBodyFields).map(f => ({
+          id: f.id,
+          name: f.name,
+          type: f.beltType,
+          particleCount: f.particleCount,
+          hostStarId: f.hostStarId,
+        })));
+      }
+      
       // Update Zustand store using the imperative API
       useSystemStore.setState({
         stars: result.stars,
@@ -60,12 +77,16 @@ export const UniverseGeneratorPanel: React.FC = () => {
         groups: result.groups,
         rootGroupIds: result.rootGroupIds,
         belts: result.belts,
+        smallBodyFields: result.smallBodyFields || {},
         protoplanetaryDisks: result.protoplanetaryDisks || {},
         selectedStarId: null,
         selectedGroupId: null,
         selectedBeltId: null,
+        selectedSmallBodyFieldId: null,
         selectedProtoplanetaryDiskId: null,
       });
+      
+      console.log('[UniverseGeneratorPanel] Store updated. Current smallBodyFields:', Object.keys(useSystemStore.getState().smallBodyFields).length);
       
       // Save to localStorage
       useSystemStore.getState().save();

@@ -18,31 +18,31 @@ const SMALL_BODY_DETAIL_SCALES: Record<GenerationConfig['smallBodyDetail'], {
   label: string;
 }> = {
   low: {
-    countScale: 0.3,
-    geometricPAdjust: 0.2,  // Higher p = fewer objects
-    minCountScale: 0.5,
-    maxCountScale: 0.3,
+    countScale: 0.5,
+    geometricPAdjust: 0.1,  // Higher p = fewer objects
+    minCountScale: 1.0,
+    maxCountScale: 0.8,
     label: 'Low (fast)',
   },
   medium: {
-    countScale: 0.6,
-    geometricPAdjust: 0,    // No adjustment
-    minCountScale: 0.7,
-    maxCountScale: 0.6,
+    countScale: 1.0,
+    geometricPAdjust: -0.1,    // Lower p = more objects
+    minCountScale: 2.0,        // Much higher for visibility
+    maxCountScale: 2.0,
     label: 'Medium',
   },
   high: {
-    countScale: 1.0,
-    geometricPAdjust: -0.1, // Lower p = more objects
-    minCountScale: 1.0,
-    maxCountScale: 1.0,
+    countScale: 1.5,
+    geometricPAdjust: -0.2, // Lower p = more objects
+    minCountScale: 3.0,
+    maxCountScale: 3.0,
     label: 'High',
   },
   ultra: {
-    countScale: 1.5,
-    geometricPAdjust: -0.15,
-    minCountScale: 1.2,
-    maxCountScale: 1.5,
+    countScale: 2.0,
+    geometricPAdjust: -0.3,
+    minCountScale: 4.0,
+    maxCountScale: 4.0,
     label: 'Ultra (expensive)',
   },
 };
@@ -408,11 +408,11 @@ function mapBeltDensityToCounts(density: number): {
   beltMinCount: number;
   beltMaxCount: number;
 } {
-  // Scale asteroid counts based on density
-  // Low density: 50-500 asteroids
-  // High density: 200-1000 asteroids
-  const minCount = Math.floor(50 + density * 150);
-  const maxCount = Math.floor(500 + density * 500);
+  // Scale asteroid counts based on density (increased for better visibility)
+  // Low density: 300-1000 particles
+  // High density: 600-2500 particles
+  const minCount = Math.floor(300 + density * 300);
+  const maxCount = Math.floor(1000 + density * 1500);
   
   return { beltMinCount: minCount, beltMaxCount: maxCount };
 }
@@ -509,11 +509,11 @@ function mapKuiperDensityToCounts(density: number): {
   kuiperBeltMinCount: number;
   kuiperBeltMaxCount: number;
 } {
-  // Scale KBO counts based on density
-  // Low density: 100-800 KBOs
-  // High density: 300-1500 KBOs
-  const minCount = Math.floor(100 + density * 200);
-  const maxCount = Math.floor(800 + density * 700);
+  // Scale KBO counts based on density (increased for better visibility)
+  // Low density: 500-1500 particles
+  // High density: 1000-3500 particles
+  const minCount = Math.floor(500 + density * 500);
+  const maxCount = Math.floor(1500 + density * 2000);
   
   return { kuiperBeltMinCount: minCount, kuiperBeltMaxCount: maxCount };
 }
@@ -578,7 +578,29 @@ function mapTrojanRichnessToMassScaleAndVariation(richness: number): {
  * Main generation function - bridge to internal generator
  */
 export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
+  console.log('[generateUniverse] Called with config:', {
+    enableAsteroidBelts: config.enableAsteroidBelts,
+    beltDensity: config.beltDensity,
+    enableKuiperBelt: config.enableKuiperBelt,
+    kuiperBeltDensity: config.kuiperBeltDensity,
+    smallBodyDetail: config.smallBodyDetail,
+    maxBeltsPerSystem: config.maxBeltsPerSystem,
+    beltPlacementMode: config.beltPlacementMode,
+  });
+  
   const internalConfig = mapConfigToInternal(config);
+  
+  console.log('[generateUniverse] Internal config belt settings:', {
+    enableAsteroidBelts: internalConfig.enableAsteroidBelts,
+    beltPlacementMode: internalConfig.beltPlacementMode,
+    beltAsteroidGeometricP: internalConfig.beltAsteroidGeometricP,
+    beltMinCount: internalConfig.beltMinCount,
+    beltMaxCount: internalConfig.beltMaxCount,
+    enableKuiperBelt: internalConfig.enableKuiperBelt,
+    kuiperBeltDensity: internalConfig.kuiperBeltDensity,
+    kuiperBeltMinCount: internalConfig.kuiperBeltMinCount,
+    kuiperBeltMaxCount: internalConfig.kuiperBeltMaxCount,
+  });
   
   // Use seed for deterministic generation
   const seed = config.seed || undefined; // Convert empty string to undefined
@@ -591,7 +613,6 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   }
   
   // Count totals
-  const totalAsteroids = Object.values(result.belts).reduce((sum, belt) => sum + belt.asteroidCount, 0);
   const allStars = Object.values(result.stars);
   const totalRingedPlanets = allStars.filter(
     (star) => star.bodyType === 'planet' && star.ring
@@ -601,17 +622,40 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   const totalLagrangePoints = allStars.filter((star) => star.bodyType === 'lagrangePoint').length;
   const totalLagrangeMarkers = totalLagrangePoints; // Same count
   const totalTrojanBodies = allStars.filter((star) => star.lagrangeHostId !== undefined).length;
+  
+  // Legacy asteroid/KBO counts from Star entities (for backwards compatibility)
   const totalKuiperObjects = allStars.filter((star) => star.asteroidSubType === 'kuiperBelt').length;
   const totalMainBeltAsteroids = allStars.filter((star) => star.asteroidSubType === 'mainBelt').length;
+  const totalAsteroids = totalMainBeltAsteroids + totalKuiperObjects;
   
   // ============================================================================
-  // Unified Small Body Stats
+  // Unified Small Body Stats (Particle Field Version)
   // ============================================================================
-  const allBelts = Object.values(result.belts);
-  const totalMainBelts = allBelts.filter((belt) => belt.beltType === 'main' || !belt.beltType).length;
-  const totalKuiperBelts = allBelts.filter((belt) => belt.beltType === 'kuiper').length;
+  const allFields = Object.values(result.smallBodyFields || {});
+  const totalMainBelts = allFields.filter((field) => field.beltType === 'main').length;
+  const totalKuiperBelts = allFields.filter((field) => field.beltType === 'kuiper').length;
   const totalSmallBodyBelts = totalMainBelts + totalKuiperBelts;
-  const totalSmallBodies = totalMainBeltAsteroids + totalKuiperObjects;
+  
+  // Calculate particle counts from fields
+  const totalSmallBodyParticles = allFields.reduce((sum, field) => sum + field.particleCount, 0);
+  const totalMainBeltParticles = allFields
+    .filter((field) => field.beltType === 'main')
+    .reduce((sum, field) => sum + field.particleCount, 0);
+  const totalKuiperBeltParticles = allFields
+    .filter((field) => field.beltType === 'kuiper')
+    .reduce((sum, field) => sum + field.particleCount, 0);
+  
+  // Use particle counts as "total small bodies" (replaces entity counts)
+  const totalSmallBodies = totalSmallBodyParticles > 0 ? totalSmallBodyParticles : (totalMainBeltAsteroids + totalKuiperObjects);
+  
+  console.log('[generateUniverse] Small body field stats:', {
+    totalFields: allFields.length,
+    totalMainBelts,
+    totalKuiperBelts,
+    totalSmallBodyParticles,
+    totalMainBeltParticles,
+    totalKuiperBeltParticles,
+  });
   
   // ============================================================================
   // Protoplanetary Disk Stats
@@ -624,25 +668,30 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     ...result,
     totalStars: Object.keys(result.stars).length,
     totalGroups: Object.keys(result.groups).length,
-    totalBelts: Object.keys(result.belts).length,
-    totalAsteroids,
+    totalBelts: Object.keys(result.belts).length,  // Legacy
+    totalAsteroids,  // Legacy entity count
     totalRingedPlanets,
     totalRings,
     totalComets,
     totalLagrangePoints,
     totalLagrangeMarkers,
     totalTrojanBodies,
-    totalKuiperObjects,
-    // Unified small body stats
+    totalKuiperObjects,  // Legacy entity count
+    // Unified small body stats (particle-based)
     totalSmallBodyBelts,
-    totalSmallBodies,
+    totalSmallBodies,  // Now uses particle counts
     totalMainBelts,
     totalKuiperBelts,
-    totalMainBeltAsteroids,
+    totalMainBeltAsteroids: totalMainBeltParticles > 0 ? totalMainBeltParticles : totalMainBeltAsteroids,
+    totalSmallBodyParticles,
+    totalMainBeltParticles,
+    totalKuiperBeltParticles,
     // Protoplanetary disk stats
     protoplanetaryDisks: result.protoplanetaryDisks,
     totalProtoplanetaryDisks,
     totalProtoplanetaryDiskParticles,
+    // Small body fields (new)
+    smallBodyFields: result.smallBodyFields,
     generatedAt: new Date(),
   };
 }

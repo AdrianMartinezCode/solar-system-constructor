@@ -84,7 +84,8 @@ export interface GeneratedUniverse {
   rootIds: string[];
   groups: Record<string, Group>;
   rootGroupIds: string[];
-  belts: Record<string, AsteroidBelt>;
+  belts: Record<string, AsteroidBelt>;  // Legacy, kept for backwards compat
+  smallBodyFields?: Record<string, SmallBodyField>;  // New particle-based belts
   totalStars: number;
   totalGroups: number;
   totalBelts: number;
@@ -95,26 +96,35 @@ export interface GeneratedUniverse {
   totalLagrangePoints?: number;      // Total number of Lagrange point markers
   totalLagrangeMarkers?: number;     // Same as totalLagrangePoints (for clarity)
   totalTrojanBodies?: number;        // Number of Trojan bodies at L4/L5
-  totalKuiperObjects?: number;       // Number of Kuiper Belt Objects
+  totalKuiperObjects?: number;       // Number of Kuiper Belt Objects (legacy entity count)
   
   // ============================================================================
-  // Unified Small Body Stats (aggregates asteroid belts + Kuiper belt objects)
+  // Unified Small Body Stats (particle-field based)
   // ============================================================================
   
-  /** Total number of small body belts (main belts + Kuiper belts) */
+  /** Total number of small body belt fields (main belts + Kuiper belts) */
   totalSmallBodyBelts?: number;
   
-  /** Total count of all small bodies (main belt asteroids + KBOs) */
+  /** Total approximate particle count in all belt fields */
   totalSmallBodies?: number;
   
-  /** Breakdown: number of main asteroid belts */
+  /** Breakdown: number of main asteroid belt fields */
   totalMainBelts?: number;
   
-  /** Breakdown: number of Kuiper belts */
+  /** Breakdown: number of Kuiper belt fields */
   totalKuiperBelts?: number;
   
-  /** Breakdown: number of main belt asteroids */
+  /** Breakdown: approximate particle count in main belts */
   totalMainBeltAsteroids?: number;
+  
+  /** Total approximate particles across all small body fields */
+  totalSmallBodyParticles?: number;
+  
+  /** Approximate particle count in main belt fields */
+  totalMainBeltParticles?: number;
+  
+  /** Approximate particle count in Kuiper belt fields */
+  totalKuiperBeltParticles?: number;
   
   // ============================================================================
   // Protoplanetary Disks (visual-only particle fields)
@@ -133,5 +143,5 @@ export interface GeneratedUniverse {
 }
 
 // Re-export types from main types file
-import type { Star, Group, AsteroidBelt, ProtoplanetaryDisk } from '../types';
+import type { Star, Group, AsteroidBelt, ProtoplanetaryDisk, SmallBodyField } from '../types';
 

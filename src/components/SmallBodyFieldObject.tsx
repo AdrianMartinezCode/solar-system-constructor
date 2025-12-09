@@ -24,13 +24,6 @@ export const SmallBodyFieldObject: React.FC<SmallBodyFieldObjectProps> = ({ fiel
   
   const field = useSystemStore((state) => state.smallBodyFields[fieldId]);
   const selectSmallBodyField = useSystemStore((state) => state.selectSmallBodyField);
-  const stars = useSystemStore((state) => state.stars);
-  
-  // Get host star position for positioning the field
-  const hostStar = useMemo(() => {
-    if (!field) return null;
-    return stars[field.hostStarId];
-  }, [field, stars]);
   
   // Generate particle positions, colors, and sizes using the field's seed
   const { positions, colors, sizes } = useMemo(() => {
@@ -76,9 +69,9 @@ export const SmallBodyFieldObject: React.FC<SmallBodyFieldObjectProps> = ({ fiel
       const noiseFreq = field.beltType === 'main' ? 8.0 : 5.0;
       const clumpNoise = (Math.sin(theta * noiseFreq + r * 0.2) * 0.5 + 0.5) * clumpFactor;
       
-      // Skip some particles based on clumpiness (creates gaps)
-      const densityThreshold = 1.0 - clumpFactor * 0.3;
-      if (rng() > densityThreshold + clumpNoise * 0.3) {
+      // Skip fewer particles for higher density (reduced threshold)
+      const densityThreshold = 1.0 - clumpFactor * 0.15;  // Reduced from 0.3 to 0.15
+      if (rng() > densityThreshold + clumpNoise * 0.2) {  // Reduced from 0.3 to 0.2
         // Make this particle invisible by setting it at origin with size 0
         positions[i * 3] = 0;
         positions[i * 3 + 1] = 0;
@@ -106,14 +99,14 @@ export const SmallBodyFieldObject: React.FC<SmallBodyFieldObjectProps> = ({ fiel
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
       
-      // Size: varied based on belt type
+      // Size: varied based on belt type (maximized for visibility)
       // Main belt asteroids are generally smaller and more uniform
       // Kuiper belt objects have more size variation
-      const baseSizeRange = field.beltType === 'main' ? [0.015, 0.035] : [0.02, 0.06];
+      const baseSizeRange = field.beltType === 'main' ? [0.06, 0.12] : [0.08, 0.16];
       const baseSize = baseSizeRange[0] + rng() * (baseSizeRange[1] - baseSizeRange[0]);
       
       // Slightly larger particles in clumpy regions (denser areas)
-      const clumpSizeBoost = 1.0 + clumpNoise * 0.3;
+      const clumpSizeBoost = 1.0 + clumpNoise * 0.5;
       sizes[i] = baseSize * clumpSizeBoost;
     }
     
@@ -131,7 +124,7 @@ export const SmallBodyFieldObject: React.FC<SmallBodyFieldObjectProps> = ({ fiel
     field?.beltType,
   ]);
   
-  // Animate field rotation
+  // Animate field rotation (position is inherited from parent StarObject)
   useFrame(() => {
     if (!pointsRef.current || !field) return;
     
@@ -160,15 +153,29 @@ export const SmallBodyFieldObject: React.FC<SmallBodyFieldObjectProps> = ({ fiel
     selectSmallBodyField(fieldId);
   };
   
-  if (!field || !hostStar || positions.length === 0) {
+  if (!field || positions.length === 0) {
+    if (!field) {
+      console.warn(`SmallBodyField ${fieldId} not found in store`);
+    } else if (positions.length === 0) {
+      console.warn(`No particles generated for field ${fieldId} (particleCount: ${field.particleCount})`);
+    }
     return null;
   }
   
-  // Position at host star location
-  const hostPos = hostStar.parentId ? { x: 0, y: 0, z: 0 } : { x: 0, y: 0, z: 0 };
+  console.log(`Rendering SmallBodyField ${field.name}:`, {
+    particleCount: field.particleCount,
+    positionCount: positions.length / 3,
+    innerRadius: field.innerRadius,
+    outerRadius: field.outerRadius,
+    beltType: field.beltType,
+    hostStarId: field.hostStarId,
+    opacity: field.opacity,
+    brightness: field.brightness,
+  });
   
+  // Position is inherited from parent StarObject, render at local (0,0,0)
   return (
-    <group position={[hostPos.x, hostPos.y, hostPos.z]}>
+    <group>
       <points ref={pointsRef} onClick={handleClick}>
         <bufferGeometry>
           <bufferAttribute
@@ -196,8 +203,8 @@ export const SmallBodyFieldObject: React.FC<SmallBodyFieldObjectProps> = ({ fiel
           depthWrite={false}
           blending={THREE.AdditiveBlending}
           uniforms={{
-            opacity: { value: field.opacity },
-            brightness: { value: field.brightness },
+            opacity: { value: Math.min(1.0, field.opacity * 1.2) }, // Boost opacity
+            brightness: { value: field.brightness * 2.0 }, // Double brightness for visibility
           }}
           vertexShader={`
             attribute float size;

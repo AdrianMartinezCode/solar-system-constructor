@@ -986,7 +986,15 @@ class AsteroidBeltGenerator {
    * @returns Array of SmallBodyField objects (no asteroid Star entities)
    */
   generate(stars: Star[], centerStarId: string, systemId: string): { fields: SmallBodyField[] } {
+    console.log('[AsteroidBeltGenerator] Generate called:', {
+      enableAsteroidBelts: this.config.enableAsteroidBelts,
+      beltPlacementMode: this.config.beltPlacementMode,
+      centerStarId,
+      systemId,
+    });
+    
     if (!this.config.enableAsteroidBelts || this.config.beltPlacementMode === 'none') {
+      console.log('[AsteroidBeltGenerator] Belts disabled, returning empty array');
       return { fields: [] };
     }
     
@@ -994,6 +1002,8 @@ class AsteroidBeltGenerator {
     
     // Find planets orbiting the center star
     const planets = stars.filter(s => s.parentId === centerStarId && s.bodyType !== 'star');
+    
+    console.log('[AsteroidBeltGenerator] Found planets:', planets.length);
     
     // Sort planets by orbital distance
     const sortedPlanets = [...planets].sort((a, b) => a.orbitalDistance - b.orbitalDistance);
@@ -1027,6 +1037,14 @@ class AsteroidBeltGenerator {
       fields.push(field);
       beltsCreated++;
     }
+    
+    console.log(`[AsteroidBeltGenerator] Created ${beltsCreated} belt fields:`, fields.map(f => ({
+      name: f.name,
+      type: f.beltType,
+      particleCount: f.particleCount,
+      innerRadius: f.innerRadius,
+      outerRadius: f.outerRadius,
+    })));
     
     return { fields };
   }
@@ -1097,10 +1115,10 @@ class AsteroidBeltGenerator {
     const baseColor = isIcy ? '#8B7D6B' : '#8B7355';  // Rocky brown for main
     const highlightColor = isIcy ? '#B8A896' : '#A68A6D';  // Lighter brown for main
     
-    // Visual properties
-    const opacity = this.rng.uniform(0.4, 0.7);
-    const brightness = this.rng.uniform(0.6, 0.9);
-    const clumpiness = this.rng.uniform(0.3, 0.6);
+    // Visual properties (maximized for visibility)
+    const opacity = this.rng.uniform(0.8, 1.0);
+    const brightness = this.rng.uniform(1.2, 1.8);
+    const clumpiness = this.rng.uniform(0.2, 0.4);  // Lower clumpiness = more uniform density
     
     // Rotation speed (belts rotate very slowly)
     const rotationSpeedMultiplier = this.rng.uniform(0.5, 1.5);
@@ -1163,15 +1181,25 @@ class KuiperBeltGenerator {
    * @returns SmallBodyField object representing the Kuiper belt (no KBO Star entities)
    */
   generate(stars: Star[], centerStarId: string, systemId: string): { fields: SmallBodyField[] } {
+    console.log('[KuiperBeltGenerator] Generate called:', {
+      enableKuiperBelt: this.config.enableKuiperBelt,
+      centerStarId,
+      systemId,
+    });
+    
     if (!this.config.enableKuiperBelt) {
+      console.log('[KuiperBeltGenerator] Kuiper belt disabled, returning empty array');
       return { fields: [] };
     }
     
     // Find planets orbiting the center star
     const planets = stars.filter(s => s.parentId === centerStarId && s.bodyType === 'planet');
     
+    console.log('[KuiperBeltGenerator] Found planets:', planets.length);
+    
     if (planets.length === 0) {
       // No planets, skip Kuiper belt generation
+      console.log('[KuiperBeltGenerator] No planets found, skipping Kuiper belt');
       return { fields: [] };
     }
     
@@ -1186,6 +1214,14 @@ class KuiperBeltGenerator {
     
     // Create the Kuiper belt field
     const field = this.createKuiperBeltField(centerStarId, systemId, innerRadius, outerRadius);
+    
+    console.log('[KuiperBeltGenerator] Created Kuiper belt field:', {
+      name: field.name,
+      type: field.beltType,
+      particleCount: field.particleCount,
+      innerRadius: field.innerRadius,
+      outerRadius: field.outerRadius,
+    });
     
     return { fields: [field] };
   }
@@ -1203,15 +1239,12 @@ class KuiperBeltGenerator {
     const fieldId = uuidv4();
     
     // Determine KBO particle count using geometric distribution
+    // Note: min/max counts are already scaled by density in generatorBridge
     const baseCount = this.rng.geometric(this.config.kuiperBeltAsteroidGeometricP);
     const particleCount = Math.max(
       this.config.kuiperBeltMinCount,
       Math.min(this.config.kuiperBeltMaxCount, baseCount)
     );
-    
-    // Apply density scaling from config
-    const densityScale = this.config.kuiperBeltDensity;
-    const scaledParticleCount = Math.floor(particleCount * densityScale);
     
     // Thickness is higher for Kuiper belt (more scattered)
     const thickness = this.config.kuiperBeltInclinationSigma;
@@ -1220,10 +1253,10 @@ class KuiperBeltGenerator {
     const baseColor = '#A8C5DD';  // Icy bluish-gray
     const highlightColor = '#D0E0F0';  // Lighter icy blue
     
-    // Visual properties
-    const opacity = this.rng.uniform(0.3, 0.6);  // More transparent than main belts
-    const brightness = this.rng.uniform(0.5, 0.8);
-    const clumpiness = this.rng.uniform(0.4, 0.7);  // More clumpy/scattered
+    // Visual properties (maximized for visibility)
+    const opacity = this.rng.uniform(0.7, 0.9);  // High opacity for visibility
+    const brightness = this.rng.uniform(1.0, 1.5);
+    const clumpiness = this.rng.uniform(0.3, 0.5);  // Moderate clumpiness
     
     // Rotation speed (Kuiper belt rotates very slowly)
     const rotationSpeedMultiplier = this.rng.uniform(0.3, 0.8);
@@ -1238,7 +1271,7 @@ class KuiperBeltGenerator {
       innerRadius,
       outerRadius,
       thickness,
-      particleCount: scaledParticleCount,
+      particleCount,
       baseColor,
       highlightColor,
       opacity,
@@ -2161,6 +2194,7 @@ export function generateSolarSystem(
   });
   
   // 4. Generate asteroid belt particle fields (if enabled)
+  console.log('[generateSolarSystem] Generating asteroid belt fields...');
   const beltGen = new AsteroidBeltGenerator(fullConfig, beltRng);
   const beltMap: Record<string, AsteroidBelt> = {};  // Legacy, kept empty for backwards compat
   const smallBodyFieldMap: Record<string, SmallBodyField> = {};
@@ -2175,8 +2209,11 @@ export function generateSolarSystem(
       smallBodyFieldMap[field.id] = field;
     });
   });
+  
+  console.log('[generateSolarSystem] Total main belt fields created:', Object.values(smallBodyFieldMap).filter(f => f.beltType === 'main').length);
 
   // 5. Generate Kuiper belt particle fields (if enabled)
+  console.log('[generateSolarSystem] Generating Kuiper belt fields...');
   const kuiperGen = new KuiperBeltGenerator(fullConfig, kuiperRng);
   
   systemData.rootIds.forEach((rootId, systemIndex) => {
@@ -2188,6 +2225,9 @@ export function generateSolarSystem(
       smallBodyFieldMap[field.id] = field;
     });
   });
+  
+  console.log('[generateSolarSystem] Total Kuiper belt fields created:', Object.values(smallBodyFieldMap).filter(f => f.beltType === 'kuiper').length);
+  console.log('[generateSolarSystem] Total small body fields:', Object.keys(smallBodyFieldMap).length);
 
   // 6. Generate planetary rings (if enabled)
   const ringGen = new PlanetaryRingGenerator(fullConfig, ringRng);

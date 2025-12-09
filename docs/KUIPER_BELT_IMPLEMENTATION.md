@@ -4,28 +4,42 @@
 
 Full support for Kuiper Belt Objects (KBOs) has been successfully added to the Solar System Constructor. The feature is **production-ready**, fully integrated with existing systems, and maintains backward compatibility.
 
+## ⚡ GPU Particle Field Architecture (Latest Update)
+
+**As of the latest refactoring**, Kuiper belts now use a **GPU-based particle field approach** similar to protoplanetary disks, replacing the previous system of thousands of individual `Star` entities. This dramatically improves performance while maintaining visual quality and all existing configuration semantics.
+
+### Key Architecture Changes:
+
+- **New `SmallBodyField` type**: Particle-field representation with geometry, visual properties, and PRNG seed
+- **GPU rendering**: `SmallBodyFieldObject.tsx` component using custom shaders and buffer attributes
+- **No individual entities**: Kuiper belts are now visual-only particle fields, not collections of `Star` KBO objects
+- **Preserved semantics**: All existing UI controls (`kuiperBeltDensity`, `smallBodyDetail`, etc.) still work, now controlling particle counts
+- **Performance**: Massive reduction in CPU overhead; Kuiper belts with 1500+ particles run smoothly
+- **Determinism**: PRNG-based particle distribution ensures same seed → same visual result
+
 ## Unification with Asteroid Belts
 
-Kuiper belts are now part of a **unified "Small Body Belts" system** alongside main asteroid belts. Both types share the same infrastructure while preserving their physical distinctions:
+Kuiper belts are now part of a **unified "Small Body Belts" system** alongside main asteroid belts. Both types share the same particle field infrastructure while preserving their physical distinctions:
 
 ### Shared Infrastructure:
-- **Data model**: Both use `AsteroidBelt` interface (with `beltType: 'kuiper'`)
-- **Rendering**: Single `AsteroidBeltObject` component with LOD optimization
+- **Data model**: Both use `SmallBodyField` interface (with `beltType: 'kuiper'`)
+- **Rendering**: Single `SmallBodyFieldObject` component with GPU particles
 - **UI**: Combined "Small Body Belts & Fields" section in generator panel
-- **Stats**: Aggregated as `totalSmallBodies` + per-type breakdown
+- **Stats**: Aggregated as `totalSmallBodyParticles` + per-type breakdown
 
 ### Key Differences Preserved:
 - **Position**: Kuiper belts are outer (trans-Neptunian), main belts are inner
-- **Composition**: `isIcy: true` for Kuiper, rocky colors for main belt
-- **Inclination**: Higher `inclinationSigma` for scattered disc appearance
-- **Colors**: Icy bluish-gray vs rocky browns
+- **Composition**: `isIcy: true` for Kuiper, icy blue-gray colors
+- **Inclination**: Higher `inclinationSigma` for scattered disc appearance (thicker vertical spread)
+- **Visual style**: `style: 'scattered'` for Kuiper vs `'moderate'` for main belts
+- **Clumpiness**: Higher clumpiness factor for more scattered appearance
 
 ### Performance Control:
-The `smallBodyDetail` config option now controls both belt types:
-- `"low"`: Fast rendering, ~100-300 objects per belt
-- `"medium"`: Balanced, ~300-600 objects per belt
-- `"high"`: Detailed, ~600-1000 objects per belt
-- `"ultra"`: Maximum density, ~1000-1500+ objects (expensive)
+The `smallBodyDetail` config option now controls particle counts for both belt types:
+- `"low"`: Fast rendering, ~100-300 particles per belt
+- `"medium"`: Balanced, ~300-600 particles per belt
+- `"high"`: Detailed, ~600-1000 particles per belt
+- `"ultra"`: Maximum density, ~1000-1500+ particles (GPU-accelerated, minimal CPU cost)
 
 ## Implementation Complete ✓
 
@@ -68,13 +82,13 @@ All requirements from the specification have been implemented:
   - Added `isIcy?: boolean` parameter
   - Icy colors: `#B0C4DE, #D3D3D3, #E0F3FF, #A8C5DD, #E0E8F0, #C9D9E8`
   - Distinct from rocky main belt colors
-- ✅ Implemented complete `KuiperBeltGenerator` class:
+- ✅ Implemented complete `KuiperBeltGenerator` class (refactored to particle fields):
   - Placement algorithm: calculates belt beyond outermost planet using configurable radial range
-  - Deterministic KBO generation using forked PRNG streams
-  - Physical property generation with icy colors and smaller masses
+  - Deterministic particle field generation using forked PRNG streams
+  - Visual properties: icy blue-gray colors (`#A8C5DD`, `#D0E0F0`)
   - Higher inclination scatter (thicker disc) via `inclinationSigma`
-  - Orbital parameter assignment following Kepler's laws
-  - Sets `beltType: 'kuiper'` and `asteroidSubType: 'kuiperBelt'` for proper identification
+  - Particle count scaled by `kuiperBeltDensity` and `smallBodyDetail`
+  - Sets `beltType: 'kuiper'`, `isIcy: true`, and `style: 'scattered'` for proper identification
 - ✅ Integrated Kuiper belt generation into main `generateSolarSystem()` function:
   - Phase 5 in the pipeline (after main asteroid belts, before planetary rings)
   - Uses dedicated `kuiperRng` fork for reproducibility

@@ -8,6 +8,7 @@ import { PlanetaryRingObject } from './PlanetaryRingObject';
 import { CometObject } from './CometObject';
 import { LagrangePointObject } from './LagrangePointObject';
 import { ProtoplanetaryDiskObject } from './ProtoplanetaryDiskObject';
+import { SmallBodyFieldObject } from './SmallBodyFieldObject';
 
 interface StarObjectProps {
   starId: string;
@@ -22,6 +23,7 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
   const selectedStarId = useSystemStore((state) => state.selectedStarId);
   const selectStar = useSystemStore((state) => state.selectStar);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
+  const smallBodyFields = useSystemStore((state) => state.smallBodyFields);
   
   const isSelected = selectedStarId === starId;
   
@@ -31,6 +33,13 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
       diskId => protoplanetaryDisks[diskId].centralStarId === starId
     ) || null;
   }, [protoplanetaryDisks, starId]);
+  
+  // Find all belt fields hosted by this star
+  const associatedBeltFieldIds = useMemo(() => {
+    return Object.keys(smallBodyFields).filter(
+      fieldId => smallBodyFields[fieldId].hostStarId === starId
+    );
+  }, [smallBodyFields, starId]);
   
   // Calculate position based on orbital parameters (now supports elliptical orbits)
   const position = useMemo(() => {
@@ -118,6 +127,11 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
           {associatedDiskId && (
             <ProtoplanetaryDiskObject diskId={associatedDiskId} />
           )}
+          
+          {/* Small body fields (asteroid/Kuiper belts hosted by this star) */}
+          {associatedBeltFieldIds.map(fieldId => (
+            <SmallBodyFieldObject key={fieldId} fieldId={fieldId} />
+          ))}
         </>
       )}
       

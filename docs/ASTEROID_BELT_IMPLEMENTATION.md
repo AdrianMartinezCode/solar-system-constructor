@@ -85,20 +85,23 @@ All requirements from the specification have been implemented:
 ### 3. Rendering & Physics Integration ✓
 
 **Files Created/Modified:**
-- `src/components/AsteroidBeltObject.tsx` (new)
+- `src/components/SmallBodyFieldObject.tsx` (new GPU particle renderer)
+- `src/components/AsteroidBeltObject.tsx` (legacy, kept for backwards compatibility)
 - `src/components/Scene.tsx`
 - `src/state/systemStore.ts`
 
 **Changes:**
-- ✅ Created `AsteroidBeltObject` component using **instanced meshes** for performance
-  - Renders hundreds/thousands of asteroids efficiently
-  - Updates positions each frame based on orbital mechanics
-  - Uses per-instance colors from asteroid data
-- ✅ Integrated belt rendering into Scene component
-- ✅ Extended Zustand store with `belts` state and `selectedBeltId`
-- ✅ Asteroids respect `timeScale` (pause, slow-motion, hyperspeed)
-- ✅ Asteroids use same `calculateOrbitalPosition()` as other bodies
-- ✅ Performance optimized with instanced rendering (no per-asteroid React components)
+- ✅ Created `SmallBodyFieldObject` component using **GPU particle fields**
+  - Renders thousands of particles efficiently with custom shaders
+  - Deterministic PRNG-based particle distribution
+  - Per-particle colors, sizes, and positions computed once and buffered
+  - Slow rotation animation based on `timeScale` and `rotationSpeedMultiplier`
+  - Visual distinction: main belts (rocky browns) vs Kuiper belts (icy blues)
+- ✅ Integrated field rendering into Scene component
+- ✅ Extended Zustand store with `smallBodyFields` state and `selectedSmallBodyFieldId`
+- ✅ Fields respect `timeScale` for rotation animation
+- ✅ Performance optimized: GPU-based, no per-particle CPU updates
+- ✅ Legacy `AsteroidBeltObject` retained for backwards compatibility with old saves
 
 ### 4. Universe Generator UI Changes ✓
 
