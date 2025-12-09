@@ -239,3 +239,81 @@ export interface ProtoplanetaryDisk {
   name?: string;
 }
 
+/**
+ * Small Body Field - a GPU particle field for asteroid belts and Kuiper belts.
+ * 
+ * This replaces the previous system of creating thousands of individual Star entities
+ * for asteroids/KBOs with a performant GPU-based particle field approach.
+ * 
+ * Modeled after ProtoplanetaryDisk but specialized for rocky/icy small body populations.
+ * The field is visual-only and uses deterministic PRNG for particle distribution.
+ */
+export interface SmallBodyField {
+  /** Unique identifier for this field */
+  id: string;
+  
+  /** System ID that this field belongs to (for multi-system organization) */
+  systemId: string;
+  
+  /** ID of the host star this field orbits */
+  hostStarId: string;
+  
+  // Geometry (in orbital distance units)
+  /** Inner radius of the belt (start of particle distribution) */
+  innerRadius: number;
+  
+  /** Outer radius of the belt (end of particle distribution) */
+  outerRadius: number;
+  
+  /** Vertical thickness / scatter (standard deviation for Y offsets) */
+  thickness: number;
+  
+  // Visual parameters
+  /** Approximate particle count (before LOD scaling) */
+  particleCount: number;
+  
+  /** Base color for particles (hex string) */
+  baseColor: string;
+  
+  /** Highlight/accent color for variation (hex string) */
+  highlightColor: string;
+  
+  /** Overall opacity (0-1) */
+  opacity: number;
+  
+  /** Brightness scalar */
+  brightness: number;
+  
+  /** Clumpiness factor (0-1) controlling density variation */
+  clumpiness: number;
+  
+  /** Rotation speed multiplier (scales belt rotation relative to timeScale) */
+  rotationSpeedMultiplier: number;
+  
+  // Belt-specific metadata
+  /** Belt type discriminator ('main' = inner rocky, 'kuiper' = outer icy) */
+  beltType: 'main' | 'kuiper';
+  
+  /** Region label for UI display (e.g. "Main Belt", "Kuiper Belt") */
+  regionLabel: string;
+  
+  /** Whether this belt represents icy bodies (affects color palette) */
+  isIcy: boolean;
+  
+  /** Extra inclination scatter for Kuiper-type belts (adds to thickness) */
+  inclinationSigma?: number;
+  
+  // PRNG and style
+  /** Seed for deterministic particle distribution */
+  seed: string | number;
+  
+  /** Visual style preset */
+  style: 'thin' | 'moderate' | 'thick' | 'scattered';
+  
+  /** Optional display name */
+  name?: string;
+  
+  /** Optional visibility toggle for UI control */
+  visible?: boolean;
+}
+

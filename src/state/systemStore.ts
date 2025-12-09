@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, NestingLevel, AsteroidBelt, PlanetaryRing, ProtoplanetaryDisk } from '../types';
+import { Star, Group, GroupChild, NestingLevel, AsteroidBelt, PlanetaryRing, ProtoplanetaryDisk, SmallBodyField } from '../types';
 import { saveSystem, loadSystem } from '../utils/persistence';
 import { createExampleSystem } from '../utils/exampleData';
 import { findHeaviestStar } from '../utils/physics';
@@ -12,9 +12,13 @@ interface SystemStore {
   time: number;
   timeScale: number; // Global simulation speed multiplier (0-50)
   
-  // Asteroid belt management
+  // Asteroid belt management (legacy, kept for backwards compatibility)
   belts: Record<string, AsteroidBelt>;
   selectedBeltId: string | null;
+  
+  // Small body particle fields (new performant representation for belts)
+  smallBodyFields: Record<string, SmallBodyField>;
+  selectedSmallBodyFieldId: string | null;
   
   // Protoplanetary disk management (visual-only particle fields)
   protoplanetaryDisks: Record<string, ProtoplanetaryDisk>;
@@ -43,6 +47,12 @@ interface SystemStore {
   // Planetary ring operations (per-planet)
   updateRing: (planetId: string, payload: Partial<PlanetaryRing>) => void;
   removeRing: (planetId: string) => void;
+  
+  // Small body field operations (particle-based belts)
+  setSmallBodyFields: (fields: Record<string, SmallBodyField>) => void;
+  selectSmallBodyField: (id: string | null) => void;
+  updateSmallBodyField: (id: string, patch: Partial<SmallBodyField>) => void;
+  removeSmallBodyField: (id: string) => void;
   
   // Protoplanetary disk operations
   setProtoplanetaryDisks: (disks: Record<string, ProtoplanetaryDisk>) => void;
@@ -88,9 +98,13 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   time: 0,
   timeScale: 1.0, // Default to normal speed (1x)
   
-  // Belt state
+  // Belt state (legacy)
   belts: {},
   selectedBeltId: null,
+  
+  // Small body fields state (new particle-based representation)
+  smallBodyFields: {},
+  selectedSmallBodyFieldId: null,
   
   // Protoplanetary disk state
   protoplanetaryDisks: {},
@@ -209,6 +223,56 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
     get().save();
   },
 
+  // Small body field operations
+  setSmallBodyFields: (fields) => {
+    set({ smallBodyFields: fields });
+    get().save();
+  },
+
+  selectSmallBodyField: (id) => {
+    set({
+      selectedSmallBodyFieldId: id,
+      selectedStarId: null,
+      selectedGroupId: null,
+      selectedBeltId: null,
+      selectedProtoplanetaryDiskId: null,
+    });
+  },
+
+  updateSmallBodyField: (id, patch) => {
+    set((state) => {
+      const field = state.smallBodyFields[id];
+      if (!field) return state;
+
+      return {
+        smallBodyFields: {
+          ...state.smallBodyFields,
+          [id]: {
+            ...field,
+            ...patch,
+          },
+        },
+      };
+    });
+
+    get().save();
+  },
+
+  removeSmallBodyField: (id) => {
+    set((state) => {
+      const newFields = { ...state.smallBodyFields };
+      delete newFields[id];
+
+      return {
+        smallBodyFields: newFields,
+        selectedSmallBodyFieldId:
+          state.selectedSmallBodyFieldId === id ? null : state.selectedSmallBodyFieldId,
+      };
+    });
+
+    get().save();
+  },
+
   // Protoplanetary disk operations
   setProtoplanetaryDisks: (disks) => {
     set({ protoplanetaryDisks: disks });
@@ -221,6 +285,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       selectedStarId: null,
       selectedGroupId: null,
       selectedBeltId: null,
+      selectedSmallBodyFieldId: null,
     });
   },
 
@@ -403,11 +468,23 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   },
   
   selectStar: (id) => {
-    set({ selectedStarId: id, selectedGroupId: null, selectedBeltId: null });
+    set({ 
+      selectedStarId: id, 
+      selectedGroupId: null, 
+      selectedBeltId: null,
+      selectedSmallBodyFieldId: null,
+      selectedProtoplanetaryDiskId: null,
+    });
   },
   
   selectBelt: (id) => {
-    set({ selectedBeltId: id, selectedStarId: null, selectedGroupId: null });
+    set({ 
+      selectedBeltId: id, 
+      selectedStarId: null, 
+      selectedGroupId: null,
+      selectedSmallBodyFieldId: null,
+      selectedProtoplanetaryDiskId: null,
+    });
   },
   
   // Group CRUD operations
@@ -634,7 +711,13 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   },
   
   selectGroup: (id) => {
-    set({ selectedGroupId: id, selectedStarId: null, selectedBeltId: null });
+    set({ 
+      selectedGroupId: id, 
+      selectedStarId: null, 
+      selectedBeltId: null,
+      selectedSmallBodyFieldId: null,
+      selectedProtoplanetaryDiskId: null,
+    });
   },
   
   setNestingLevel: (level) => {
@@ -665,6 +748,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       groups: state.groups,
       rootGroupIds: state.rootGroupIds,
       belts: state.belts,
+      smallBodyFields: state.smallBodyFields,
       protoplanetaryDisks: state.protoplanetaryDisks,
     });
   },
@@ -678,10 +762,12 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
         groups: data.groups || {},
         rootGroupIds: data.rootGroupIds || [],
         belts: data.belts || {},
+        smallBodyFields: data.smallBodyFields || {},
         protoplanetaryDisks: data.protoplanetaryDisks || {},
         selectedStarId: null,
         selectedGroupId: null,
         selectedBeltId: null,
+        selectedSmallBodyFieldId: null,
         selectedProtoplanetaryDiskId: null,
         time: 0,
       });
@@ -699,10 +785,12 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       groups: example.groups || {},
       rootGroupIds: example.rootGroupIds || [],
       belts: example.belts || {},
+      smallBodyFields: example.smallBodyFields || {},
       protoplanetaryDisks: example.protoplanetaryDisks || {},
       selectedStarId: null,
       selectedGroupId: null,
       selectedBeltId: null,
+      selectedSmallBodyFieldId: null,
       selectedProtoplanetaryDiskId: null,
       time: 0,
     });

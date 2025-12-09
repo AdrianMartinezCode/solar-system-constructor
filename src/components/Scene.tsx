@@ -5,6 +5,7 @@ import { useSystemStore } from '../state/systemStore';
 import { StarObject } from './StarObject';
 import { GroupBox } from './GroupBox';
 import { AsteroidBeltObject } from './AsteroidBeltObject';
+import { SmallBodyFieldObject } from './SmallBodyFieldObject';
 import { BodyCameraController } from './BodyCameraController';
 import { computeVisibleItems } from '../utils/groupUtils';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -36,6 +37,7 @@ export const Scene: React.FC = () => {
   const groups = useSystemStore((state) => state.groups);
   const rootGroupIds = useSystemStore((state) => state.rootGroupIds);
   const belts = useSystemStore((state) => state.belts);
+  const smallBodyFields = useSystemStore((state) => state.smallBodyFields);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const nestingLevel = useSystemStore((state) => state.nestingLevel);
   const time = useSystemStore((state) => state.time);
@@ -53,7 +55,8 @@ export const Scene: React.FC = () => {
   console.log('Total Stars:', Object.keys(stars).length);
   console.log('Root Group IDs:', rootGroupIds);
   console.log('Total Groups:', Object.keys(groups).length);
-  console.log('Total Belts:', Object.keys(belts).length);
+  console.log('Total Belts (legacy):', Object.keys(belts).length);
+  console.log('Total Small Body Fields:', Object.keys(smallBodyFields).length);
   console.log('Total Protoplanetary Disks:', Object.keys(protoplanetaryDisks).length);
   console.log('Nesting Level:', nestingLevel);
   console.log('Visible Items:', visibleItems);
@@ -105,9 +108,14 @@ export const Scene: React.FC = () => {
         <DebugCube />
       )}
       
-      {/* Render asteroid belts */}
+      {/* Render asteroid belts (legacy - kept for backwards compatibility) */}
       {Object.keys(belts).map(beltId => (
         <AsteroidBeltObject key={`belt-${beltId}`} beltId={beltId} />
+      ))}
+      
+      {/* Render small body fields (new GPU particle-based belts) */}
+      {Object.keys(smallBodyFields).map(fieldId => (
+        <SmallBodyFieldObject key={`field-${fieldId}`} fieldId={fieldId} />
       ))}
       
       {/* Note: Protoplanetary disks are rendered inside StarObject for correct positioning */}

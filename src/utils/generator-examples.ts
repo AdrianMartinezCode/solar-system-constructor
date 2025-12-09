@@ -263,6 +263,7 @@ export function analyzeSystem(data: {
   groups: Record<string, any>;
   rootGroupIds: string[];
   belts?: Record<string, any>;
+  smallBodyFields?: Record<string, any>;
   protoplanetaryDisks?: Record<string, any>;
 }) {
   const stats = {
@@ -283,12 +284,15 @@ export function analyzeSystem(data: {
     trojanBodies: 0,
     
     // ============================================================================
-    // Unified Small Body Stats
+    // Unified Small Body Stats (Particle Field Version)
     // ============================================================================
-    totalSmallBodies: 0,        // Sum of main belt + Kuiper belt
-    totalSmallBodyBelts: 0,     // Total number of belts (main + Kuiper)
-    totalMainBelts: 0,          // Number of main asteroid belts
-    totalKuiperBelts: 0,        // Number of Kuiper belts
+    totalSmallBodies: 0,        // Approximate particle count from fields
+    totalSmallBodyBelts: 0,     // Total number of belt fields (main + Kuiper)
+    totalMainBelts: 0,          // Number of main asteroid belt fields
+    totalKuiperBelts: 0,        // Number of Kuiper belt fields
+    totalSmallBodyParticles: 0, // Total approximate particles in all belt fields
+    totalMainBeltParticles: 0,  // Particles in main belts
+    totalKuiperBeltParticles: 0,// Particles in Kuiper belts
     
     // ============================================================================
     // Protoplanetary Disk Stats
@@ -415,14 +419,31 @@ export function analyzeSystem(data: {
     stats.avgCometEccentricity = cometEccentricities.reduce((a, b) => a + b, 0) / cometEccentricities.length;
   }
   
-  // Calculate unified small body stats
-  if (data.belts) {
+  // Calculate unified small body stats from particle fields
+  if (data.smallBodyFields) {
+    const allFields = Object.values(data.smallBodyFields);
+    stats.totalSmallBodyBelts = allFields.length;
+    stats.totalMainBelts = allFields.filter((f: any) => f.beltType === 'main').length;
+    stats.totalKuiperBelts = allFields.filter((f: any) => f.beltType === 'kuiper').length;
+    
+    // Calculate approximate particle counts
+    stats.totalSmallBodyParticles = allFields.reduce((sum: number, f: any) => sum + (f.particleCount || 0), 0);
+    stats.totalMainBeltParticles = allFields
+      .filter((f: any) => f.beltType === 'main')
+      .reduce((sum: number, f: any) => sum + (f.particleCount || 0), 0);
+    stats.totalKuiperBeltParticles = allFields
+      .filter((f: any) => f.beltType === 'kuiper')
+      .reduce((sum: number, f: any) => sum + (f.particleCount || 0), 0);
+    
+    stats.totalSmallBodies = stats.totalSmallBodyParticles;
+  } else if (data.belts) {
+    // Legacy support for old belt format with individual asteroid entities
     const allBelts = Object.values(data.belts);
     stats.totalSmallBodyBelts = allBelts.length;
     stats.totalMainBelts = allBelts.filter((b: any) => b.beltType === 'main' || !b.beltType).length;
     stats.totalKuiperBelts = allBelts.filter((b: any) => b.beltType === 'kuiper').length;
+    stats.totalSmallBodies = stats.mainBeltAsteroids + stats.kuiperBeltObjects;
   }
-  stats.totalSmallBodies = stats.mainBeltAsteroids + stats.kuiperBeltObjects;
   
   // Calculate protoplanetary disk stats
   if (data.protoplanetaryDisks) {
@@ -448,6 +469,7 @@ export function validateSystem(data: {
   groups: Record<string, any>;
   rootGroupIds: string[];
   belts?: Record<string, any>;
+  smallBodyFields?: Record<string, any>;
   protoplanetaryDisks?: Record<string, any>;
 }): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -516,7 +538,47 @@ export function validateSystem(data: {
     }
   });
   
-  // Validate asteroid belt data (including Kuiper belts)
+  // Validate small body field data (particle-based belts)
+  if (data.smallBodyFields) {
+    Object.values(data.smallBodyFields).forEach((field: any) => {
+      // Validate field geometry
+      if (field.innerRadius >= field.outerRadius) {
+        errors.push(`Small body field ${field.id} has innerRadius >= outerRadius: ${field.innerRadius} >= ${field.outerRadius}`);
+      }
+      if (field.thickness < 0) {
+        errors.push(`Small body field ${field.id} has negative thickness: ${field.thickness}`);
+      }
+      if (field.particleCount < 0) {
+        errors.push(`Small body field ${field.id} has negative particleCount: ${field.particleCount}`);
+      }
+      
+      // Validate host star reference
+      if (field.hostStarId && !data.stars[field.hostStarId]) {
+        errors.push(`Small body field ${field.id} references non-existent host star: ${field.hostStarId}`);
+      }
+      
+      // Validate Kuiper belts specifically
+      if (field.beltType === 'kuiper') {
+        // Verify Kuiper belts have icy properties
+        if (!field.isIcy) {
+          errors.push(`Kuiper belt field ${field.id} should have isIcy=true`);
+        }
+      }
+      
+      // Validate visual properties
+      if (field.opacity < 0 || field.opacity > 1) {
+        errors.push(`Small body field ${field.id} has invalid opacity: ${field.opacity} (should be 0-1)`);
+      }
+      if (field.brightness < 0) {
+        errors.push(`Small body field ${field.id} has negative brightness: ${field.brightness}`);
+      }
+      if (field.clumpiness < 0 || field.clumpiness > 1) {
+        errors.push(`Small body field ${field.id} has invalid clumpiness: ${field.clumpiness} (should be 0-1)`);
+      }
+    });
+  }
+  
+  // Legacy: Validate old asteroid belt data (if present)
   if (data.belts) {
     Object.values(data.belts).forEach((belt: any) => {
       // Validate belt geometry
@@ -533,26 +595,30 @@ export function validateSystem(data: {
         if (!belt.isIcy) {
           errors.push(`Kuiper belt ${belt.id} should have isIcy=true`);
         }
-        // Verify KBOs have correct subtype
+        // Verify KBOs have correct subtype (only if asteroidIds exist)
+        if (belt.asteroidIds) {
+          belt.asteroidIds.forEach((asteroidId: string) => {
+            const asteroid = data.stars[asteroidId];
+            if (asteroid && asteroid.asteroidSubType !== 'kuiperBelt') {
+              errors.push(`Asteroid ${asteroidId} in Kuiper belt ${belt.id} should have asteroidSubType='kuiperBelt'`);
+            }
+          });
+        }
+      }
+      
+      // Verify all asteroid IDs reference valid stars (only if asteroidIds exist)
+      if (belt.asteroidIds) {
         belt.asteroidIds.forEach((asteroidId: string) => {
           const asteroid = data.stars[asteroidId];
-          if (asteroid && asteroid.asteroidSubType !== 'kuiperBelt') {
-            errors.push(`Asteroid ${asteroidId} in Kuiper belt ${belt.id} should have asteroidSubType='kuiperBelt'`);
+          if (!asteroid) {
+            errors.push(`Belt ${belt.id} references non-existent asteroid: ${asteroidId}`);
+          } else if (asteroid.bodyType !== 'asteroid') {
+            errors.push(`Belt ${belt.id} references non-asteroid body ${asteroidId} (type: ${asteroid.bodyType})`);
+          } else if (asteroid.parentBeltId !== belt.id) {
+            errors.push(`Asteroid ${asteroidId} parentBeltId mismatch (expected: ${belt.id}, got: ${asteroid.parentBeltId})`);
           }
         });
       }
-      
-      // Verify all asteroid IDs reference valid stars
-      belt.asteroidIds.forEach((asteroidId: string) => {
-        const asteroid = data.stars[asteroidId];
-        if (!asteroid) {
-          errors.push(`Belt ${belt.id} references non-existent asteroid: ${asteroidId}`);
-        } else if (asteroid.bodyType !== 'asteroid') {
-          errors.push(`Belt ${belt.id} references non-asteroid body ${asteroidId} (type: ${asteroid.bodyType})`);
-        } else if (asteroid.parentBeltId !== belt.id) {
-          errors.push(`Asteroid ${asteroidId} parentBeltId mismatch (expected: ${belt.id}, got: ${asteroid.parentBeltId})`);
-        }
-      });
     });
   }
   

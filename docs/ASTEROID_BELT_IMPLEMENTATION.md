@@ -4,16 +4,30 @@
 
 Robust asteroid belt support has been successfully added to the Solar System Constructor. The feature is **production-ready**, fully integrated with existing systems, and maintains backward compatibility.
 
-## Unified Small Body Belts Concept
+## ⚡ GPU Particle Field Architecture (Latest Update)
 
-As of the latest update, **asteroid belts and Kuiper belt objects are unified as "Small Body Belts"** in the editor and UI. Both belt types share the same underlying `AsteroidBelt` data structure and rendering infrastructure, with `beltType` distinguishing 'main' (rocky, inner) from 'kuiper' (icy, outer) belts.
+**As of the latest refactoring**, asteroid belts and Kuiper belts now use a **GPU-based particle field approach** similar to protoplanetary disks, replacing the previous system of thousands of individual `Star` entities. This dramatically improves performance while maintaining visual quality and all existing configuration semantics.
+
+### Key Architecture Changes:
+
+- **New `SmallBodyField` type**: Particle-field representation with geometry, visual properties, and PRNG seed
+- **GPU rendering**: `SmallBodyFieldObject.tsx` component using custom shaders and buffer attributes
+- **No individual entities**: Belts are now visual-only particle fields, not collections of `Star` objects
+- **Preserved semantics**: All existing UI controls (`beltDensity`, `smallBodyDetail`, etc.) still work, now controlling particle counts
+- **Performance**: Massive reduction in CPU overhead; belts with 1000+ particles run smoothly
+- **Determinism**: PRNG-based particle distribution ensures same seed → same visual result
+
+### Unified Small Body Belts Concept
+
+**Asteroid belts and Kuiper belt objects are unified as "Small Body Belts"** in the editor and UI. Both belt types share similar particle field infrastructure, with `beltType: 'main' | 'kuiper'` distinguishing rocky inner belts from icy outer belts.
 
 ### Key Unification Points:
-- **Single data model**: Both types use `AsteroidBelt` interface (alias: `SmallBodyBelt`)
+- **Single field model**: Both types use `SmallBodyField` interface
 - **Unified UI section**: "Small Body Belts & Fields" in the Universe Generator Panel
-- **Global quality control**: `smallBodyDetail` slider affects both belt types
-- **Aggregated stats**: `totalSmallBodies`, `totalSmallBodyBelts` in generation results
-- **Shared rendering**: `AsteroidBeltObject` component handles both types with LOD optimization
+- **Global quality control**: `smallBodyDetail` slider affects particle counts for both belt types
+- **Aggregated stats**: `totalSmallBodyParticles`, `totalSmallBodyBelts` in generation results
+- **Shared rendering**: `SmallBodyFieldObject` component handles both types with GPU particles
+- **Visual distinction**: Main belts use rocky brown colors; Kuiper belts use icy blue-gray colors
 
 ## Implementation Complete ✓
 
