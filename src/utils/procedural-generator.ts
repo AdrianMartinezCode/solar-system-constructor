@@ -131,6 +131,26 @@ interface GeneratorConfig {
   nebulaNoiseScaleRange: [number, number];                // 3D noise scale range (controls frequency)
   nebulaNoiseDetailRange: [number, number];               // 3D noise detail/octaves range
   nebulaDetail?: 'low' | 'medium' | 'high' | 'ultra';     // Optional LOD control (mirrors smallBodyDetail)
+
+  // Rogue Planets (galaxy-scale wandering planets not bound to any star)
+  enableRoguePlanets: boolean;                            // Master switch for rogue planet generation
+  roguePlanetCountRange: [number, number];                // [min, max] total rogues in universe
+  roguePlanetDistanceRange: [number, number];             // Radial distance from origin / group centers
+  roguePlanetSpeedRange: [number, number];                // Drift speed magnitude range
+  roguePlanetInclinationMax: number;                      // Max tilt from galactic plane (degrees)
+  roguePlanetColorVariation: number;                      // 0-1 variance around typical planet colors
+  
+  // Curved / Elliptical trajectory parameters for rogue planets
+  roguePlanetCurvatureRange: [number, number];            // [min, max] path curvature (0=linear, 1=strongly curved)
+  roguePlanetTrajectoryMode: 'linearOnly' | 'mixed' | 'mostlyCurved'; // Distribution of trajectory types
+  roguePlanetPathPeriodRange: [number, number];           // [min, max] time to complete one loop (seconds)
+  roguePlanetEccentricityRange: [number, number];         // [min, max] eccentricity for curved paths
+  roguePlanetSemiMajorAxisRange: [number, number];        // [min, max] semi-major axis for curved paths
+  
+  // Trajectory visualization settings
+  roguePlanetShowTrajectories: boolean;                   // Whether to show trajectory visualization
+  roguePlanetTrajectoryPastWindow: number;                // Past trajectory window (seconds or fraction of period)
+  roguePlanetTrajectoryFutureWindow: number;              // Future trajectory window (seconds or fraction of period)
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -254,6 +274,26 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   nebulaNoiseScaleRange: [0.8, 2.5],                    // Medium frequency noise
   nebulaNoiseDetailRange: [3, 6],                       // Moderate detail/octaves
   nebulaDetail: 'medium',                               // Default quality level
+
+  // Rogue planets (disabled by default, galaxy-scale wandering planets)
+  enableRoguePlanets: false,
+  roguePlanetCountRange: [0, 0],                        // No rogues by default
+  roguePlanetDistanceRange: [100, 300],                 // Moderate distance from origin
+  roguePlanetSpeedRange: [0.01, 0.05],                  // Slow drift speed
+  roguePlanetInclinationMax: 15,                        // Moderate inclination
+  roguePlanetColorVariation: 0.3,                       // Some color variation
+  
+  // Curved trajectory defaults (backwards compatible - linear only by default)
+  roguePlanetCurvatureRange: [0, 0],                    // Linear only by default
+  roguePlanetTrajectoryMode: 'linearOnly',              // Linear trajectories only
+  roguePlanetPathPeriodRange: [300, 800],               // 5-13 minutes for a full loop
+  roguePlanetEccentricityRange: [0.1, 0.6],             // Moderate eccentricity for curved paths
+  roguePlanetSemiMajorAxisRange: [80, 200],             // Moderate-sized curved paths
+  
+  // Trajectory visualization defaults
+  roguePlanetShowTrajectories: true,                    // Show trajectories by default
+  roguePlanetTrajectoryPastWindow: 100,                 // 100 seconds of history
+  roguePlanetTrajectoryFutureWindow: 100,               // 100 seconds of prediction
 };
 
 // ============================================================================
@@ -2477,6 +2517,312 @@ class NebulaGenerator {
 }
 
 // ============================================================================
+// Rogue Planet Generator (Unbound Planets Traversing the Universe)
+// ============================================================================
+
+/**
+ * Generates rogue planets - planet-sized bodies not gravitationally bound to any star,
+ * which freely traverse the scene using linear drift motion.
+ */
+class RoguePlanetGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+  private physics: PhysicsGenerator;
+
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+    this.physics = new PhysicsGenerator(config, rng);
+  }
+
+  /**
+   * Generate rogue planets for the universe.
+   * @param groups - All groups in the universe (for position reference)
+   * @param rootGroupIds - Root group IDs
+   * @param stars - All stars (for fallback position reference)
+   * @param rootIds - Root star IDs
+   * @returns Array of rogue planet Star objects
+   */
+  generate(
+    groups: Record<string, Group>,
+    rootGroupIds: string[],
+    stars: Record<string, Star>,
+    rootIds: string[]
+  ): Star[] {
+    if (!this.config.enableRoguePlanets) {
+      return [];
+    }
+
+    const roguePlanets: Star[] = [];
+
+    // Decide rogue planet count
+    const targetCount = this.rng.randInt(
+      this.config.roguePlanetCountRange[0],
+      this.config.roguePlanetCountRange[1]
+    );
+
+    if (targetCount === 0) {
+      return [];
+    }
+
+    // Precompute reference positions (groups or origin)
+    const referencePositions = this.computeReferencePositions(groups, rootGroupIds, stars, rootIds);
+
+    // Generate each rogue planet
+    for (let i = 0; i < targetCount; i++) {
+      const rogue = this.createRoguePlanet(i, referencePositions);
+      roguePlanets.push(rogue);
+    }
+
+    return roguePlanets;
+  }
+
+  /**
+   * Compute reference positions for rogue planet placement
+   */
+  private computeReferencePositions(
+    groups: Record<string, Group>,
+    rootGroupIds: string[],
+    stars: Record<string, Star>,
+    rootIds: string[]
+  ): Array<Position> {
+    const positions: Position[] = [];
+
+    if (rootGroupIds.length > 0) {
+      // Use group positions as references
+      rootGroupIds.forEach(groupId => {
+        const group = groups[groupId];
+        if (group?.position) {
+          positions.push(group.position);
+        }
+      });
+    }
+
+    // If no groups, use origin or add scattered positions
+    if (positions.length === 0) {
+      positions.push({ x: 0, y: 0, z: 0 });
+    }
+
+    return positions;
+  }
+
+  /**
+   * Create a single rogue planet
+   */
+  private createRoguePlanet(
+    index: number,
+    referencePositions: Array<Position>
+  ): Star {
+    // Fork RNG for this rogue planet
+    const rogueRng = this.rng.fork(`rogue-planet-${index}`);
+    const roguePhysics = new PhysicsGenerator(this.config, rogueRng);
+
+    // Pick a reference position
+    const refPos = rogueRng.choice(referencePositions);
+
+    // Sample distance from reference
+    const distance = rogueRng.uniform(
+      this.config.roguePlanetDistanceRange[0],
+      this.config.roguePlanetDistanceRange[1]
+    );
+
+    // Sample random direction (uniform on sphere)
+    const theta = rogueRng.uniform(0, Math.PI * 2);
+    const phi = Math.acos(rogueRng.uniform(-1, 1));
+
+    const dirX = Math.sin(phi) * Math.cos(theta);
+    const dirY = Math.sin(phi) * Math.sin(theta);
+    const dirZ = Math.cos(phi);
+
+    // Initial position
+    const initialPosition = {
+      x: refPos.x + dirX * distance,
+      y: refPos.y + dirY * distance,
+      z: refPos.z + dirZ * distance,
+    };
+
+    // Sample drift velocity
+    const speed = rogueRng.uniform(
+      this.config.roguePlanetSpeedRange[0],
+      this.config.roguePlanetSpeedRange[1]
+    );
+
+    // Sample velocity direction with inclination limit (diverse directions)
+    const velTheta = rogueRng.uniform(0, Math.PI * 2);
+    const inclinationRad = (this.config.roguePlanetInclinationMax * Math.PI) / 180;
+    const velPhi = Math.acos(rogueRng.uniform(Math.cos(inclinationRad), 1));
+
+    const velDirX = Math.sin(velPhi) * Math.cos(velTheta);
+    const velDirY = Math.sin(velPhi) * Math.sin(velTheta);
+    const velDirZ = Math.cos(velPhi);
+
+    const velocity = {
+      x: velDirX * speed,
+      y: velDirY * speed,
+      z: velDirZ * speed,
+    };
+
+    // Generate physical properties (planet-sized)
+    const mass = roguePhysics.generateMass('planet');
+    const radius = roguePhysics.generateRadius(mass);
+    const baseColor = roguePhysics.generateColor(mass, 'planet');
+
+    // Apply color variation
+    const color = this.varyColor(baseColor, this.config.roguePlanetColorVariation, rogueRng);
+
+    // ============================================================================
+    // Curved / Elliptical Trajectory Generation
+    // ============================================================================
+    
+    // Determine if this rogue should have a curved path
+    let pathCurvature = 0;
+    let semiMajorAxis: number | undefined;
+    let eccentricity: number | undefined;
+    let orbitRotX: number | undefined;
+    let orbitRotY: number | undefined;
+    let orbitRotZ: number | undefined;
+    let pathPeriod: number | undefined;
+    
+    // Sample curvature based on trajectory mode
+    const curvatureMin = this.config.roguePlanetCurvatureRange[0];
+    const curvatureMax = this.config.roguePlanetCurvatureRange[1];
+    
+    if (this.config.roguePlanetTrajectoryMode === 'linearOnly') {
+      pathCurvature = 0;
+    } else if (this.config.roguePlanetTrajectoryMode === 'mostlyCurved') {
+      // Bias toward high curvature
+      const biasedSample = Math.pow(rogueRng.uniform(0, 1), 0.5); // Square root bias
+      pathCurvature = curvatureMin + biasedSample * (curvatureMax - curvatureMin);
+    } else {
+      // Mixed: uniform distribution
+      pathCurvature = rogueRng.uniform(curvatureMin, curvatureMax);
+    }
+    
+    // If curved, generate elliptical path parameters
+    if (pathCurvature > 0) {
+      // Sample semi-major axis
+      semiMajorAxis = rogueRng.uniform(
+        this.config.roguePlanetSemiMajorAxisRange[0],
+        this.config.roguePlanetSemiMajorAxisRange[1]
+      );
+      
+      // Sample eccentricity (higher curvature → more eccentric)
+      const eMin = this.config.roguePlanetEccentricityRange[0];
+      const eMax = this.config.roguePlanetEccentricityRange[1];
+      eccentricity = eMin + pathCurvature * (eMax - eMin);
+      
+      // Sample 3D orientation (inclination and rotation)
+      // Use diverse random orientations
+      orbitRotX = rogueRng.uniform(0, this.config.roguePlanetInclinationMax);
+      orbitRotY = rogueRng.uniform(0, 360);
+      orbitRotZ = rogueRng.uniform(0, 360);
+      
+      // Sample path period
+      pathPeriod = rogueRng.uniform(
+        this.config.roguePlanetPathPeriodRange[0],
+        this.config.roguePlanetPathPeriodRange[1]
+      );
+    }
+
+    // Create rogue planet metadata
+    const roguePlanetMeta = {
+      seed: rogueRng.randInt(0, 2147483647),
+      initialPosition,
+      velocity,
+      colorOverride: color !== baseColor ? color : undefined,
+      
+      // Curved trajectory parameters (optional, for backwards compatibility)
+      pathCurvature: pathCurvature > 0 ? pathCurvature : undefined,
+      semiMajorAxis,
+      eccentricity,
+      orbitRotX,
+      orbitRotY,
+      orbitRotZ,
+      pathPeriod,
+      
+      // Trajectory visualization settings (use global defaults)
+      showTrajectory: this.config.roguePlanetShowTrajectories,
+      trajectoryPastWindow: this.config.roguePlanetTrajectoryPastWindow,
+      trajectoryFutureWindow: this.config.roguePlanetTrajectoryFutureWindow,
+    };
+
+    // Generate name
+    const name = this.generateRoguePlanetName(index);
+
+    const rogueId = uuidv4();
+
+    return {
+      id: rogueId,
+      name,
+      mass,
+      radius,
+      color,
+      children: [],
+      parentId: null,  // No parent - not bound to any star
+      bodyType: 'planet',
+      isRoguePlanet: true,
+      roguePlanet: roguePlanetMeta,
+      // Set orbital parameters to zero/default (not used for rogues)
+      orbitalDistance: 0,
+      orbitalSpeed: 0,
+      orbitalPhase: 0,
+    };
+  }
+
+  /**
+   * Vary a color by a given amount
+   */
+  private varyColor(hexColor: string, variation: number, rng: RandomGenerator): string {
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+
+    const vary = (value: number) => {
+      const delta = rng.uniform(-variation * 60, variation * 60);
+      return Math.max(0, Math.min(255, Math.round(value + delta)));
+    };
+
+    const newR = vary(r);
+    const newG = vary(g);
+    const newB = vary(b);
+
+    return `#${newR.toString(16).padStart(2, '0')}${newG
+      .toString(16)
+      .padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  }
+
+  /**
+   * Generate a rogue planet name
+   */
+  private generateRoguePlanetName(index: number): string {
+    const prefixes = [
+      'Nomad',
+      'Wanderer',
+      'Vagrant',
+      'Drifter',
+      'Outcast',
+      'Exile',
+      'Stray',
+      'Hermit',
+      'Voyager',
+      'Rover',
+      'Wayfarer',
+      'Rambler',
+    ];
+
+    if (index < prefixes.length) {
+      return `${prefixes[index]}`;
+    }
+
+    // Generate alphanumeric designations
+    const catalogPrefix = ['RG', 'WISE J', 'PSO J', '2MASS J', 'CFBDS'];
+    const prefix = this.rng.choice(catalogPrefix);
+    const number = 1000 + index;
+    return `${prefix}${number}`;
+  }
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -2630,6 +2976,17 @@ export function generateSolarSystem(
   const nebulaGen = new NebulaGenerator(fullConfig, nebulaRng);
   const nebulaMap = nebulaGen.generate(groupMap, rootGroupIds, starMap, systemData.rootIds);
   
+  // 12. Generate rogue planets (unbound planets, if enabled)
+  const rogueRng = new RandomGenerator(masterRng.fork('rogue-planets'));
+  const rogueGen = new RoguePlanetGenerator(fullConfig, rogueRng);
+  const roguePlanets = rogueGen.generate(groupMap, rootGroupIds, starMap, systemData.rootIds);
+  
+  // Add rogue planets to the star map (they are root-level, not attached to any system)
+  roguePlanets.forEach((rogue) => {
+    starMap[rogue.id] = rogue;
+    // Don't add to rootIds - rogue planets are tracked separately
+  });
+  
   return {
     stars: starMap,
     rootIds: systemData.rootIds,
@@ -2707,6 +3064,16 @@ export function generateMultipleSystems(
   const nebulaGen = new NebulaGenerator(fullConfig, nebulaRng);
   const nebulaMap = nebulaGen.generate(groupMap, rootGroupIds, allStars, allRootIds);
   Object.assign(allNebulae, nebulaMap);
+  
+  // Generate rogue planets at universe scale (after all systems and groups)
+  const rogueRng = new RandomGenerator(masterRng.fork('rogue-planets'));
+  const rogueGen = new RoguePlanetGenerator(fullConfig, rogueRng);
+  const roguePlanets = rogueGen.generate(groupMap, rootGroupIds, allStars, allRootIds);
+  
+  // Add rogue planets to the star map (they are not part of any root system)
+  roguePlanets.forEach((rogue) => {
+    allStars[rogue.id] = rogue;
+  });
   
   return {
     stars: allStars,

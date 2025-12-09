@@ -207,6 +207,138 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
 
     // Nebulae regions
     ...mapNebulaConfig(config),
+
+    // Rogue planets
+    ...mapRoguePlanetConfig(config),
+  };
+}
+
+/**
+ * Map rogue planet UI config to internal generator config
+ */
+function mapRoguePlanetConfig(config: GenerationConfig): {
+  enableRoguePlanets: boolean;
+  roguePlanetCountRange: [number, number];
+  roguePlanetDistanceRange: [number, number];
+  roguePlanetSpeedRange: [number, number];
+  roguePlanetInclinationMax: number;
+  roguePlanetColorVariation: number;
+  roguePlanetCurvatureRange: [number, number];
+  roguePlanetTrajectoryMode: 'linearOnly' | 'mixed' | 'mostlyCurved';
+  roguePlanetPathPeriodRange: [number, number];
+  roguePlanetEccentricityRange: [number, number];
+  roguePlanetSemiMajorAxisRange: [number, number];
+  roguePlanetShowTrajectories: boolean;
+  roguePlanetTrajectoryPastWindow: number;
+  roguePlanetTrajectoryFutureWindow: number;
+} {
+  const frequency = config.roguePlanetFrequency ?? 0;
+  const style = config.roguePlanetOrbitStyle ?? 'mixed';
+  const visibility = config.roguePlanetVisibility ?? 0.5;
+
+  // Map frequency (0-1) to count range (very rare - rogues are special events)
+  let countRange: [number, number];
+  if (frequency === 0) {
+    countRange = [0, 0];
+  } else if (frequency < 0.4) {
+    countRange = [0, 1];  // Rare: 0-1 rogue
+  } else if (frequency < 0.7) {
+    countRange = [1, 2];  // Few: 1-2 rogues
+  } else if (frequency < 0.9) {
+    countRange = [2, 3];  // Moderate: 2-3 rogues
+  } else {
+    countRange = [3, 5];  // Many: 3-5 rogues maximum
+  }
+
+  // Map style to speed and inclination
+  let speedRange: [number, number];
+  let inclinationMax: number;
+  switch (style) {
+    case 'slowDrifters':
+      speedRange = [0.005, 0.02];
+      inclinationMax = 10;
+      break;
+    case 'fastIntruders':
+      speedRange = [0.05, 0.15];
+      inclinationMax = 45;
+      break;
+    case 'mixed':
+    default:
+      speedRange = [0.01, 0.08];
+      inclinationMax = 25;
+      break;
+  }
+
+  // Distance range based on groupPositionSigma (around 50 default)
+  const distanceRange: [number, number] = [100, 300];
+
+  // Map visibility to color variation
+  const colorVariation = 0.2 + visibility * 0.5; // 0.2 to 0.7
+
+  // ============================================================================
+  // Map trajectory configuration (new fields)
+  // ============================================================================
+  
+  const trajectoryMode = config.rogueTrajectoryMode ?? 'linearOnly';
+  const curvatureMin = config.rogueCurvatureMin ?? 0;
+  const curvatureMax = config.rogueCurvatureMax ?? 0;
+  const showTrajectories = config.rogueTrajectoryShow ?? true;
+  const previewLength = config.rogueTrajectoryPreviewLength ?? 0.5;
+  
+  // Map UI trajectory mode to internal mode
+  let internalTrajectoryMode: 'linearOnly' | 'mixed' | 'mostlyCurved';
+  switch (trajectoryMode) {
+    case 'linearOnly':
+      internalTrajectoryMode = 'linearOnly';
+      break;
+    case 'curved':
+      internalTrajectoryMode = 'mostlyCurved';
+      break;
+    case 'mixed':
+    default:
+      internalTrajectoryMode = 'mixed';
+      break;
+  }
+  
+  // Map curvature range
+  const curvatureRange: [number, number] = [
+    Math.max(0, Math.min(1, curvatureMin)),
+    Math.max(0, Math.min(1, curvatureMax)),
+  ];
+  
+  // Path period range (5-13 minutes by default, scaled by curvature)
+  const pathPeriodRange: [number, number] = [300, 800];
+  
+  // Eccentricity range (moderate by default, higher for more curved)
+  const eccentricityRange: [number, number] = [0.1, 0.6];
+  
+  // Semi-major axis range (moderate-sized paths)
+  const semiMajorAxisRange: [number, number] = [80, 200];
+  
+  // Trajectory visualization windows (scaled by preview length)
+  const baseWindow = 100; // seconds
+  const pastWindow = baseWindow * previewLength;
+  const futureWindow = baseWindow * previewLength;
+
+  return {
+    enableRoguePlanets: config.enableRoguePlanets ?? false,
+    roguePlanetCountRange: countRange,
+    roguePlanetDistanceRange: distanceRange,
+    roguePlanetSpeedRange: speedRange,
+    roguePlanetInclinationMax: inclinationMax,
+    roguePlanetColorVariation: colorVariation,
+    
+    // Curved trajectory parameters
+    roguePlanetCurvatureRange: curvatureRange,
+    roguePlanetTrajectoryMode: internalTrajectoryMode,
+    roguePlanetPathPeriodRange: pathPeriodRange,
+    roguePlanetEccentricityRange: eccentricityRange,
+    roguePlanetSemiMajorAxisRange: semiMajorAxisRange,
+    
+    // Trajectory visualization
+    roguePlanetShowTrajectories: showTrajectories,
+    roguePlanetTrajectoryPastWindow: pastWindow,
+    roguePlanetTrajectoryFutureWindow: futureWindow,
   };
 }
 
@@ -786,6 +918,14 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   const allNebulae = Object.values(result.nebulae || {});
   const totalNebulae = allNebulae.length;
   
+  // ============================================================================
+  // Rogue Planet Stats
+  // ============================================================================
+  const roguePlanetIds = allStars
+    .filter((star) => star.isRoguePlanet === true)
+    .map((star) => star.id);
+  const totalRoguePlanets = roguePlanetIds.length;
+  
   return {
     ...result,
     totalStars: Object.keys(result.stars).length,
@@ -815,6 +955,9 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     // Nebula stats
     nebulae: result.nebulae,
     totalNebulae,
+    // Rogue planet stats
+    roguePlanetIds,
+    totalRoguePlanets,
     // Small body fields (new)
     smallBodyFields: result.smallBodyFields,
     generatedAt: new Date(),

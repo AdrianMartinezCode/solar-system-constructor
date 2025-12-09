@@ -71,6 +71,19 @@ export const defaultConfig: GenerationConfig = {
   nebulaSizeBias: 'medium',
   nebulaColorStyle: 'random',
   nebulaBrightness: 0.7,
+
+  // Rogue planets defaults (disabled by default)
+  enableRoguePlanets: false,
+  roguePlanetFrequency: 0,
+  roguePlanetOrbitStyle: 'mixed',
+  roguePlanetVisibility: 0.5,
+  
+  // Rogue trajectory defaults (linear only for backwards compatibility)
+  rogueTrajectoryMode: 'linearOnly',
+  rogueCurvatureMin: 0,
+  rogueCurvatureMax: 0,
+  rogueTrajectoryShow: true,
+  rogueTrajectoryPreviewLength: 0.5,
 };
 
 /**
@@ -127,9 +140,22 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         // Nebulae - disabled for sparse preset
         enableNebulae: false,
         nebulaDensity: 0,
-        nebulaSizeBias: 'medium',
+        nebulaSizeBias: 'small',
         nebulaColorStyle: 'random',
         nebulaBrightness: 0.5,
+
+        // Rogue planets - disabled for sparse preset
+        enableRoguePlanets: false,
+        roguePlanetFrequency: 0,
+        roguePlanetOrbitStyle: 'slowDrifters',
+        roguePlanetVisibility: 0.3,
+        
+        // Rogue trajectories - linear only for sparse
+        rogueTrajectoryMode: 'linearOnly',
+        rogueCurvatureMin: 0,
+        rogueCurvatureMax: 0,
+        rogueTrajectoryShow: false,
+        rogueTrajectoryPreviewLength: 0.3,
       };
       
     case "solarLike":
@@ -182,9 +208,22 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         // Nebulae - moderate presence for visual interest
         enableNebulae: true,
         nebulaDensity: 0.2,  // Few nebulae
-        nebulaSizeBias: 'medium',
+        nebulaSizeBias: 'small',
         nebulaColorStyle: 'mixed',
-        nebulaBrightness: 0.7,
+        nebulaBrightness: 0.5,
+
+        // Rogue planets - low frequency, slow drifters
+        enableRoguePlanets: true,
+        roguePlanetFrequency: 0.2,  // Few rogues
+        roguePlanetOrbitStyle: 'slowDrifters',
+        roguePlanetVisibility: 0.5,
+        
+        // Rogue trajectories - mostly linear with gentle curves
+        rogueTrajectoryMode: 'mixed',
+        rogueCurvatureMin: 0,
+        rogueCurvatureMax: 0.3,
+        rogueTrajectoryShow: true,
+        rogueTrajectoryPreviewLength: 0.5,
       };
       
     case "crowded":
@@ -236,10 +275,23 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
 
         // Nebulae - moderate to high presence for visual richness
         enableNebulae: true,
-        nebulaDensity: 0.5,  // Moderate nebula count
-        nebulaSizeBias: 'medium',
+        nebulaDensity: 0.2,  // Moderate nebula count
+        nebulaSizeBias: 'small',
         nebulaColorStyle: 'mixed',
-        nebulaBrightness: 0.7,
+        nebulaBrightness: 0.5,
+
+        // Rogue planets - medium frequency, mixed styles
+        enableRoguePlanets: true,
+        roguePlanetFrequency: 0.5,  // Moderate rogues
+        roguePlanetOrbitStyle: 'mixed',
+        roguePlanetVisibility: 0.6,
+        
+        // Rogue trajectories - more curved paths
+        rogueTrajectoryMode: 'mixed',
+        rogueCurvatureMin: 0,
+        rogueCurvatureMax: 0.6,
+        rogueTrajectoryShow: true,
+        rogueTrajectoryPreviewLength: 0.6,
       };
       
     case "superDenseExperimental":
@@ -294,10 +346,23 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
 
         // Nebulae - high density for dramatic visual effect
         enableNebulae: true,
-        nebulaDensity: 0.8,  // Many overlapping nebulae
-        nebulaSizeBias: 'giant',
+        nebulaDensity: 0.2,  // Many overlapping nebulae
+        nebulaSizeBias: 'small',
         nebulaColorStyle: 'mixed',
-        nebulaBrightness: 0.9,
+        nebulaBrightness: 0.5,
+
+        // Rogue planets - high frequency, fast intruders, visually distinct
+        enableRoguePlanets: true,
+        roguePlanetFrequency: 0.8,  // Many rogues
+        roguePlanetOrbitStyle: 'fastIntruders',
+        roguePlanetVisibility: 0.9,
+        
+        // Rogue trajectories - highly curved, elliptical paths
+        rogueTrajectoryMode: 'curved',
+        rogueCurvatureMin: 0.3,
+        rogueCurvatureMax: 1.0,
+        rogueTrajectoryShow: true,
+        rogueTrajectoryPreviewLength: 0.8,
       };
       
     default:

@@ -28,6 +28,10 @@ export interface Star {
   // Reference to Lagrange point (for Trojan bodies)
   lagrangeHostId?: string;
   
+  // Rogue planet support (planets not bound to any system)
+  isRoguePlanet?: boolean;          // true only for rogue planets
+  roguePlanet?: RoguePlanetMeta;    // Rogue planet motion and style metadata
+  
   // Legacy circular orbit parameters (maintained for backward compatibility)
   orbitalDistance: number;
   orbitalSpeed: number;
@@ -97,6 +101,84 @@ export interface LagrangePointMeta {
   stable: boolean;                  // true for L4/L5, false for L1-L3
   pairType: 'starPlanet' | 'planetMoon'; // Type of two-body pair
   label?: string;                   // Optional display label (e.g. "Earth L4")
+}
+
+// Rogue Planet metadata for planets not gravitationally bound to any star
+export interface RoguePlanetMeta {
+  seed: string | number;            // Deterministic per-rogue RNG seed
+  initialPosition: { x: number; y: number; z: number }; // World-space position at t=0
+  velocity: { x: number; y: number; z: number };        // World-space drift vector
+  colorOverride?: string;           // Optional special coloring for rogues
+  
+  // ============================================================================
+  // Curved / Elliptical Path Parameters (optional, for non-linear trajectories)
+  // ============================================================================
+  
+  /**
+   * Path curvature coefficient: 0 = perfectly straight/rectilinear, 1 = strongly curved
+   * When > 0, the rogue follows an elliptical/curved path instead of pure linear drift.
+   * Undefined or 0 defaults to linear motion (backwards compatible).
+   */
+  pathCurvature?: number;  // 0..1
+  
+  /**
+   * Semi-major axis for elliptical path (reused from elliptical orbit system).
+   * When pathCurvature > 0, defines the size of the curved path.
+   * If undefined, derived from velocity magnitude and configured ranges.
+   */
+  semiMajorAxis?: number;
+  
+  /**
+   * Eccentricity for elliptical path: 0 = circular, 0-0.99 = ellipse.
+   * Higher curvature typically correlates with more eccentric paths.
+   */
+  eccentricity?: number;  // 0..0.99
+  
+  /**
+   * Path center offset (translation of the path center relative to initialPosition).
+   * Allows the ellipse center to be positioned differently from t=0 position.
+   */
+  pathOffsetX?: number;
+  pathOffsetY?: number;
+  pathOffsetZ?: number;
+  
+  /**
+   * 3D orientation of the curved path (Euler angles in degrees).
+   * Applied in order: rotZ, then rotY, then rotX (same as orbital rotations).
+   * Controls inclination and orientation of the elliptical path plane.
+   */
+  orbitRotX?: number;  // Rotation around X axis (inclination)
+  orbitRotY?: number;  // Rotation around Y axis
+  orbitRotZ?: number;  // Rotation around Z axis (longitude of ascending node)
+  
+  /**
+   * Time period to complete one loop of the curved path (in seconds).
+   * When curved, the path is periodic. If undefined, derived from semiMajorAxis.
+   * Used to compute angular velocity for parametric motion.
+   */
+  pathPeriod?: number;
+  
+  // ============================================================================
+  // Trajectory Visualization Settings (optional)
+  // ============================================================================
+  
+  /**
+   * Whether to show trajectory visualization for this rogue planet.
+   * If undefined, uses global rogue trajectory visibility setting.
+   */
+  showTrajectory?: boolean;
+  
+  /**
+   * Length of past trajectory segment to visualize (in seconds or as fraction of pathPeriod).
+   * If undefined, uses global default.
+   */
+  trajectoryPastWindow?: number;
+  
+  /**
+   * Length of future trajectory segment to visualize (in seconds or as fraction of pathPeriod).
+   * If undefined, uses global default.
+   */
+  trajectoryFutureWindow?: number;
 }
 
 /**

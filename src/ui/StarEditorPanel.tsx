@@ -512,6 +512,148 @@ export const StarEditorPanel: React.FC = () => {
             </>
           )}
 
+          {/* Rogue Planet Trajectory - only for rogue planets */}
+          {selectedStar.isRoguePlanet && selectedStar.roguePlanet && (
+            <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <h5 style={{ marginTop: 0, marginBottom: '8px' }}>Rogue Trajectory</h5>
+              
+              {/* Velocity Components */}
+              <div className="form-group">
+                <label>Velocity X</label>
+                <input
+                  type="number"
+                  value={selectedStar.roguePlanet.velocity.x}
+                  onChange={(e) => handleUpdate('roguePlanet', {
+                    ...selectedStar.roguePlanet,
+                    velocity: { ...selectedStar.roguePlanet.velocity, x: Number(e.target.value) }
+                  })}
+                  step="0.001"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Velocity Y</label>
+                <input
+                  type="number"
+                  value={selectedStar.roguePlanet.velocity.y}
+                  onChange={(e) => handleUpdate('roguePlanet', {
+                    ...selectedStar.roguePlanet,
+                    velocity: { ...selectedStar.roguePlanet.velocity, y: Number(e.target.value) }
+                  })}
+                  step="0.001"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Velocity Z</label>
+                <input
+                  type="number"
+                  value={selectedStar.roguePlanet.velocity.z}
+                  onChange={(e) => handleUpdate('roguePlanet', {
+                    ...selectedStar.roguePlanet,
+                    velocity: { ...selectedStar.roguePlanet.velocity, z: Number(e.target.value) }
+                  })}
+                  step="0.001"
+                />
+              </div>
+              
+              {/* Path Curvature */}
+              <div className="form-group">
+                <label>Path Curvature (0=linear, 1=curved)</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={selectedStar.roguePlanet.pathCurvature || 0}
+                  onChange={(e) => handleUpdate('roguePlanet', {
+                    ...selectedStar.roguePlanet,
+                    pathCurvature: Number(e.target.value)
+                  })}
+                />
+                <small>{((selectedStar.roguePlanet.pathCurvature || 0) * 100).toFixed(0)}%</small>
+              </div>
+              
+              {/* Curved Path Parameters (only shown if curvature > 0) */}
+              {(selectedStar.roguePlanet.pathCurvature || 0) > 0 && (
+                <>
+                  <div className="form-group">
+                    <label>Semi-Major Axis</label>
+                    <input
+                      type="number"
+                      value={selectedStar.roguePlanet.semiMajorAxis || 100}
+                      onChange={(e) => handleUpdate('roguePlanet', {
+                        ...selectedStar.roguePlanet,
+                        semiMajorAxis: Number(e.target.value)
+                      })}
+                      min="10"
+                      step="10"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Eccentricity (0-0.99)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.roguePlanet.eccentricity || 0}
+                      onChange={(e) => handleUpdate('roguePlanet', {
+                        ...selectedStar.roguePlanet,
+                        eccentricity: Math.min(0.99, Math.max(0, Number(e.target.value)))
+                      })}
+                      min="0"
+                      max="0.99"
+                      step="0.01"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Inclination (X rotation, degrees)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.roguePlanet.orbitRotX || 0}
+                      onChange={(e) => handleUpdate('roguePlanet', {
+                        ...selectedStar.roguePlanet,
+                        orbitRotX: Number(e.target.value)
+                      })}
+                      min="0"
+                      max="90"
+                      step="1"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Path Period (seconds)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.roguePlanet.pathPeriod || 500}
+                      onChange={(e) => handleUpdate('roguePlanet', {
+                        ...selectedStar.roguePlanet,
+                        pathPeriod: Number(e.target.value)
+                      })}
+                      min="100"
+                      step="50"
+                    />
+                  </div>
+                </>
+              )}
+              
+              {/* Trajectory Visualization */}
+              <div className="form-group">
+                <label className="generator-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedStar.roguePlanet.showTrajectory ?? true}
+                    onChange={(e) => handleUpdate('roguePlanet', {
+                      ...selectedStar.roguePlanet,
+                      showTrajectory: e.target.checked
+                    })}
+                  />
+                  <span>Show Trajectory</span>
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Planetary Rings - only for planets */}
           {selectedStar.bodyType === 'planet' && (
             <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>

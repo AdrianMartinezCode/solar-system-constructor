@@ -84,6 +84,19 @@ export interface GenerationConfig {
   nebulaSizeBias?: 'small' | 'medium' | 'giant'; // Optional size bias control
   nebulaColorStyle?: 'random' | 'warm' | 'cool' | 'mixed'; // Optional color palette filter
   nebulaBrightness?: number;                   // 0..1 optional brightness slider (if exposed)
+
+  // Rogue Planets (unbound planets traversing the universe)
+  enableRoguePlanets: boolean;                 // Master switch for rogue planet generation
+  roguePlanetFrequency: number;                // 0..1 slider controlling rogue planet count
+  roguePlanetOrbitStyle?: 'slowDrifters' | 'mixed' | 'fastIntruders'; // Movement style
+  roguePlanetVisibility?: number;              // 0..1 visual emphasis (color/brightness distinction)
+  
+  // Rogue Planet Trajectory Configuration
+  rogueTrajectoryMode?: 'linearOnly' | 'mixed' | 'curved'; // Path type distribution
+  rogueCurvatureMin?: number;                  // 0..1 minimum path curvature
+  rogueCurvatureMax?: number;                  // 0..1 maximum path curvature
+  rogueTrajectoryShow?: boolean;               // Master toggle for rogue path rendering
+  rogueTrajectoryPreviewLength?: number;       // 0..1, how much of path is visualized
 }
 
 export interface GeneratedUniverse {
@@ -155,6 +168,16 @@ export interface GeneratedUniverse {
   
   /** Total number of nebula regions generated */
   totalNebulae?: number;
+  
+  // ============================================================================
+  // Rogue Planets (unbound planets freely traversing the universe)
+  // ============================================================================
+  
+  /** IDs of all rogue planets (subset of stars keys) */
+  roguePlanetIds?: string[];
+  
+  /** Total number of rogue planets generated */
+  totalRoguePlanets?: number;
   
   generatedAt: Date;
 }

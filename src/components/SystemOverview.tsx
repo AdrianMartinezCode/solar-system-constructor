@@ -3,7 +3,7 @@ import { useSystemStore } from '../state/systemStore';
 import { useWindowStore } from '../state/windowStore';
 import './SystemOverview.css';
 
-type FilterType = 'all' | 'stars' | 'planets' | 'moons' | 'asteroids' | 'comets' | 'lagrangePoints' | 'disks' | 'groups';
+type FilterType = 'all' | 'stars' | 'planets' | 'moons' | 'asteroids' | 'comets' | 'lagrangePoints' | 'disks' | 'groups' | 'roguePlanets';
 type SortType = 'name' | 'mass' | 'distance';
 
 export const SystemOverview: React.FC = () => {
@@ -23,8 +23,9 @@ export const SystemOverview: React.FC = () => {
   // Count objects
   const counts = useMemo(() => {
     const starArray = Object.values(stars);
-    const starsCount = starArray.filter(s => s.bodyType === 'star' || (s.parentId === null && !s.bodyType)).length;
-    const planetsCount = starArray.filter(s => s.bodyType === 'planet').length;
+    const starsCount = starArray.filter(s => s.bodyType === 'star' || (s.parentId === null && !s.bodyType && !s.isRoguePlanet)).length;
+    const planetsCount = starArray.filter(s => s.bodyType === 'planet' && !s.isRoguePlanet).length;
+    const roguePlanetsCount = starArray.filter(s => s.isRoguePlanet === true).length;
     const moonsCount = starArray.filter(s => s.bodyType === 'moon').length;
     const asteroidsCount = starArray.filter(s => s.bodyType === 'asteroid').length;
     const cometsCount = starArray.filter(s => s.bodyType === 'comet').length;
@@ -34,6 +35,7 @@ export const SystemOverview: React.FC = () => {
     return {
       stars: starsCount,
       planets: planetsCount,
+      roguePlanets: roguePlanetsCount,
       moons: moonsCount,
       asteroids: asteroidsCount,
       comets: cometsCount,
@@ -48,18 +50,20 @@ export const SystemOverview: React.FC = () => {
   const filteredObjects = useMemo(() => {
     let results: any[] = [];
 
-    // Get stars/planets/moons/asteroids/comets
-    if (filter === 'all' || filter === 'stars' || filter === 'planets' || filter === 'moons' || filter === 'asteroids' || filter === 'comets') {
+    // Get stars/planets/moons/asteroids/comets/roguePlanets
+    if (filter === 'all' || filter === 'stars' || filter === 'planets' || filter === 'moons' || filter === 'asteroids' || filter === 'comets' || filter === 'roguePlanets') {
       Object.values(stars).forEach(star => {
         const matchesSearch = star.name.toLowerCase().includes(searchQuery.toLowerCase());
         
         if (matchesSearch) {
           if (filter === 'all') {
-            results.push({ type: star.bodyType || 'star', data: star });
-          } else if (filter === 'stars' && (star.bodyType === 'star' || (!star.bodyType && star.parentId === null))) {
+            results.push({ type: star.isRoguePlanet ? 'roguePlanet' : (star.bodyType || 'star'), data: star });
+          } else if (filter === 'stars' && (star.bodyType === 'star' || (!star.bodyType && star.parentId === null && !star.isRoguePlanet))) {
             results.push({ type: 'star', data: star });
-          } else if (filter === 'planets' && star.bodyType === 'planet') {
+          } else if (filter === 'planets' && star.bodyType === 'planet' && !star.isRoguePlanet) {
             results.push({ type: 'planet', data: star });
+          } else if (filter === 'roguePlanets' && star.isRoguePlanet === true) {
+            results.push({ type: 'roguePlanet', data: star });
           } else if (filter === 'moons' && star.bodyType === 'moon') {
             results.push({ type: 'moon', data: star });
           } else if (filter === 'asteroids' && star.bodyType === 'asteroid') {
@@ -194,6 +198,13 @@ export const SystemOverview: React.FC = () => {
           ☄️ Comets
         </button>
         <button
+          className={`filter-btn ${filter === 'roguePlanets' ? 'active' : ''}`}
+          onClick={() => setFilter('roguePlanets')}
+          title="Rogue Planets (unbound wanderers)"
+        >
+          🧭 Rogues
+        </button>
+        <button
           className={`filter-btn ${filter === 'disks' ? 'active' : ''}`}
           onClick={() => setFilter('disks')}
         >
@@ -227,6 +238,7 @@ export const SystemOverview: React.FC = () => {
             let icon = '⭐';
             if (obj.type === 'group') icon = '📁';
             else if (obj.type === 'planet') icon = '🌍';
+            else if (obj.type === 'roguePlanet') icon = '🧭';
             else if (obj.type === 'moon') icon = '🌑';
             else if (obj.type === 'asteroid') icon = '🪨';
             else if (obj.type === 'comet') icon = '☄️';
@@ -239,7 +251,32 @@ export const SystemOverview: React.FC = () => {
               </div>
               <div className="result-info">
                 <div className="result-name">{obj.data.name || (obj.type === 'disk' ? 'Protoplanetary Disk' : 'Unknown')}</div>
-                {obj.type !== 'group' && obj.type !== 'disk' && obj.data.parentId && (
+                {obj.type === 'roguePlanet' && obj.data.roguePlanet && (
+                  <div className="result-details">
+                    {obj.data.roguePlanet.pathCurvature && obj.data.roguePlanet.pathCurvature > 0 ? (
+                      <>
+                        Curved Path ({(obj.data.roguePlanet.pathCurvature * 100).toFixed(0)}%) | 
+                        Speed: {Math.sqrt(
+                          obj.data.roguePlanet.velocity.x ** 2 + 
+                          obj.data.roguePlanet.velocity.y ** 2 + 
+                          obj.data.roguePlanet.velocity.z ** 2
+                        ).toFixed(3)} units/s
+                        {obj.data.roguePlanet.eccentricity && (
+                          <> | e={obj.data.roguePlanet.eccentricity.toFixed(2)}</>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        Linear Drift | Speed: {Math.sqrt(
+                      obj.data.roguePlanet.velocity.x ** 2 + 
+                      obj.data.roguePlanet.velocity.y ** 2 + 
+                      obj.data.roguePlanet.velocity.z ** 2
+                    ).toFixed(3)} units/s
+                      </>
+                    )}
+                  </div>
+                )}
+                {obj.type !== 'group' && obj.type !== 'disk' && obj.type !== 'roguePlanet' && obj.data.parentId && (
                   <div className="result-details">
                     Parent: {stars[obj.data.parentId]?.name || 'Unknown'} | {(obj.data.semiMajorAxis ?? obj.data.orbitalDistance)?.toFixed(2)} AU
                     {obj.data.eccentricity && obj.data.eccentricity > 0 && (
@@ -312,6 +349,13 @@ export const SystemOverview: React.FC = () => {
             <span className="stat-value">{counts.comets}</span>
             <span className="stat-label">Comets</span>
           </div>
+          {counts.roguePlanets > 0 && (
+            <div className="stat-item">
+              <span className="stat-icon">🧭</span>
+              <span className="stat-value">{counts.roguePlanets}</span>
+              <span className="stat-label">Rogues</span>
+            </div>
+          )}
           {counts.disks > 0 && (
             <div className="stat-item">
               <span className="stat-icon">💿</span>

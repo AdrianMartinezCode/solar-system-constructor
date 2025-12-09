@@ -206,3 +206,216 @@ export function findHeaviestStar(starIds: string[], starsMap: Record<string, any
   return heaviest;
 }
 
+/**
+ * Calculate position of a rogue planet (unbound planet with linear or curved trajectory).
+ * 
+ * Rogue planets can move in two modes:
+ * 1. Linear mode (pathCurvature = 0 or undefined): simple drift with constant velocity
+ *    position = initialPosition + velocity * time
+ * 
+ * 2. Curved/Elliptical mode (pathCurvature > 0): follows an elliptical path
+ *    - Reuses the same parametric ellipse math as bound orbits
+ *    - Path center is at initialPosition + pathOffset
+ *    - Motion is periodic with configurable period (pathPeriod)
+ *    - Supports 3D orientation via orbitRotX/Y/Z
+ * 
+ * This function respects the global time scale, so pausing (timeScale=0) freezes
+ * rogue motion and high speeds (e.g., 50x) make rogues traverse the scene quickly.
+ * 
+ * @param meta - Full RoguePlanetMeta object with all trajectory parameters
+ * @param time - Current simulation time in seconds (already scaled by timeScale)
+ * @returns 3D world-space position
+ */
+export function calculateRoguePlanetPosition(
+  meta: {
+    initialPosition: { x: number; y: number; z: number };
+    velocity: { x: number; y: number; z: number };
+    pathCurvature?: number;
+    semiMajorAxis?: number;
+    eccentricity?: number;
+    pathOffsetX?: number;
+    pathOffsetY?: number;
+    pathOffsetZ?: number;
+    orbitRotX?: number;
+    orbitRotY?: number;
+    orbitRotZ?: number;
+    pathPeriod?: number;
+  },
+  time: number
+): { x: number; y: number; z: number } {
+  const curvature = meta.pathCurvature ?? 0;
+  
+  // Linear mode: simple constant velocity drift (backwards compatible)
+  if (curvature === 0) {
+    return {
+      x: meta.initialPosition.x + meta.velocity.x * time,
+      y: meta.initialPosition.y + meta.velocity.y * time,
+      z: meta.initialPosition.z + meta.velocity.z * time,
+    };
+  }
+  
+  // Curved/Elliptical mode: parametric ellipse motion
+  const a = meta.semiMajorAxis ?? 100; // Default semi-major axis if not specified
+  const e = meta.eccentricity ?? 0;    // Default to circular if not specified
+  
+  const offsetX = meta.pathOffsetX ?? 0;
+  const offsetY = meta.pathOffsetY ?? 0;
+  const offsetZ = meta.pathOffsetZ ?? 0;
+  
+  const rotX = meta.orbitRotX ?? 0;
+  const rotY = meta.orbitRotY ?? 0;
+  const rotZ = meta.orbitRotZ ?? 0;
+  
+  // Compute angular velocity from period
+  // Default period based on semi-major axis (arbitrary scaling for visual appeal)
+  const period = meta.pathPeriod ?? (a * 5); // Larger paths = longer periods
+  const angularVelocity = (360 / period); // degrees per second
+  
+  // Compute mean anomaly (parametric angle)
+  const meanAnomaly = time * angularVelocity * (Math.PI / 180);
+  
+  // Map mean anomaly to position on ellipse in local 2D plane
+  // Using parametric ellipse: x' = a*cos(θ), z' = b*sin(θ)
+  // where b = a*sqrt(1 - e²)
+  const b = a * Math.sqrt(1 - e * e);
+  
+  // Local ellipse coordinates (in the ellipse's own plane, before rotation)
+  let xLocal = a * Math.cos(meanAnomaly);
+  let yLocal = 0;
+  let zLocal = b * Math.sin(meanAnomaly);
+  
+  // Apply 3D rotation: order is rotZ, then rotY, then rotX
+  // Convert angles to radians
+  const rxRad = rotX * (Math.PI / 180);
+  const ryRad = rotY * (Math.PI / 180);
+  const rzRad = rotZ * (Math.PI / 180);
+  
+  // Rotation around Z axis
+  if (rzRad !== 0) {
+    const cosZ = Math.cos(rzRad);
+    const sinZ = Math.sin(rzRad);
+    const xTemp = xLocal * cosZ - yLocal * sinZ;
+    const yTemp = xLocal * sinZ + yLocal * cosZ;
+    xLocal = xTemp;
+    yLocal = yTemp;
+  }
+  
+  // Rotation around Y axis
+  if (ryRad !== 0) {
+    const cosY = Math.cos(ryRad);
+    const sinY = Math.sin(ryRad);
+    const xTemp = xLocal * cosY + zLocal * sinY;
+    const zTemp = -xLocal * sinY + zLocal * cosY;
+    xLocal = xTemp;
+    zLocal = zTemp;
+  }
+  
+  // Rotation around X axis
+  if (rxRad !== 0) {
+    const cosX = Math.cos(rxRad);
+    const sinX = Math.sin(rxRad);
+    const yTemp = yLocal * cosX - zLocal * sinX;
+    const zTemp = yLocal * sinX + zLocal * cosX;
+    yLocal = yTemp;
+    zLocal = zTemp;
+  }
+  
+  // Apply path center offset (relative to initialPosition)
+  // The path is centered at initialPosition + pathOffset
+  return {
+    x: meta.initialPosition.x + offsetX + xLocal,
+    y: meta.initialPosition.y + offsetY + yLocal,
+    z: meta.initialPosition.z + offsetZ + zLocal,
+  };
+}
+
+/**
+ * Compute trajectory points for a rogue planet for visualization purposes.
+ * Returns two arrays: past path points (history) and future path points (prediction).
+ * 
+ * For linear paths: samples points at regular time intervals
+ * For curved paths: samples parametric positions along the ellipse
+ * 
+ * @param meta - RoguePlanetMeta with trajectory parameters
+ * @param currentTime - Current simulation time
+ * @param options - Visualization options
+ * @returns Object with pastPoints and futurePoints arrays
+ */
+export function computeRogueTrajectoryPoints(
+  meta: {
+    initialPosition: { x: number; y: number; z: number };
+    velocity: { x: number; y: number; z: number };
+    pathCurvature?: number;
+    semiMajorAxis?: number;
+    eccentricity?: number;
+    pathOffsetX?: number;
+    pathOffsetY?: number;
+    pathOffsetZ?: number;
+    orbitRotX?: number;
+    orbitRotY?: number;
+    orbitRotZ?: number;
+    pathPeriod?: number;
+  },
+  currentTime: number,
+  options: {
+    pastWindow?: number;      // Time window for past segment (seconds)
+    futureWindow?: number;    // Time window for future segment (seconds)
+    sampleCount?: number;     // Number of sample points per segment
+  } = {}
+): {
+  pastPoints: Array<{ x: number; y: number; z: number }>;
+  futurePoints: Array<{ x: number; y: number; z: number }>;
+} {
+  const curvature = meta.pathCurvature ?? 0;
+  const sampleCount = options.sampleCount ?? 32;
+  
+  // Default time windows
+  // For curved paths, use a fraction of the period if available
+  let pastWindow: number;
+  let futureWindow: number;
+  
+  if (curvature > 0 && meta.pathPeriod) {
+    // For curved paths, show a portion of the loop
+    pastWindow = options.pastWindow ?? (meta.pathPeriod * 0.25);
+    futureWindow = options.futureWindow ?? (meta.pathPeriod * 0.25);
+  } else {
+    // For linear paths, use fixed time windows
+    pastWindow = options.pastWindow ?? 100;  // 100 seconds of history
+    futureWindow = options.futureWindow ?? 100; // 100 seconds of prediction
+  }
+  
+  const pastPoints: Array<{ x: number; y: number; z: number }> = [];
+  const futurePoints: Array<{ x: number; y: number; z: number }> = [];
+  
+  // Sample past segment
+  for (let i = 0; i <= sampleCount; i++) {
+    const t = currentTime - pastWindow + (i / sampleCount) * pastWindow;
+    const pos = calculateRoguePlanetPosition(meta, Math.max(0, t));
+    pastPoints.push(pos);
+  }
+  
+  // Sample future segment
+  for (let i = 1; i <= sampleCount; i++) {
+    const t = currentTime + (i / sampleCount) * futureWindow;
+    const pos = calculateRoguePlanetPosition(meta, t);
+    futurePoints.push(pos);
+  }
+  
+  return { pastPoints, futurePoints };
+}
+
+/**
+ * Legacy function signature for backward compatibility with existing code.
+ * Deprecated: Use calculateRoguePlanetPosition(meta, time) with full meta object instead.
+ */
+export function calculateRoguePlanetPositionLegacy(
+  initialPosition: { x: number; y: number; z: number },
+  velocity: { x: number; y: number; z: number },
+  time: number
+): { x: number; y: number; z: number } {
+  return calculateRoguePlanetPosition(
+    { initialPosition, velocity, pathCurvature: 0 },
+    time
+  );
+}
+

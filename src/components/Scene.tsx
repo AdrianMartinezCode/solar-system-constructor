@@ -44,6 +44,13 @@ export const Scene: React.FC = () => {
   const time = useSystemStore((state) => state.time);
   const controlsRef = useRef<OrbitControlsImpl>(null);
   
+  // Collect rogue planet IDs (planets not bound to any system)
+  const roguePlanetIds = useMemo(() => {
+    return Object.values(stars)
+      .filter(star => star.isRoguePlanet === true)
+      .map(star => star.id);
+  }, [stars]);
+  
   // Note: Protoplanetary disks are now rendered inside StarObject for correct positioning
   
   // Compute which items should be visible based on nesting level
@@ -70,6 +77,7 @@ export const Scene: React.FC = () => {
   }
   console.log('Total Protoplanetary Disks:', Object.keys(protoplanetaryDisks).length);
   console.log('Total Nebulae:', Object.keys(nebulae).length);
+  console.log('Total Rogue Planets:', roguePlanetIds.length);
   console.log('Nesting Level:', nestingLevel);
   console.log('Visible Items:', visibleItems);
   console.log('Time:', time);
@@ -119,6 +127,11 @@ export const Scene: React.FC = () => {
         // Debug: show a red cube if no items
         <DebugCube />
       )}
+      
+      {/* Render rogue planets (not bound to any system) */}
+      {roguePlanetIds.map(rogueId => (
+        <StarObject key={`rogue-${rogueId}`} starId={rogueId} />
+      ))}
       
       {/* Render asteroid belts (legacy - kept for backwards compatibility) */}
       {Object.keys(belts).map(beltId => (

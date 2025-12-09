@@ -7,6 +7,7 @@ The Solar System Constructor now supports **full 3D elliptical orbits** with:
 - 3D orbit plane rotation (inclination, orientation)
 - Orbit center translation (offset from parent)
 - Full backward compatibility with existing circular orbits
+- **Reused for rogue planet curved trajectories** (unbound elliptical paths)
 
 ## Orbit Parameters
 
@@ -302,9 +303,39 @@ Potential improvements:
 
 ---
 
+## Rogue Planet Curved Trajectories
+
+The elliptical orbit mathematics are **reused for rogue planet curved trajectories**, allowing rogues to follow elliptical/looping paths instead of straight lines.
+
+### Key Differences from Bound Orbits
+
+| Aspect | Bound Orbits | Rogue Curved Paths |
+|--------|--------------|-------------------|
+| **Gravitational binding** | Bound to parent star | Unbound, free-floating |
+| **Center point** | Parent body position | `initialPosition + pathOffset` |
+| **Motion type** | Orbital (around parent) | Trajectory (through space) |
+| **Parameters** | `Star` orbit fields | `RoguePlanetMeta` path fields |
+| **Period meaning** | Orbital period | Path loop period |
+| **Visualization** | Orbit ring (full ellipse) | Trajectory segments (past/future) |
+
+### Implementation Details
+
+Rogue planets with `pathCurvature > 0` use the same `calculateOrbitalPosition` math internally:
+1. Parametric ellipse: `x' = a cos(θ)`, `z' = b sin(θ)`
+2. 3D rotation via `orbitRotX/Y/Z`
+3. Translation by path offset
+4. Periodic motion with configurable `pathPeriod`
+
+The key difference is that the "orbit center" is not a physical body but a point in space, and the rogue is not gravitationally bound—it simply follows a pre-determined elliptical path through the universe.
+
+See `docs/ROGUE_PLANETS.md` for full details on rogue planet trajectories.
+
+---
+
 For more information, see:
-- `src/types.ts` - Star interface definition
-- `src/utils/physics.ts` - Orbit calculation implementation
-- `src/ui/StarEditorPanel.tsx` - UI for editing orbits
-- `src/utils/procedural-generator.ts` - Procedural orbit generation
+- `src/types.ts` - Star and RoguePlanetMeta interface definitions
+- `src/utils/physics.ts` - Orbit and rogue trajectory calculation
+- `src/ui/StarEditorPanel.tsx` - UI for editing orbits and rogue trajectories
+- `src/utils/procedural-generator.ts` - Procedural orbit and trajectory generation
+- `docs/ROGUE_PLANETS.md` - Rogue planet implementation details
 

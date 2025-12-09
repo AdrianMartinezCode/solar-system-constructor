@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
-import { calculateOrbitalPosition, generateOrbitPath } from '../utils/physics';
+import { calculateOrbitalPosition, calculateRoguePlanetPosition, generateOrbitPath, computeRogueTrajectoryPoints } from '../utils/physics';
 import { OrbitRing } from './OrbitRing';
 import * as THREE from 'three';
 import { PlanetaryRingObject } from './PlanetaryRingObject';
@@ -9,6 +9,7 @@ import { CometObject } from './CometObject';
 import { LagrangePointObject } from './LagrangePointObject';
 import { ProtoplanetaryDiskObject } from './ProtoplanetaryDiskObject';
 import { SmallBodyFieldObject } from './SmallBodyFieldObject';
+import { RogueTrajectory } from './RogueTrajectory';
 
 interface StarObjectProps {
   starId: string;
@@ -41,17 +42,30 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
     );
   }, [smallBodyFields, starId]);
   
-  // Calculate position based on orbital parameters (now supports elliptical orbits)
+  // Calculate position based on orbital parameters (now supports elliptical orbits and rogue planets)
   const position = useMemo(() => {
-    if (!star || star.orbitalDistance === 0) {
+    if (!star) {
+      return { x: 0, y: 0, z: 0 };
+    }
+    
+    // Rogue planets use linear or curved drift motion
+    if (star.isRoguePlanet && star.roguePlanet) {
+      return calculateRoguePlanetPosition(
+        star.roguePlanet,
+        time
+      );
+    }
+    
+    // Normal bound bodies use orbital motion
+    if (star.orbitalDistance === 0) {
       return { x: 0, y: 0, z: 0 };
     }
     return calculateOrbitalPosition(time, star);
   }, [time, star]);
   
-  // Generate orbit path for visualization
+  // Generate orbit path for visualization (not applicable to rogue planets)
   const orbitPath = useMemo(() => {
-    if (!star || star.orbitalDistance === 0) {
+    if (!star || star.orbitalDistance === 0 || star.isRoguePlanet) {
       return [];
     }
     return generateOrbitPath(star);
@@ -68,11 +82,20 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
   
   return (
     <group ref={groupRef} position={[position.x, position.y, position.z]}>
-      {/* Orbit ring - positioned at parent origin */}
-      {star.orbitalDistance > 0 && (
+      {/* Orbit ring - positioned at parent origin (not shown for rogue planets) */}
+      {star.orbitalDistance > 0 && !star.isRoguePlanet && (
         <group position={[-position.x, -position.y, -position.z]}>
           <OrbitRing points={orbitPath} />
         </group>
+      )}
+      
+      {/* Rogue planet trajectory visualization */}
+      {star.isRoguePlanet && star.roguePlanet && (
+        <RogueTrajectory 
+          roguePlanetMeta={star.roguePlanet}
+          currentTime={time}
+          currentPosition={position}
+        />
       )}
       
       {/* Comet rendering (if this is a comet) - handles its own geometry and tail */}

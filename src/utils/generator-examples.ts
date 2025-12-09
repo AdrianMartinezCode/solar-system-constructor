@@ -329,12 +329,19 @@ export function analyzeSystem(data: {
     minCometEccentricity: Infinity,
     maxCometEccentricity: -Infinity,
     avgCometEccentricity: 0,
+    
+    // Rogue planet stats
+    roguePlanets: 0,
+    avgRogueSpeed: 0,
+    minRogueSpeed: Infinity,
+    maxRogueSpeed: -Infinity,
   };
   
   const depths: number[] = [];
   let totalMass = 0;
   let totalRadius = 0;
   let cometEccentricities: number[] = [];
+  let rogueSpeeds: number[] = [];
   
   // Analyze each star
   Object.values(data.stars).forEach((star: any) => {
@@ -347,7 +354,20 @@ export function analyzeSystem(data: {
     stats.maxRadius = Math.max(stats.maxRadius, star.radius);
     
     // Count by body type
-    if (star.bodyType === 'star' || (!star.bodyType && star.parentId === null)) {
+    if (star.isRoguePlanet) {
+      // Rogue planets are counted separately
+      stats.roguePlanets++;
+      if (star.roguePlanet && star.roguePlanet.velocity) {
+        const speed = Math.sqrt(
+          star.roguePlanet.velocity.x ** 2 +
+          star.roguePlanet.velocity.y ** 2 +
+          star.roguePlanet.velocity.z ** 2
+        );
+        rogueSpeeds.push(speed);
+        stats.minRogueSpeed = Math.min(stats.minRogueSpeed, speed);
+        stats.maxRogueSpeed = Math.max(stats.maxRogueSpeed, speed);
+      }
+    } else if (star.bodyType === 'star' || (!star.bodyType && star.parentId === null)) {
       stats.stars++;
     } else if (star.bodyType === 'planet') {
       stats.planets++;
@@ -417,6 +437,15 @@ export function analyzeSystem(data: {
   // Comet eccentricity stats
   if (cometEccentricities.length > 0) {
     stats.avgCometEccentricity = cometEccentricities.reduce((a, b) => a + b, 0) / cometEccentricities.length;
+  }
+  
+  // Rogue planet speed stats
+  if (rogueSpeeds.length > 0) {
+    stats.avgRogueSpeed = rogueSpeeds.reduce((a, b) => a + b, 0) / rogueSpeeds.length;
+  } else {
+    // Reset to 0 if no rogue planets found
+    stats.minRogueSpeed = 0;
+    stats.maxRogueSpeed = 0;
   }
   
   // Calculate unified small body stats from particle fields
@@ -645,13 +674,17 @@ export function validateSystem(data: {
   });
   
   // Check heaviest star is center in each system
+  // Note: Rogue planets are excluded from this check as they are not part of any system hierarchy
   data.rootIds.forEach(rootId => {
     const rootStar = data.stars[rootId];
     if (!rootStar) return;
     
+    // Skip rogue planets (they are not system centers)
+    if (rootStar.isRoguePlanet) return;
+    
     // Get all direct children that might be stars
     const children = rootStar.children.map((id: string) => data.stars[id]).filter(Boolean);
-    const companionStars = children.filter((child: any) => child.mass > 50);
+    const companionStars = children.filter((child: any) => child.mass > 50 && !child.isRoguePlanet);
     
     // Check if any companion is heavier than root
     companionStars.forEach((companion: any) => {

@@ -27,6 +27,8 @@ interface GenerationStats {
   totalProtoplanetaryDiskParticles?: number;
   // Nebula stats
   totalNebulae?: number;
+  // Rogue planet stats
+  totalRoguePlanets?: number;
   generatedAt: string;
 }
 
@@ -118,6 +120,8 @@ export const UniverseGeneratorPanel: React.FC = () => {
         totalProtoplanetaryDiskParticles: result.totalProtoplanetaryDiskParticles || 0,
         // Nebula stats
         totalNebulae: result.totalNebulae || 0,
+        // Rogue planet stats
+        totalRoguePlanets: result.totalRoguePlanets || 0,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -814,6 +818,194 @@ export const UniverseGeneratorPanel: React.FC = () => {
         )}
       </div>
 
+      {/* Rogue Planet Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">Rogue Planets 🧭</h3>
+        
+        {/* Enable Rogue Planets */}
+        <div className="generator-field">
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableRoguePlanets}
+              onChange={(e) => updateConfig('enableRoguePlanets', e.target.checked)}
+            />
+            <span>Enable Rogue Planets</span>
+          </label>
+          <small className="generator-hint">
+            Unbound planets freely drifting through the universe
+          </small>
+        </div>
+        
+        {config.enableRoguePlanets && (
+          <>
+            {/* Rogue Planet Frequency */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Rogue Planet Frequency
+                <span className="generator-value">{(config.roguePlanetFrequency * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.roguePlanetFrequency}
+                onChange={(e) => updateConfig('roguePlanetFrequency', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>None</span>
+                <span>Many Drifters</span>
+              </div>
+              <small className="generator-hint">Number of rogue planets in the universe</small>
+            </div>
+            
+            {/* Trajectory Style */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Trajectory Style
+              </label>
+              <select
+                className="generator-select"
+                value={config.roguePlanetOrbitStyle || 'mixed'}
+                onChange={(e) => updateConfig('roguePlanetOrbitStyle', e.target.value as any)}
+              >
+                <option value="slowDrifters">Slow Drifters</option>
+                <option value="mixed">Mixed</option>
+                <option value="fastIntruders">Fast Intruders</option>
+              </select>
+              <small className="generator-hint">Movement speed and inclination style</small>
+            </div>
+            
+            {/* Visual Emphasis */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Visual Emphasis
+                <span className="generator-value">{((config.roguePlanetVisibility || 0.5) * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.roguePlanetVisibility || 0.5}
+                onChange={(e) => updateConfig('roguePlanetVisibility', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Subtle</span>
+                <span>Highly Distinct</span>
+              </div>
+              <small className="generator-hint">Color variation and visual prominence</small>
+            </div>
+            
+            {/* Rogue Trajectory Mode */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Rogue Trajectory Mode
+              </label>
+              <select
+                className="generator-select"
+                value={config.rogueTrajectoryMode || 'linearOnly'}
+                onChange={(e) => updateConfig('rogueTrajectoryMode', e.target.value as any)}
+              >
+                <option value="linearOnly">Linear Only</option>
+                <option value="mixed">Mixed</option>
+                <option value="curved">Curved</option>
+              </select>
+              <small className="generator-hint">Path shape: straight lines vs curved/elliptical</small>
+            </div>
+            
+            {/* Rogue Path Curvature Range */}
+            {(config.rogueTrajectoryMode === 'mixed' || config.rogueTrajectoryMode === 'curved') && (
+              <>
+                <div className="generator-field">
+                  <label className="generator-label">
+                    Min Path Curvature
+                    <span className="generator-value">{((config.rogueCurvatureMin || 0) * 100).toFixed(0)}%</span>
+                  </label>
+                  <input
+                    type="range"
+                    className="generator-slider"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={config.rogueCurvatureMin || 0}
+                    onChange={(e) => updateConfig('rogueCurvatureMin', parseFloat(e.target.value))}
+                  />
+                  <div className="generator-slider-labels">
+                    <span>Straight</span>
+                    <span>Curved</span>
+                  </div>
+                  <small className="generator-hint">Minimum curvature for rogue paths</small>
+                </div>
+                
+                <div className="generator-field">
+                  <label className="generator-label">
+                    Max Path Curvature
+                    <span className="generator-value">{((config.rogueCurvatureMax || 0) * 100).toFixed(0)}%</span>
+                  </label>
+                  <input
+                    type="range"
+                    className="generator-slider"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={config.rogueCurvatureMax || 0}
+                    onChange={(e) => updateConfig('rogueCurvatureMax', parseFloat(e.target.value))}
+                  />
+                  <div className="generator-slider-labels">
+                    <span>Straight</span>
+                    <span>Strongly Curved</span>
+                  </div>
+                  <small className="generator-hint">Maximum curvature for rogue paths</small>
+                </div>
+              </>
+            )}
+            
+            {/* Show Rogue Trajectories */}
+            <div className="generator-field">
+              <label className="generator-checkbox">
+                <input
+                  type="checkbox"
+                  checked={config.rogueTrajectoryShow ?? true}
+                  onChange={(e) => updateConfig('rogueTrajectoryShow', e.target.checked)}
+                />
+                <span>Show Rogue Trajectories</span>
+              </label>
+              <small className="generator-hint">
+                Visualize past and future path segments
+              </small>
+            </div>
+            
+            {/* Trajectory Preview Length */}
+            {(config.rogueTrajectoryShow ?? true) && (
+              <div className="generator-field">
+                <label className="generator-label">
+                  Trajectory Length
+                  <span className="generator-value">{((config.rogueTrajectoryPreviewLength || 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={config.rogueTrajectoryPreviewLength || 0.5}
+                  onChange={(e) => updateConfig('rogueTrajectoryPreviewLength', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Short</span>
+                  <span>Long</span>
+                </div>
+                <small className="generator-hint">Length of visible path segments</small>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       {/* Planetary Ring Controls */}
       <div className="generator-section">
         <h3 className="generator-section-title">Planetary Rings</h3>
@@ -1168,6 +1360,14 @@ export const UniverseGeneratorPanel: React.FC = () => {
               <div className="generator-stat">
                 <span className="generator-stat-label">🌫 Nebulae Regions</span>
                 <span className="generator-stat-value">{stats.totalNebulae}</span>
+              </div>
+            )}
+            
+            {/* Rogue Planet Stats */}
+            {(stats.totalRoguePlanets ?? 0) > 0 && (
+              <div className="generator-stat">
+                <span className="generator-stat-label">🧭 Rogue Planets</span>
+                <span className="generator-stat-value">{stats.totalRoguePlanets}</span>
               </div>
             )}
             
