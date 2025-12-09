@@ -47,7 +47,20 @@ export const StarEditorPanel: React.FC = () => {
   
   const handleUpdate = (field: string, value: any) => {
     if (selectedStarId) {
+      console.log(`[StarEditorPanel] Updating ${field} for ${selectedStarId}:`, value);
       updateStar(selectedStarId, { [field]: value });
+      
+      // Verify the update was applied
+      setTimeout(() => {
+        const updated = useSystemStore.getState().stars[selectedStarId];
+        if (field === 'blackHole' && updated?.blackHole) {
+          console.log('[StarEditorPanel] Verified blackHole update:', {
+            diskBrightness: updated.blackHole.diskBrightness,
+            diskOpacity: updated.blackHole.diskOpacity,
+            dopplerBeamingStrength: updated.blackHole.dopplerBeamingStrength,
+          });
+        }
+      }, 50);
     }
   };
   
@@ -650,6 +663,334 @@ export const StarEditorPanel: React.FC = () => {
                   />
                   <span>Show Trajectory</span>
                 </label>
+              </div>
+            </div>
+          )}
+
+          {/* Black Hole Properties - only for black holes */}
+          {selectedStar.bodyType === 'blackHole' && selectedStar.blackHole && (
+            <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <h5 style={{ marginTop: 0, marginBottom: '8px' }}>Black Hole Properties 🕳️</h5>
+              
+              {/* Core Presence Flags */}
+              <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
+                <div className="form-group">
+                  <label className="generator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedStar.blackHole.hasAccretionDisk}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        hasAccretionDisk: e.target.checked
+                      })}
+                    />
+                    <span>Accretion Disk</span>
+                  </label>
+                </div>
+                
+                <div className="form-group">
+                  <label className="generator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedStar.blackHole.hasRelativisticJet}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        hasRelativisticJet: e.target.checked
+                      })}
+                    />
+                    <span>Relativistic Jets</span>
+                  </label>
+                </div>
+                
+                <div className="form-group">
+                  <label className="generator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedStar.blackHole.hasPhotonRing}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        hasPhotonRing: e.target.checked
+                      })}
+                    />
+                    <span>Photon Ring</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Geometry Section */}
+              <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(74,144,226,0.1)', borderRadius: '4px' }}>
+                <h6 style={{ marginTop: 0, marginBottom: '8px', fontSize: '0.9em' }}>Geometry</h6>
+                
+                <div className="form-group">
+                  <label>Shadow Radius</label>
+                  <input
+                    type="number"
+                    value={selectedStar.blackHole.shadowRadius}
+                    onChange={(e) => handleUpdate('blackHole', {
+                      ...selectedStar.blackHole,
+                      shadowRadius: Number(e.target.value)
+                    })}
+                    min="0.1"
+                    step="0.1"
+                  />
+                  <small>Event horizon visual size</small>
+                </div>
+                
+                {selectedStar.blackHole.hasAccretionDisk && (
+                  <>
+                    <div className="form-group">
+                      <label>Disk Inner Radius</label>
+                      <input
+                        type="number"
+                        value={selectedStar.blackHole.accretionInnerRadius}
+                        onChange={(e) => handleUpdate('blackHole', {
+                          ...selectedStar.blackHole,
+                          accretionInnerRadius: Math.max(selectedStar.blackHole.shadowRadius * 1.1, Number(e.target.value))
+                        })}
+                        min={selectedStar.blackHole.shadowRadius * 1.1}
+                        step="0.1"
+                      />
+                      <small>Must be &gt; shadow radius</small>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Disk Outer Radius</label>
+                      <input
+                        type="number"
+                        value={selectedStar.blackHole.accretionOuterRadius}
+                        onChange={(e) => handleUpdate('blackHole', {
+                          ...selectedStar.blackHole,
+                          accretionOuterRadius: Math.max(selectedStar.blackHole.accretionInnerRadius * 1.1, Number(e.target.value))
+                        })}
+                        min={selectedStar.blackHole.accretionInnerRadius * 1.1}
+                        step="0.5"
+                      />
+                      <small>Must be &gt; inner radius</small>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Disk Thickness</label>
+                      <input
+                        type="number"
+                        value={selectedStar.blackHole.diskThickness}
+                        onChange={(e) => handleUpdate('blackHole', {
+                          ...selectedStar.blackHole,
+                          diskThickness: Number(e.target.value)
+                        })}
+                        min="0"
+                        step="0.05"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              {/* Accretion Disk Appearance */}
+              {selectedStar.blackHole.hasAccretionDisk && (
+                <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(226,144,74,0.1)', borderRadius: '4px' }}>
+                  <h6 style={{ marginTop: 0, marginBottom: '8px', fontSize: '0.9em' }}>Accretion Disk Appearance</h6>
+                  
+                  <div className="form-group">
+                    <label>Brightness (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={selectedStar.blackHole.diskBrightness}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        diskBrightness: Number(e.target.value)
+                      })}
+                    />
+                    <small>{selectedStar.blackHole.diskBrightness.toFixed(2)}</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Opacity (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={selectedStar.blackHole.diskOpacity}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        diskOpacity: Number(e.target.value)
+                      })}
+                    />
+                    <small>{selectedStar.blackHole.diskOpacity.toFixed(2)}</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Temperature (K)</label>
+                    <input
+                      type="number"
+                      value={Math.round(selectedStar.blackHole.diskTemperature)}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        diskTemperature: Number(e.target.value)
+                      })}
+                      min="1000"
+                      max="50000"
+                      step="1000"
+                    />
+                    <small>Color temperature gradient</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Clumpiness (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={selectedStar.blackHole.diskClumpiness}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        diskClumpiness: Number(e.target.value)
+                      })}
+                    />
+                    <small>{selectedStar.blackHole.diskClumpiness.toFixed(2)} - density variation</small>
+                  </div>
+                </div>
+              )}
+              
+              {/* Jet Parameters */}
+              {selectedStar.blackHole.hasRelativisticJet && (
+                <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(144,226,74,0.1)', borderRadius: '4px' }}>
+                  <h6 style={{ marginTop: 0, marginBottom: '8px', fontSize: '0.9em' }}>Relativistic Jets</h6>
+                  
+                  <div className="form-group">
+                    <label>Jet Length</label>
+                    <input
+                      type="number"
+                      value={selectedStar.blackHole.jetLength}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        jetLength: Number(e.target.value)
+                      })}
+                      min="5"
+                      step="5"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Jet Opening Angle (degrees)</label>
+                    <input
+                      type="number"
+                      value={selectedStar.blackHole.jetOpeningAngle}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        jetOpeningAngle: Number(e.target.value)
+                      })}
+                      min="1"
+                      max="30"
+                      step="0.5"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Jet Brightness (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={selectedStar.blackHole.jetBrightness}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        jetBrightness: Number(e.target.value)
+                      })}
+                    />
+                    <small>{selectedStar.blackHole.jetBrightness.toFixed(2)}</small>
+                  </div>
+                </div>
+              )}
+              
+              {/* Physical Parameters */}
+              <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(226,74,144,0.1)', borderRadius: '4px' }}>
+                <h6 style={{ marginTop: 0, marginBottom: '8px', fontSize: '0.9em' }}>Physical Parameters</h6>
+                
+                <div className="form-group">
+                  <label>Spin Parameter (0-1)</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={selectedStar.blackHole.spin}
+                    onChange={(e) => handleUpdate('blackHole', {
+                      ...selectedStar.blackHole,
+                      spin: Number(e.target.value)
+                    })}
+                  />
+                  <small>{selectedStar.blackHole.spin.toFixed(2)} (0=Schwarzschild, 1=extremal Kerr)</small>
+                </div>
+              </div>
+              
+              {/* Relativistic Effects */}
+              <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(144,74,226,0.1)', borderRadius: '4px' }}>
+                <h6 style={{ marginTop: 0, marginBottom: '8px', fontSize: '0.9em' }}>Relativistic FX</h6>
+                
+                <div className="form-group">
+                  <label>Doppler Beaming (0-1)</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={selectedStar.blackHole.dopplerBeamingStrength}
+                    onChange={(e) => handleUpdate('blackHole', {
+                      ...selectedStar.blackHole,
+                      dopplerBeamingStrength: Number(e.target.value)
+                    })}
+                  />
+                  <small>{selectedStar.blackHole.dopplerBeamingStrength.toFixed(2)}</small>
+                </div>
+                
+                <div className="form-group">
+                  <label>Lensing Strength (0-1)</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={selectedStar.blackHole.lensingStrength}
+                    onChange={(e) => handleUpdate('blackHole', {
+                      ...selectedStar.blackHole,
+                      lensingStrength: Number(e.target.value)
+                    })}
+                  />
+                  <small>{selectedStar.blackHole.lensingStrength.toFixed(2)}</small>
+                </div>
+              </div>
+              
+              {/* Animation */}
+              <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(74,226,144,0.1)', borderRadius: '4px' }}>
+                <h6 style={{ marginTop: 0, marginBottom: '8px', fontSize: '0.9em' }}>Animation</h6>
+                
+                <div className="form-group">
+                  <label>Rotation Speed Multiplier</label>
+                  <input
+                    type="number"
+                    value={selectedStar.blackHole.rotationSpeedMultiplier}
+                    onChange={(e) => handleUpdate('blackHole', {
+                      ...selectedStar.blackHole,
+                      rotationSpeedMultiplier: Number(e.target.value)
+                    })}
+                    min="0.1"
+                    max="3"
+                    step="0.1"
+                  />
+                  <small>Disk rotation speed (scales with global time)</small>
+                </div>
+                
+                <div className="form-group" style={{ marginTop: '8px' }}>
+                  <label style={{ fontSize: '0.85em', color: '#aaa' }}>Seed: {selectedStar.blackHole.seed}</label>
+                  <br />
+                  <small style={{ fontSize: '0.75em' }}>Deterministic noise/variation</small>
+                </div>
               </div>
             </div>
           )}

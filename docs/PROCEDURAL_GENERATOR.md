@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module implements a **Stochastic Hierarchical L-System** combined with **Kepler-inspired orbital rules** to procedurally generate hierarchical solar systems compatible with the 3D orbital editor.
+This module implements a **Stochastic Hierarchical L-System** combined with **Kepler-inspired orbital rules** to procedurally generate hierarchical solar systems compatible with the 3D orbital editor. The generator supports stars, planets, moons, asteroid belts, comets, Lagrange points, protoplanetary disks, nebulae, rogue planets, and exotic objects like black holes.
 
 ## Architecture
 

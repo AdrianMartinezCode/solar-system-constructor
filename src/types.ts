@@ -8,7 +8,7 @@ export interface Star {
   parentId: string | null;
   
   // Body type discriminant for identifying different celestial body types
-  bodyType?: 'star' | 'planet' | 'moon' | 'asteroid' | 'comet' | 'lagrangePoint';
+  bodyType?: 'star' | 'planet' | 'moon' | 'asteroid' | 'comet' | 'lagrangePoint' | 'blackHole';
   
   // Optional planetary ring (primarily for planets)
   ring?: PlanetaryRing;
@@ -27,6 +27,9 @@ export interface Star {
   
   // Reference to Lagrange point (for Trojan bodies)
   lagrangeHostId?: string;
+  
+  // Optional black hole metadata (if this is a black hole)
+  blackHole?: BlackHoleProperties;
   
   // Rogue planet support (planets not bound to any system)
   isRoguePlanet?: boolean;          // true only for rogue planets
@@ -101,6 +104,52 @@ export interface LagrangePointMeta {
   stable: boolean;                  // true for L4/L5, false for L1-L3
   pairType: 'starPlanet' | 'planetMoon'; // Type of two-body pair
   label?: string;                   // Optional display label (e.g. "Earth L4")
+}
+
+/**
+ * Black Hole Properties - metadata for black hole bodies
+ * 
+ * Black holes are special, extremely dense central objects with visual elements
+ * including event horizon shadow, accretion disk, relativistic jets, and
+ * simulated gravitational lensing effects.
+ */
+export interface BlackHoleProperties {
+  // Core presence flags
+  hasAccretionDisk: boolean;        // Whether this black hole has an accretion disk
+  hasRelativisticJet: boolean;      // Whether this black hole has jets
+  hasPhotonRing: boolean;           // Whether to render the photon ring
+  
+  // Physical-ish parameters
+  spin: number;                     // 0–1 dimensionless spin parameter (Kerr)
+  
+  // Visual radii and dimensions (in world units)
+  shadowRadius: number;             // Visual radius of black hole shadow (~ 2x event horizon)
+  
+  // Accretion disk geometry
+  accretionInnerRadius: number;     // Inner edge of accretion disk (> shadowRadius)
+  accretionOuterRadius: number;     // Outer edge of accretion disk
+  diskThickness: number;            // Half-height thickness of disk
+  
+  // Accretion disk appearance
+  diskBrightness: number;           // 0-1 brightness/emissive intensity
+  diskOpacity: number;              // 0-1 base opacity
+  diskTemperature: number;          // Temperature gradient (affects color, kelvin-like)
+  diskClumpiness: number;           // 0-1 clumpiness/density variation
+  
+  // Relativistic jet parameters
+  jetLength: number;                // Length of jet along spin axis
+  jetOpeningAngle: number;          // Opening angle in degrees (cone width)
+  jetBrightness: number;            // 0-1 brightness/emissive intensity
+  
+  // Visual effects strengths
+  dopplerBeamingStrength: number;   // 0-1, strength of Doppler beaming effect
+  lensingStrength: number;          // 0-1, strength of gravitational lensing warping
+  
+  // Rotation and animation
+  rotationSpeedMultiplier: number;  // Multiplier for disk rotation (scales with timeScale)
+  
+  // Determinism
+  seed: string | number;            // Per-black-hole seed for noise/variation
 }
 
 // Rogue Planet metadata for planets not gravitationally bound to any star

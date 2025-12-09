@@ -242,6 +242,83 @@ The UI exposes this as a dropdown in the "Small Body Belts & Fields" section:
 
 ---
 
+## Black Hole Mapping
+
+Black holes have both basic and advanced UI controls that map to internal generator parameters:
+
+### Basic Controls Mapping
+
+```typescript
+// Basic UI → Internal Config
+
+blackHoleFrequency: 0.5               → blackHoleSystemProbability: 0.25  // 5-50% scaling
+blackHoleAccretionIntensity: 0.7      → blackHoleAccretionDiskProbability: 0.78  // 50-90%
+blackHoleJetFrequency: 0.6            → blackHoleJetProbability: 0.6  // Direct
+blackHoleVisualComplexity: 'normal'   → {
+  blackHoleDopplerBeamingStrengthRange: [0.3, 0.7],
+  blackHoleLensingStrengthRange: [0.4, 0.8],
+  blackHolePhotonRingEnabled: true
+}
+```
+
+### Advanced Controls Mapping
+
+```typescript
+// Mass Profile
+blackHoleMassProfile: 'mixed' → blackHoleMassClassWeights: {
+  stellar: 0.7,
+  intermediate: 0.25,
+  supermassive: 0.05
+}
+
+// Spin Level (0-1)
+blackHoleSpinLevel: 0.2  → blackHoleSpinRange: [0.0, 0.4], blackHoleSpinDistribution: 'lowSpinBiased'
+blackHoleSpinLevel: 0.5  → blackHoleSpinRange: [0.2, 0.8], blackHoleSpinDistribution: 'uniform'
+blackHoleSpinLevel: 0.8  → blackHoleSpinRange: [0.6, 0.99], blackHoleSpinDistribution: 'highSpinBiased'
+
+// Disk Properties
+blackHoleDiskThicknessLevel: 0.7 → blackHoleDiskThicknessRange: [0.24, 0.65]  // Scaled
+blackHoleDiskClumpinessLevel: 0.6 → blackHoleDiskClumpinessRange: [0.22, 0.76]  // Scaled
+
+// Jets
+blackHoleJetDramaLevel: 0.8 → {
+  blackHoleJetLengthRange: [34, 86],
+  blackHoleJetBrightnessRange: [0.74, 0.96]
+}
+
+// FX Intensity
+blackHoleFxIntensity: 0.7 → {
+  blackHoleDopplerBeamingStrengthRange: [0.31, 0.82],
+  blackHoleLensingStrengthRange: [0.41, 0.85],
+  blackHolePhotonRingEnabled: true  // If > 0.3
+}
+
+// Accretion Style
+blackHoleAccretionStyle: 'quasar' → {
+  blackHoleDiskBrightnessRange: [0.9, 1.0],
+  blackHoleDiskOpacityRange: [0.8, 1.0],
+  blackHoleDiskTemperatureRange: [15000, 50000]
+}
+
+// Rarity Style (overrides frequency)
+blackHoleRarityStyle: 'ultraRare' → blackHoleSystemProbability: 0.01
+blackHoleRarityStyle: 'rare'      → blackHoleSystemProbability: 0.05
+blackHoleRarityStyle: 'common'    → blackHoleSystemProbability: 0.30
+
+// Multiple BHs
+blackHoleAllowMultiplePerSystem: true → blackHoleMultiplePerSystemProbability: 0.15
+```
+
+### Selection-Time Editing
+
+When a black hole is selected in the 3D scene, `StarEditorPanel.tsx` displays a black hole inspector with live-editable properties:
+- All `BlackHoleProperties` fields are exposed and editable
+- Changes update `useSystemStore` immediately
+- Edits persist through save/load cycles
+- Validation prevents invalid values (e.g., `innerRadius > shadowRadius`)
+
+---
+
 ## Scale Mode Mapping
 
 ```typescript

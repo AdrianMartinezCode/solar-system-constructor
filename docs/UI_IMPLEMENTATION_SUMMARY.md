@@ -78,6 +78,7 @@ A complete **React UI panel** for configuring and running the procedural generat
 - ✅ Max Systems (slider 1-100)
 - ✅ Max Stars Per System (slider 1-3)
 - ✅ Max Depth (slider 1-5)
+- ✅ Black Holes 🕳️ (enable/frequency/intensity/jets/visual complexity)
 - ✅ Enable N-ary Systems (checkbox)
 - ✅ Scale Mode (select: toy/compressed/realistic)
 

@@ -151,6 +151,40 @@ interface GeneratorConfig {
   roguePlanetShowTrajectories: boolean;                   // Whether to show trajectory visualization
   roguePlanetTrajectoryPastWindow: number;                // Past trajectory window (seconds or fraction of period)
   roguePlanetTrajectoryFutureWindow: number;              // Future trajectory window (seconds or fraction of period)
+  
+  // Black Holes (extremely dense central objects with accretion disks and jets)
+  enableBlackHoles: boolean;                              // Master switch for black hole generation
+  blackHoleSystemProbability: number;                     // Chance that a root system is centered on a black hole
+  blackHoleAsCompanionProbability: number;                // Chance to include a black hole in multi-star systems
+  blackHoleMassRange: [number, number];                   // Mass range (in solar masses, typically large)
+  blackHoleAccretionDiskProbability: number;              // Chance a black hole has an accretion disk
+  blackHoleJetProbability: number;                        // Chance a black hole with a disk has jets
+  blackHolePhotonRingEnabled: boolean;                    // Whether to render photon rings
+  blackHoleDopplerBeamingStrengthRange: [number, number]; // [min, max] Doppler beaming strength
+  blackHoleLensingStrengthRange: [number, number];        // [min, max] gravitational lensing strength
+  blackHoleShadowRadiusRange: [number, number];           // [min, max] event horizon shadow radius
+  blackHoleAccretionInnerRadiusMultiplier: [number, number]; // Inner radius as multiple of shadow radius
+  blackHoleAccretionOuterRadiusMultiplier: [number, number]; // Outer radius as multiple of shadow radius
+  blackHoleDiskThicknessRange: [number, number];          // Disk half-height thickness range
+  blackHoleJetLengthRange: [number, number];              // Jet length range
+  blackHoleJetOpeningAngleRange: [number, number];        // Jet opening angle range (degrees)
+  blackHoleSpinRange: [number, number];                   // Black hole spin parameter range (0-1)
+  
+  // Advanced Black Hole Diversity Parameters
+  blackHoleMassClassWeights?: { stellar: number; intermediate: number; supermassive: number }; // Mass class distribution weights
+  blackHoleMultiplePerSystemProbability?: number;         // Chance of multiple black holes in a system (binary BHs, etc.)
+  blackHoleCenterBias?: number;                           // 0-1 bias toward making the central object a black hole
+  blackHoleSpinDistribution?: 'uniform' | 'highSpinBiased' | 'lowSpinBiased'; // Spin distribution style
+  blackHoleTiltRange?: [number, number];                  // Disk/jet tilt angle range (degrees)
+  blackHoleShadowRadiusScaleMode?: 'physicalish' | 'cinematic'; // Shadow radius scaling mode
+  blackHoleAccretionStyle?: 'subtle' | 'normal' | 'quasar'; // Accretion disk brightness/style preset
+  blackHoleDiskBrightnessRange?: [number, number];        // Disk brightness range
+  blackHoleDiskOpacityRange?: [number, number];           // Disk opacity range
+  blackHoleDiskTemperatureRange?: [number, number];       // Disk temperature range (Kelvin)
+  blackHoleDiskClumpinessRange?: [number, number];        // Disk clumpiness/density variation range
+  blackHoleJetBrightnessRange?: [number, number];         // Jet brightness range
+  blackHoleSecondaryRingProbability?: number;             // Probability of showing secondary lensing ring
+  blackHoleRotationSpeedMultiplierRange?: [number, number]; // Animation speed multiplier range
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -294,6 +328,40 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   roguePlanetShowTrajectories: true,                    // Show trajectories by default
   roguePlanetTrajectoryPastWindow: 100,                 // 100 seconds of history
   roguePlanetTrajectoryFutureWindow: 100,               // 100 seconds of prediction
+  
+  // Black Holes (disabled by default - exotic feature)
+  enableBlackHoles: false,                              // Off by default
+  blackHoleSystemProbability: 0.05,                     // 5% chance a system has a black hole center
+  blackHoleAsCompanionProbability: 0.02,                // 2% chance in multi-star systems
+  blackHoleMassRange: [5, 50],                          // 5-50 solar masses (stellar-mass black holes)
+  blackHoleAccretionDiskProbability: 0.7,               // 70% have accretion disks
+  blackHoleJetProbability: 0.5,                         // 50% of disks have jets
+  blackHolePhotonRingEnabled: true,                     // Show photon rings by default
+  blackHoleDopplerBeamingStrengthRange: [0.3, 0.8],     // Moderate to strong Doppler effect
+  blackHoleLensingStrengthRange: [0.4, 0.9],            // Moderate to strong lensing
+  blackHoleShadowRadiusRange: [0.3, 0.8],               // Visual shadow radius (smaller than typical planets)
+  blackHoleAccretionInnerRadiusMultiplier: [3, 4],      // Inner disk edge at 3-4× shadow radius
+  blackHoleAccretionOuterRadiusMultiplier: [10, 20],    // Outer disk edge at 10-20× shadow radius
+  blackHoleDiskThicknessRange: [0.2, 0.5],              // Thin disk (0.2-0.5 units)
+  blackHoleJetLengthRange: [20, 50],                    // Jet length (world units)
+  blackHoleJetOpeningAngleRange: [3, 8],                // Narrow jets (3-8 degrees)
+  blackHoleSpinRange: [0.3, 0.95],                      // Moderate to high spin
+  
+  // Advanced Black Hole Diversity (optional, undefined = use built-in defaults)
+  // blackHoleMassClassWeights: undefined,              // Undefined → all stellar-mass (5-50 M☉)
+  // blackHoleMultiplePerSystemProbability: undefined,  // Undefined → no multiple black holes
+  // blackHoleCenterBias: undefined,                    // Undefined → use blackHoleSystemProbability as-is
+  // blackHoleSpinDistribution: undefined,              // Undefined → uniform distribution
+  // blackHoleTiltRange: undefined,                     // Undefined → aligned with system plane
+  // blackHoleShadowRadiusScaleMode: undefined,         // Undefined → 'cinematic' (current behavior)
+  // blackHoleAccretionStyle: undefined,                // Undefined → 'normal'
+  // blackHoleDiskBrightnessRange: undefined,           // Undefined → [0.7, 1.0]
+  // blackHoleDiskOpacityRange: undefined,              // Undefined → [0.6, 0.9]
+  // blackHoleDiskTemperatureRange: undefined,          // Undefined → [5000, 20000] K
+  // blackHoleDiskClumpinessRange: undefined,           // Undefined → [0.3, 0.7]
+  // blackHoleJetBrightnessRange: undefined,            // Undefined → [0.8, 1.0]
+  // blackHoleSecondaryRingProbability: undefined,      // Undefined → 0.5 (50% if lensing > 0.5)
+  // blackHoleRotationSpeedMultiplierRange: undefined,  // Undefined → [0.5, 1.5]
 };
 
 // ============================================================================
@@ -728,58 +796,154 @@ class StarDataGenerator {
     const stars: Star[] = [];
     const starNodes = system.children.filter(n => n.type === 'star');
     
-    // Generate masses for all stars first
-    const starData = starNodes.map(node => ({
-      node,
-      mass: this.physics.generateMass('star'),
-    }));
+    // Check if this system should have a black hole center
+    const shouldHaveBlackHoleCenter = 
+      this.config.enableBlackHoles && 
+      this.physics.rng.bool(this.config.blackHoleSystemProbability);
     
-    // Sort by mass descending - heaviest becomes center
-    starData.sort((a, b) => b.mass - a.mass);
-    
-    // Process center star (heaviest)
-    const centerData = starData[0];
-    const centerStar = this.createStar(
-      centerData.node,
-      null,
-      0,
-      0,
-      0,
-      centerData.mass
-    );
-    stars.push(centerStar);
-    
-    // Process companion stars
-    const companionStars = starData.slice(1);
-    const isMultiStar = companionStars.length > 0;
-    
-    companionStars.forEach((companionData, index) => {
-      const distance = this.physics.calculateOrbitalDistance(0); // All companions at same orbit
-      const speed = this.physics.calculateOrbitalSpeed(distance);
-      const phase = this.physics.calculateOrbitalPhase(
-        index,
-        companionStars.length,
-        true
-      );
-      
-      const companion = this.createStar(
-        companionData.node,
-        centerStar.id,
-        distance,
-        speed,
-        phase,
-        companionData.mass
-      );
-      stars.push(companion);
+    console.log('[processSystem] Black hole check:', {
+      enableBlackHoles: this.config.enableBlackHoles,
+      blackHoleSystemProbability: this.config.blackHoleSystemProbability,
+      shouldHaveBlackHoleCenter,
+      starNodesCount: starNodes.length,
     });
     
-    // Process planets (attached to center star)
-    const planetNodes = centerData.node.children.filter(n => n.type === 'planet');
+    let centerStar: Star;
+    let centerNode: LSystemNode;
+    
+    if (shouldHaveBlackHoleCenter && starNodes.length > 0) {
+      // Create a black hole as the system center
+      centerNode = starNodes[0];
+      centerStar = this.createBlackHole(centerNode, null, 0, 0, 0);
+      stars.push(centerStar);
+      
+      // Process remaining stars as companions
+      const companionNodes = starNodes.slice(1);
+      const companionStars = companionNodes.map(node => ({
+        node,
+        mass: this.physics.generateMass('star'),
+      }));
+      
+      companionStars.forEach((companionData, index) => {
+        const distance = this.physics.calculateOrbitalDistance(0);
+        const speed = this.physics.calculateOrbitalSpeed(distance);
+        const phase = this.physics.calculateOrbitalPhase(
+          index,
+          companionStars.length,
+          true
+        );
+        
+        const companion = this.createStar(
+          companionData.node,
+          centerStar.id,
+          distance,
+          speed,
+          phase,
+          companionData.mass
+        );
+        stars.push(companion);
+      });
+    } else {
+      // Normal star-centered system
+      // Generate masses for all stars first
+      const starData = starNodes.map(node => ({
+        node,
+        mass: this.physics.generateMass('star'),
+      }));
+      
+      // Sort by mass descending - heaviest becomes center
+      starData.sort((a, b) => b.mass - a.mass);
+      
+      // Process center star (heaviest)
+      const centerData = starData[0];
+      centerNode = centerData.node;
+      centerStar = this.createStar(
+        centerData.node,
+        null,
+        0,
+        0,
+        0,
+        centerData.mass
+      );
+      stars.push(centerStar);
+      
+      // Check if we should add a black hole as a companion (rare)
+      const shouldHaveBlackHoleCompanion = 
+        this.config.enableBlackHoles &&
+        starData.length > 1 &&
+        this.physics.rng.bool(this.config.blackHoleAsCompanionProbability);
+      
+      if (shouldHaveBlackHoleCompanion) {
+        // Replace one companion star with a black hole
+        const companionStars = starData.slice(1);
+        const distance = this.physics.calculateOrbitalDistance(0);
+        const speed = this.physics.calculateOrbitalSpeed(distance);
+        const phase = this.physics.calculateOrbitalPhase(0, companionStars.length + 1, true);
+        
+        const blackHoleCompanion = this.createBlackHole(
+          companionStars[0].node,
+          centerStar.id,
+          distance,
+          speed,
+          phase
+        );
+        stars.push(blackHoleCompanion);
+        
+        // Process remaining companion stars
+        companionStars.slice(1).forEach((companionData, index) => {
+          const dist = this.physics.calculateOrbitalDistance(0);
+          const spd = this.physics.calculateOrbitalSpeed(dist);
+          const phs = this.physics.calculateOrbitalPhase(
+            index + 1,
+            companionStars.length + 1,
+            true
+          );
+          
+          const companion = this.createStar(
+            companionData.node,
+            centerStar.id,
+            dist,
+            spd,
+            phs,
+            companionData.mass
+          );
+          stars.push(companion);
+        });
+      } else {
+        // Process companion stars normally
+        const companionStars = starData.slice(1);
+        
+        companionStars.forEach((companionData, index) => {
+          const distance = this.physics.calculateOrbitalDistance(0);
+          const speed = this.physics.calculateOrbitalSpeed(distance);
+          const phase = this.physics.calculateOrbitalPhase(
+            index,
+            companionStars.length,
+            true
+          );
+          
+          const companion = this.createStar(
+            companionData.node,
+            centerStar.id,
+            distance,
+            speed,
+            phase,
+            companionData.mass
+          );
+          stars.push(companion);
+        });
+      }
+    }
+    
+    // Process planets (attached to center body, whether star or black hole)
+    const planetNodes = centerNode.children.filter(n => n.type === 'planet');
     planetNodes.forEach((planetNode, index) => {
+      // Calculate companion star count for orbit index offset
+      const companionCount = stars.filter(s => s.parentId === centerStar.id && s.bodyType === 'star').length;
       const planetStars = this.processPlanet(
         planetNode,
         centerStar.id,
-        index + companionStars.length // Offset orbit index by number of companion stars
+        index + companionCount
       );
       stars.push(...planetStars);
     });
@@ -888,6 +1052,284 @@ class StarDataGenerator {
       orbitRotY: rotations.rotY !== 0 ? rotations.rotY : undefined,
       orbitRotZ: rotations.rotZ !== 0 ? rotations.rotZ : undefined,
     };
+  }
+  
+  /**
+   * Create a black hole Star object
+   */
+  private createBlackHole(
+    node: LSystemNode,
+    parentId: string | null,
+    orbitalDistance: number,
+    orbitalSpeed: number,
+    orbitalPhase: number
+  ): Star {
+    // Use the physics RNG which is a RandomGenerator instance
+    const rng = this.physics.rng;
+    
+    // ============================================================================
+    // Mass Generation with Class Support
+    // ============================================================================
+    let mass: number;
+    let massClass: 'stellar' | 'intermediate' | 'supermassive' = 'stellar';
+    
+    if (this.config.blackHoleMassClassWeights) {
+      // Pick a mass class based on weights
+      const weights = this.config.blackHoleMassClassWeights;
+      const totalWeight = weights.stellar + weights.intermediate + weights.supermassive;
+      const rand = rng.uniform(0, totalWeight);
+      
+      if (rand < weights.stellar) {
+        massClass = 'stellar';
+        mass = rng.uniform(5, 50); // Stellar-mass: 5-50 M☉
+      } else if (rand < weights.stellar + weights.intermediate) {
+        massClass = 'intermediate';
+        mass = rng.uniform(50, 10000); // Intermediate: 50-10,000 M☉
+      } else {
+        massClass = 'supermassive';
+        mass = rng.uniform(1e6, 1e9); // Supermassive: 1M-1B M☉
+      }
+    } else {
+      // Default: use base mass range (stellar-mass)
+      mass = rng.uniform(
+        this.config.blackHoleMassRange[0],
+        this.config.blackHoleMassRange[1]
+      );
+      massClass = 'stellar';
+    }
+    
+    // ============================================================================
+    // Shadow Radius with Optional Scaling Mode
+    // ============================================================================
+    let shadowRadius: number;
+    const scaleMode = this.config.blackHoleShadowRadiusScaleMode ?? 'cinematic';
+    
+    if (scaleMode === 'physicalish') {
+      // Loosely tie radius to mass (Schwarzschild radius ~ mass, but scaled for visibility)
+      const baseRadius = rng.uniform(
+        this.config.blackHoleShadowRadiusRange[0],
+        this.config.blackHoleShadowRadiusRange[1]
+      );
+      // Scale by log of mass for supermassive BHs (clamped to prevent extreme values)
+      if (massClass === 'supermassive') {
+        const logScale = Math.min(Math.log10(mass / 1e6), 3.0); // Cap at 3 (1000x scaling)
+        shadowRadius = baseRadius * logScale * 0.3 + baseRadius; // Reduced multiplier
+      } else if (massClass === 'intermediate') {
+        shadowRadius = baseRadius * 1.5;
+      } else {
+        shadowRadius = baseRadius;
+      }
+    } else {
+      // Cinematic: independent random radius for visibility
+      shadowRadius = rng.uniform(
+        this.config.blackHoleShadowRadiusRange[0],
+        this.config.blackHoleShadowRadiusRange[1]
+      );
+      // Slight bias for larger classes (but keep it reasonable)
+      if (massClass === 'supermassive') {
+        shadowRadius *= rng.uniform(1.5, 2.5);
+      } else if (massClass === 'intermediate') {
+        shadowRadius *= rng.uniform(1.2, 1.8);
+      }
+    }
+    
+    // Safety clamp: ensure shadow radius stays within reasonable bounds for rendering
+    shadowRadius = Math.max(0.1, Math.min(shadowRadius, 10.0)); // Max 10 units
+    
+    // Black hole is dark (no emission except from accretion disk)
+    const color = '#000000';
+    const name = this.generateBlackHoleName();
+    
+    // ============================================================================
+    // Accretion Disk Presence and Parameters
+    // ============================================================================
+    const hasAccretionDisk = rng.bool(this.config.blackHoleAccretionDiskProbability);
+    
+    // Accretion disk geometry
+    const accretionInnerRadiusMultiplier = rng.uniform(
+      this.config.blackHoleAccretionInnerRadiusMultiplier[0],
+      this.config.blackHoleAccretionInnerRadiusMultiplier[1]
+    );
+    const accretionOuterRadiusMultiplier = rng.uniform(
+      this.config.blackHoleAccretionOuterRadiusMultiplier[0],
+      this.config.blackHoleAccretionOuterRadiusMultiplier[1]
+    );
+    
+    // Calculate disk radii with safety bounds
+    let accretionInnerRadius = shadowRadius * accretionInnerRadiusMultiplier;
+    let accretionOuterRadius = shadowRadius * accretionOuterRadiusMultiplier;
+    
+    // Clamp disk radii to prevent rendering issues (max 50 units for disk outer radius)
+    accretionInnerRadius = Math.max(shadowRadius * 1.1, Math.min(accretionInnerRadius, 40));
+    accretionOuterRadius = Math.max(accretionInnerRadius * 1.5, Math.min(accretionOuterRadius, 50));
+    
+    // Disk thickness (clamped to reasonable values)
+    let diskThickness = rng.uniform(
+      this.config.blackHoleDiskThicknessRange[0],
+      this.config.blackHoleDiskThicknessRange[1]
+    );
+    diskThickness = Math.max(0.05, Math.min(diskThickness, 2.0));
+    
+    // Disk appearance (use advanced ranges if provided, otherwise fallback to hardcoded)
+    const diskBrightness = hasAccretionDisk 
+      ? rng.uniform(...(this.config.blackHoleDiskBrightnessRange ?? [0.7, 1.0]))
+      : 0;
+    const diskOpacity = hasAccretionDisk 
+      ? rng.uniform(...(this.config.blackHoleDiskOpacityRange ?? [0.6, 0.9]))
+      : 0;
+    const diskTemperature = hasAccretionDisk 
+      ? rng.uniform(...(this.config.blackHoleDiskTemperatureRange ?? [5000, 20000]))
+      : 0;
+    const diskClumpiness = hasAccretionDisk 
+      ? rng.uniform(...(this.config.blackHoleDiskClumpinessRange ?? [0.3, 0.7]))
+      : 0;
+    
+    // ============================================================================
+    // Relativistic Jets
+    // ============================================================================
+    const hasRelativisticJet = hasAccretionDisk && rng.bool(this.config.blackHoleJetProbability);
+    
+    const jetLength = rng.uniform(
+      this.config.blackHoleJetLengthRange[0],
+      this.config.blackHoleJetLengthRange[1]
+    );
+    const jetOpeningAngle = rng.uniform(
+      this.config.blackHoleJetOpeningAngleRange[0],
+      this.config.blackHoleJetOpeningAngleRange[1]
+    );
+    const jetBrightness = hasRelativisticJet 
+      ? rng.uniform(...(this.config.blackHoleJetBrightnessRange ?? [0.8, 1.0]))
+      : 0;
+    
+    // ============================================================================
+    // Spin Parameter with Optional Distribution
+    // ============================================================================
+    let spin: number;
+    const spinDist = this.config.blackHoleSpinDistribution;
+    const [spinMin, spinMax] = this.config.blackHoleSpinRange;
+    
+    if (spinDist === 'highSpinBiased') {
+      // Bias toward high spin (quadratic distribution toward max)
+      const u = rng.uniform(0, 1);
+      spin = spinMin + (spinMax - spinMin) * (u * u);
+    } else if (spinDist === 'lowSpinBiased') {
+      // Bias toward low spin (inverse quadratic)
+      const u = rng.uniform(0, 1);
+      spin = spinMin + (spinMax - spinMin) * Math.sqrt(u);
+    } else {
+      // Uniform distribution (default)
+      spin = rng.uniform(spinMin, spinMax);
+    }
+    
+    // ============================================================================
+    // Visual Effect Strengths
+    // ============================================================================
+    const dopplerBeamingStrength = rng.uniform(
+      this.config.blackHoleDopplerBeamingStrengthRange[0],
+      this.config.blackHoleDopplerBeamingStrengthRange[1]
+    );
+    const lensingStrength = rng.uniform(
+      this.config.blackHoleLensingStrengthRange[0],
+      this.config.blackHoleLensingStrengthRange[1]
+    );
+    
+    // Photon ring (with optional secondary ring based on lensing strength)
+    const hasPhotonRing = this.config.blackHolePhotonRingEnabled;
+    
+    // ============================================================================
+    // Animation and Determinism
+    // ============================================================================
+    const rotationSpeedMultiplier = rng.uniform(
+      ...(this.config.blackHoleRotationSpeedMultiplierRange ?? [0.5, 1.5])
+    );
+    
+    // ============================================================================
+    // Orbit Parameters
+    // ============================================================================
+    const eccentricity = orbitalDistance > 0 ? this.physics.generateEccentricity() : 0;
+    const inclination = orbitalDistance > 0 ? this.physics.generateInclination() : 0;
+    const rotations = orbitalDistance > 0 ? this.physics.generateOrbitRotations() : { rotY: 0, rotZ: 0 };
+    const offset = orbitalDistance > 0 ? this.physics.generateOrbitOffset() : { offsetX: 0, offsetY: 0, offsetZ: 0 };
+    
+    // ============================================================================
+    // Final Validation: Ensure all values are finite
+    // ============================================================================
+    // This prevents NaN or Infinity from causing rendering errors
+    const ensureFinite = (value: number, fallback: number): number => {
+      return Number.isFinite(value) ? value : fallback;
+    };
+    
+    return {
+      id: node.id,
+      name,
+      mass,
+      radius: shadowRadius, // Visual size is the shadow radius
+      color,
+      children: [],
+      parentId,
+      bodyType: 'blackHole',
+      blackHole: {
+        hasAccretionDisk,
+        hasRelativisticJet,
+        hasPhotonRing,
+        spin: ensureFinite(spin, 0.5),
+        shadowRadius: ensureFinite(shadowRadius, 0.5),
+        accretionInnerRadius: ensureFinite(accretionInnerRadius, 2.0),
+        accretionOuterRadius: ensureFinite(accretionOuterRadius, 10.0),
+        diskThickness: ensureFinite(diskThickness, 0.3),
+        diskBrightness: ensureFinite(diskBrightness, 0.7),
+        diskOpacity: ensureFinite(diskOpacity, 0.7),
+        diskTemperature: ensureFinite(diskTemperature, 10000),
+        diskClumpiness: ensureFinite(diskClumpiness, 0.5),
+        jetLength: ensureFinite(jetLength, 30),
+        jetOpeningAngle: ensureFinite(jetOpeningAngle, 5),
+        jetBrightness: ensureFinite(jetBrightness, 0.9),
+        dopplerBeamingStrength: ensureFinite(dopplerBeamingStrength, 0.5),
+        lensingStrength: ensureFinite(lensingStrength, 0.6),
+        rotationSpeedMultiplier: ensureFinite(rotationSpeedMultiplier, 1.0),
+        seed: rng.randInt(0, 999999),
+      },
+      orbitalDistance,
+      orbitalSpeed,
+      orbitalPhase,
+      semiMajorAxis: orbitalDistance > 0 ? orbitalDistance : undefined,
+      eccentricity: eccentricity > 0 ? eccentricity : undefined,
+      orbitOffsetX: offset.offsetX !== 0 ? offset.offsetX : undefined,
+      orbitOffsetY: offset.offsetY !== 0 ? offset.offsetY : undefined,
+      orbitOffsetZ: offset.offsetZ !== 0 ? offset.offsetZ : undefined,
+      orbitRotX: inclination !== 0 ? inclination : undefined,
+      orbitRotY: rotations.rotY !== 0 ? rotations.rotY : undefined,
+      orbitRotZ: rotations.rotZ !== 0 ? rotations.rotZ : undefined,
+    };
+  }
+  
+  /**
+   * Generate a name for a black hole
+   */
+  private generateBlackHoleName(): string {
+    const count = (this.nameCounter.get('blackHole') || 0) + 1;
+    this.nameCounter.set('blackHole', count);
+    
+    const prefixes = [
+      'Cygnus X',
+      'GRS',
+      'V404',
+      'XTE J',
+      'GRO J',
+      'H',
+      'LMC X',
+      'SAX J',
+      'GX',
+    ];
+    
+    if (count <= prefixes.length) {
+      return `${prefixes[count - 1]}-${count}`;
+    }
+    
+    // Generate catalog-style designations
+    const prefix = this.physics.rng.choice(prefixes);
+    const number = 1000 + count;
+    return `${prefix}${number}`;
   }
   
   /**

@@ -185,6 +185,94 @@ generateSolarSystem({
 | `enablePlanetaryRings` | `boolean` | `false` | Enable per-planet ring systems |
 | `ringedPlanetProbability` | `number` | `0.1` | Base probability a planet has rings |
 
+### Black Holes (Exotic Objects)
+
+#### Core Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `enableBlackHoles` | `boolean` | `false` | Enable black hole generation |
+| `blackHoleSystemProbability` | `number` | `0.05` | Chance a system centers on a black hole |
+| `blackHoleAsCompanionProbability` | `number` | `0.02` | Chance black hole in multi-star systems |
+| `blackHoleMassRange` | `[number, number]` | `[5, 50]` | Base mass range (solar masses) |
+| `blackHoleAccretionDiskProbability` | `number` | `0.7` | Chance of having accretion disk |
+| `blackHoleJetProbability` | `number` | `0.5` | Chance of having relativistic jets |
+| `blackHolePhotonRingEnabled` | `boolean` | `true` | Render photon rings |
+| `blackHoleSpinRange` | `[number, number]` | `[0.3, 0.95]` | Spin parameter range (0-1) |
+| `blackHoleShadowRadiusRange` | `[number, number]` | `[0.3, 0.8]` | Visual shadow radius range |
+
+#### Advanced Diversity Parameters (Optional)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `blackHoleMassClassWeights` | `{stellar, intermediate, supermassive}` | `undefined` | Mass class distribution weights |
+| `blackHoleMultiplePerSystemProbability` | `number` | `undefined` | Chance of multiple BHs (binary BHs) |
+| `blackHoleSpinDistribution` | `'uniform' \| 'highSpinBiased' \| 'lowSpinBiased'` | `undefined` | Spin distribution style |
+| `blackHoleShadowRadiusScaleMode` | `'physicalish' \| 'cinematic'` | `undefined` | Shadow radius scaling mode |
+| `blackHoleAccretionStyle` | `'subtle' \| 'normal' \| 'quasar'` | `undefined` | Accretion disk brightness preset |
+| `blackHoleDiskBrightnessRange` | `[number, number]` | `[0.7, 1.0]` | Disk brightness range |
+| `blackHoleDiskOpacityRange` | `[number, number]` | `[0.6, 0.9]` | Disk opacity range |
+| `blackHoleDiskTemperatureRange` | `[number, number]` | `[5000, 20000]` | Disk temperature range (K) |
+| `blackHoleDiskClumpinessRange` | `[number, number]` | `[0.3, 0.7]` | Disk clumpiness range |
+| `blackHoleJetBrightnessRange` | `[number, number]` | `[0.8, 1.0]` | Jet brightness range |
+| `blackHoleRotationSpeedMultiplierRange` | `[number, number]` | `[0.5, 1.5]` | Animation speed range |
+
+**Example 1: Basic Black Hole System**
+```typescript
+generateSolarSystem({
+  enableBlackHoles: true,
+  blackHoleSystemProbability: 0.2, // 20% chance
+  blackHoleAccretionDiskProbability: 1.0, // Always show disks
+  blackHoleJetProbability: 0.8, // Frequent jets
+});
+```
+
+**Example 2: Mixed Mass Profile (Stellar + Intermediate + Supermassive)**
+```typescript
+generateUniverse({
+  enableBlackHoles: true,
+  blackHoleSystemProbability: 0.15,
+  blackHoleMassClassWeights: {
+    stellar: 0.7,        // 70% stellar-mass (5-50 M☉)
+    intermediate: 0.25,  // 25% intermediate (50-10k M☉)
+    supermassive: 0.05,  // 5% supermassive (1M-1B M☉)
+  },
+  blackHoleShadowRadiusScaleMode: 'physicalish', // Tie radius to mass
+});
+```
+
+**Example 3: High-Spin, Quasar-Style Black Holes**
+```typescript
+generateUniverse({
+  enableBlackHoles: true,
+  blackHoleSystemProbability: 0.1,
+  blackHoleSpinRange: [0.6, 0.99],              // Near-extremal Kerr
+  blackHoleSpinDistribution: 'highSpinBiased',  // Bias toward max spin
+  blackHoleAccretionStyle: 'quasar',            // Ultra-bright, hot disks
+  blackHoleDiskBrightnessRange: [0.9, 1.0],
+  blackHoleDiskTemperatureRange: [15000, 50000],
+  blackHoleJetProbability: 0.9,                 // Nearly always have jets
+  blackHoleDopplerBeamingStrengthRange: [0.7, 1.0],
+  blackHoleLensingStrengthRange: [0.7, 1.0],
+});
+```
+
+**Example 4: Binary Black Holes**
+```typescript
+generateUniverse({
+  enableBlackHoles: true,
+  blackHoleSystemProbability: 0.2,
+  blackHoleMultiplePerSystemProbability: 0.15, // 15% chance of multiple BHs
+  blackHoleMassClassWeights: {
+    stellar: 1.0,
+    intermediate: 0.0,
+    supermassive: 0.0,
+  },
+});
+```
+
+See `docs/BLACK_HOLES_IMPLEMENTATION.md` for complete black hole documentation.
+
 ## Tips
 
 ### Geometric Distribution

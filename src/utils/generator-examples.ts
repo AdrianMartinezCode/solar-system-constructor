@@ -335,6 +335,14 @@ export function analyzeSystem(data: {
     avgRogueSpeed: 0,
     minRogueSpeed: Infinity,
     maxRogueSpeed: -Infinity,
+    
+    // Black hole stats
+    blackHoles: 0,
+    blackHolesWithDisks: 0,
+    blackHolesWithJets: 0,
+    avgBlackHoleMass: 0,
+    minBlackHoleMass: Infinity,
+    maxBlackHoleMass: -Infinity,
   };
   
   const depths: number[] = [];
@@ -388,6 +396,16 @@ export function analyzeSystem(data: {
         stats.minCometEccentricity = Math.min(stats.minCometEccentricity, star.eccentricity);
         stats.maxCometEccentricity = Math.max(stats.maxCometEccentricity, star.eccentricity);
       }
+    } else if (star.bodyType === 'blackHole') {
+      stats.blackHoles++;
+      if (star.blackHole?.hasAccretionDisk) {
+        stats.blackHolesWithDisks++;
+      }
+      if (star.blackHole?.hasRelativisticJet) {
+        stats.blackHolesWithJets++;
+      }
+      stats.minBlackHoleMass = Math.min(stats.minBlackHoleMass, star.mass);
+      stats.maxBlackHoleMass = Math.max(stats.maxBlackHoleMass, star.mass);
     }
     
     // Calculate depth
@@ -446,6 +464,17 @@ export function analyzeSystem(data: {
     // Reset to 0 if no rogue planets found
     stats.minRogueSpeed = 0;
     stats.maxRogueSpeed = 0;
+  }
+  
+  // Black hole stats
+  if (stats.blackHoles > 0) {
+    const blackHoleMasses = Object.values(data.stars)
+      .filter((star: any) => star.bodyType === 'blackHole')
+      .map((star: any) => star.mass);
+    stats.avgBlackHoleMass = blackHoleMasses.reduce((a, b) => a + b, 0) / blackHoleMasses.length;
+  } else {
+    stats.minBlackHoleMass = 0;
+    stats.maxBlackHoleMass = 0;
   }
   
   // Calculate unified small body stats from particle fields

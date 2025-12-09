@@ -10,6 +10,7 @@ import { LagrangePointObject } from './LagrangePointObject';
 import { ProtoplanetaryDiskObject } from './ProtoplanetaryDiskObject';
 import { SmallBodyFieldObject } from './SmallBodyFieldObject';
 import { RogueTrajectory } from './RogueTrajectory';
+import { BlackHoleObject } from './BlackHoleObject';
 
 interface StarObjectProps {
   starId: string;
@@ -104,6 +105,24 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
       ) : star.bodyType === 'lagrangePoint' ? (
         /* Lagrange point rendering - small distinctive marker */
         <LagrangePointObject id={starId} />
+      ) : star.bodyType === 'blackHole' ? (
+        /* Black hole rendering - shadow, accretion disk, jets, lensing */
+        <>
+          <BlackHoleObject bodyId={starId} />
+          
+          {/* Selection indicator for black holes */}
+          {isSelected && (
+            <mesh>
+              <sphereGeometry args={[star.radius * 3, 32, 32]} />
+              <meshBasicMaterial 
+                color="#ffffff" 
+                transparent 
+                opacity={0.2}
+                wireframe
+              />
+            </mesh>
+          )}
+        </>
       ) : (
         <>
           {/* Star/Planet/Moon mesh with glow */}

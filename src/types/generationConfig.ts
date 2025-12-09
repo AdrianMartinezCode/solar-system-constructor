@@ -97,6 +97,56 @@ export interface GenerationConfig {
   rogueCurvatureMax?: number;                  // 0..1 maximum path curvature
   rogueTrajectoryShow?: boolean;               // Master toggle for rogue path rendering
   rogueTrajectoryPreviewLength?: number;       // 0..1, how much of path is visualized
+  
+  // ============================================================================
+  // Black Holes (extremely dense central objects with accretion disks and jets)
+  // ============================================================================
+  
+  /** Master switch for black hole generation */
+  enableBlackHoles?: boolean;
+  
+  /** 0..1 slider controlling how frequently black holes appear in systems */
+  blackHoleFrequency?: number;
+  
+  /** 0..1 slider controlling accretion disk intensity (brightness/density) */
+  blackHoleAccretionIntensity?: number;
+  
+  /** 0..1 slider controlling how often black holes have relativistic jets */
+  blackHoleJetFrequency?: number;
+  
+  /** Visual complexity preset for black hole rendering */
+  blackHoleVisualComplexity?: 'minimal' | 'normal' | 'cinematic';
+  
+  // ============================================================================
+  // Advanced Black Hole Controls
+  // ============================================================================
+  
+  /** Mass profile distribution for black holes */
+  blackHoleMassProfile?: 'stellarOnly' | 'mixed' | 'supermassiveCentres';
+  
+  /** 0..1 spin level (low → slow rotation, high → near-maximum Kerr spin) */
+  blackHoleSpinLevel?: number;
+  
+  /** 0..1 disk thickness level */
+  blackHoleDiskThicknessLevel?: number;
+  
+  /** 0..1 disk clumpiness/density variation level */
+  blackHoleDiskClumpinessLevel?: number;
+  
+  /** 0..1 jet drama level (affects jet length and brightness) */
+  blackHoleJetDramaLevel?: number;
+  
+  /** 0..1 relativistic FX intensity (scales Doppler beaming and lensing) */
+  blackHoleFxIntensity?: number;
+  
+  /** Rarity style for black holes */
+  blackHoleRarityStyle?: 'ultraRare' | 'rare' | 'common';
+  
+  /** Accretion style preset */
+  blackHoleAccretionStyle?: 'subtle' | 'normal' | 'quasar';
+  
+  /** Allow multiple black holes per system (binary black holes, etc.) */
+  blackHoleAllowMultiplePerSystem?: boolean;
 }
 
 export interface GeneratedUniverse {
@@ -178,6 +228,41 @@ export interface GeneratedUniverse {
   
   /** Total number of rogue planets generated */
   totalRoguePlanets?: number;
+  
+  // ============================================================================
+  // Black Holes
+  // ============================================================================
+  
+  /** Total number of black holes generated */
+  totalBlackHoles?: number;
+  
+  /** Number of black holes with accretion disks */
+  totalBlackHolesWithDisks?: number;
+  
+  /** Number of black holes with relativistic jets */
+  totalBlackHolesWithJets?: number;
+  
+  /** Black holes by mass class */
+  totalBlackHolesByType?: {
+    stellar: number;
+    intermediate: number;
+    supermassive: number;
+  };
+  
+  /** Average black hole spin parameter */
+  avgBlackHoleSpin?: number;
+  
+  /** Minimum black hole spin */
+  minBlackHoleSpin?: number;
+  
+  /** Maximum black hole spin */
+  maxBlackHoleSpin?: number;
+  
+  /** Number of black holes with photon rings */
+  blackHolesWithPhotonRings?: number;
+  
+  /** Number of black holes with quasar-style accretion */
+  blackHolesWithQuasarAccretion?: number;
   
   generatedAt: Date;
 }

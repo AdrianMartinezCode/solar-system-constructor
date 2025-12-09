@@ -210,6 +210,9 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
 
     // Rogue planets
     ...mapRoguePlanetConfig(config),
+    
+    // Black holes
+    ...mapBlackHoleConfig(config),
   };
 }
 
@@ -823,10 +826,276 @@ function mapTrojanRichnessToMassScaleAndVariation(richness: number): {
 }
 
 /**
+ * Map black hole UI config to internal generator config
+ */
+export function mapBlackHoleConfig(config: GenerationConfig): {
+  enableBlackHoles: boolean;
+  blackHoleSystemProbability: number;
+  blackHoleAsCompanionProbability: number;
+  blackHoleMassRange: [number, number];
+  blackHoleAccretionDiskProbability: number;
+  blackHoleJetProbability: number;
+  blackHolePhotonRingEnabled: boolean;
+  blackHoleDopplerBeamingStrengthRange: [number, number];
+  blackHoleLensingStrengthRange: [number, number];
+  blackHoleShadowRadiusRange: [number, number];
+  blackHoleAccretionInnerRadiusMultiplier: [number, number];
+  blackHoleAccretionOuterRadiusMultiplier: [number, number];
+  blackHoleDiskThicknessRange: [number, number];
+  blackHoleJetLengthRange: [number, number];
+  blackHoleJetOpeningAngleRange: [number, number];
+  blackHoleSpinRange: [number, number];
+  blackHoleMassClassWeights?: { stellar: number; intermediate: number; supermassive: number };
+  blackHoleMultiplePerSystemProbability?: number;
+  blackHoleCenterBias?: number;
+  blackHoleSpinDistribution?: 'uniform' | 'highSpinBiased' | 'lowSpinBiased';
+  blackHoleTiltRange?: [number, number];
+  blackHoleShadowRadiusScaleMode?: 'physicalish' | 'cinematic';
+  blackHoleAccretionStyle?: 'subtle' | 'normal' | 'quasar';
+  blackHoleDiskBrightnessRange?: [number, number];
+  blackHoleDiskOpacityRange?: [number, number];
+  blackHoleDiskTemperatureRange?: [number, number];
+  blackHoleDiskClumpinessRange?: [number, number];
+  blackHoleJetBrightnessRange?: [number, number];
+  blackHoleSecondaryRingProbability?: number;
+  blackHoleRotationSpeedMultiplierRange?: [number, number];
+} {
+  const enabled = config.enableBlackHoles ?? false;
+  const frequency = config.blackHoleFrequency ?? 0;
+  const accretionIntensity = config.blackHoleAccretionIntensity ?? 0.5;
+  const jetFrequency = config.blackHoleJetFrequency ?? 0.5;
+  const complexity = config.blackHoleVisualComplexity ?? 'normal';
+  
+  // Advanced controls (optional)
+  const massProfile = config.blackHoleMassProfile;
+  const spinLevel = config.blackHoleSpinLevel;
+  const diskThicknessLevel = config.blackHoleDiskThicknessLevel;
+  const diskClumpinessLevel = config.blackHoleDiskClumpinessLevel;
+  const jetDramaLevel = config.blackHoleJetDramaLevel;
+  const fxIntensity = config.blackHoleFxIntensity;
+  const rarityStyle = config.blackHoleRarityStyle;
+  const accretionStyle = config.blackHoleAccretionStyle;
+  const allowMultiple = config.blackHoleAllowMultiplePerSystem ?? false;
+  
+  // ============================================================================
+  // Basic Mapping (same as before)
+  // ============================================================================
+  
+  // Map frequency (0-1) to system probability (override by rarityStyle if set)
+  let systemProbability: number;
+  let companionProbability: number;
+  
+  if (rarityStyle) {
+    // Rarity style overrides frequency slider
+    switch (rarityStyle) {
+      case 'ultraRare':
+        systemProbability = enabled ? 0.01 : 0; // 1%
+        companionProbability = enabled ? 0.005 : 0; // 0.5%
+        break;
+      case 'rare':
+        systemProbability = enabled ? 0.05 : 0; // 5%
+        companionProbability = enabled ? 0.02 : 0; // 2%
+        break;
+      case 'common':
+        systemProbability = enabled ? 0.3 : 0; // 30%
+        companionProbability = enabled ? 0.1 : 0; // 10%
+        break;
+    }
+  } else {
+    // Default frequency-based mapping (backward compatible)
+    systemProbability = enabled ? Math.max(0.05, frequency * 0.5) : 0; // 5-50% chance
+    companionProbability = enabled ? frequency * 0.1 : 0; // 0-10% chance
+  }
+  
+  // Map accretion intensity to disk parameters
+  const diskProbability = enabled ? 0.5 + accretionIntensity * 0.4 : 0; // 50-90%
+  const jetProbability = jetFrequency; // Direct mapping
+  
+  // Map complexity to visual effect strengths (can be overridden by fxIntensity)
+  let dopplerStrength: [number, number];
+  let lensingStrength: [number, number];
+  let photonRingEnabled: boolean;
+  
+  if (fxIntensity !== undefined) {
+    // fxIntensity overrides complexity for FX settings
+    dopplerStrength = [0.1 + fxIntensity * 0.3, 0.4 + fxIntensity * 0.6]; // 0.1-0.4 to 0.4-1.0
+    lensingStrength = [0.2 + fxIntensity * 0.3, 0.5 + fxIntensity * 0.5]; // 0.2-0.5 to 0.5-1.0
+    photonRingEnabled = fxIntensity > 0.3; // Show photon ring if FX intensity > 30%
+  } else {
+    // Use complexity preset (backward compatible)
+    switch (complexity) {
+      case 'minimal':
+        dopplerStrength = [0.1, 0.3];
+        lensingStrength = [0.1, 0.3];
+        photonRingEnabled = false;
+        break;
+      case 'cinematic':
+        dopplerStrength = [0.7, 1.0];
+        lensingStrength = [0.7, 1.0];
+        photonRingEnabled = true;
+        break;
+      case 'normal':
+      default:
+        dopplerStrength = [0.3, 0.7];
+        lensingStrength = [0.4, 0.8];
+        photonRingEnabled = true;
+        break;
+    }
+  }
+  
+  // ============================================================================
+  // Advanced Mapping (new fields)
+  // ============================================================================
+  
+  // Mass Profile → Mass Class Weights
+  let massClassWeights: { stellar: number; intermediate: number; supermassive: number } | undefined;
+  if (massProfile) {
+    switch (massProfile) {
+      case 'stellarOnly':
+        massClassWeights = { stellar: 1.0, intermediate: 0.0, supermassive: 0.0 };
+        break;
+      case 'mixed':
+        massClassWeights = { stellar: 0.7, intermediate: 0.25, supermassive: 0.05 };
+        break;
+      case 'supermassiveCentres':
+        massClassWeights = { stellar: 0.3, intermediate: 0.2, supermassive: 0.5 };
+        break;
+    }
+  }
+  
+  // Spin Level → Spin Range and Distribution
+  let spinRange: [number, number];
+  let spinDistribution: 'uniform' | 'highSpinBiased' | 'lowSpinBiased' | undefined;
+  if (spinLevel !== undefined) {
+    if (spinLevel < 0.33) {
+      // Low spin: mostly slow rotators
+      spinRange = [0.0, 0.4];
+      spinDistribution = 'lowSpinBiased';
+    } else if (spinLevel < 0.67) {
+      // Medium spin: balanced
+      spinRange = [0.2, 0.8];
+      spinDistribution = 'uniform';
+    } else {
+      // High spin: mostly fast rotators (near-extremal Kerr)
+      spinRange = [0.6, 0.99];
+      spinDistribution = 'highSpinBiased';
+    }
+  } else {
+    // Default (backward compatible)
+    spinRange = [0.3, 0.95];
+    spinDistribution = undefined;
+  }
+  
+  // Disk Thickness Level → Thickness Range
+  let diskThicknessRange: [number, number];
+  if (diskThicknessLevel !== undefined) {
+    // Map 0-1 to thickness range
+    const minThickness = 0.1 + diskThicknessLevel * 0.2; // 0.1-0.3
+    const maxThickness = 0.3 + diskThicknessLevel * 0.5; // 0.3-0.8
+    diskThicknessRange = [minThickness, maxThickness];
+  } else {
+    // Default (backward compatible)
+    diskThicknessRange = [0.2, 0.5];
+  }
+  
+  // Disk Clumpiness Level → Clumpiness Range
+  let diskClumpinessRange: [number, number] | undefined;
+  if (diskClumpinessLevel !== undefined) {
+    const minClumpiness = 0.1 + diskClumpinessLevel * 0.2; // 0.1-0.3
+    const maxClumpiness = 0.4 + diskClumpinessLevel * 0.6; // 0.4-1.0
+    diskClumpinessRange = [minClumpiness, maxClumpiness];
+  }
+  
+  // Jet Drama Level → Jet Length and Brightness Ranges
+  let jetLengthRange: [number, number];
+  let jetBrightnessRange: [number, number] | undefined;
+  if (jetDramaLevel !== undefined) {
+    const minLength = 10 + jetDramaLevel * 30; // 10-40
+    const maxLength = 30 + jetDramaLevel * 70; // 30-100
+    jetLengthRange = [minLength, maxLength];
+    
+    const minBrightness = 0.5 + jetDramaLevel * 0.3; // 0.5-0.8
+    const maxBrightness = 0.8 + jetDramaLevel * 0.2; // 0.8-1.0
+    jetBrightnessRange = [minBrightness, maxBrightness];
+  } else {
+    // Default (backward compatible)
+    jetLengthRange = [20, 50];
+    jetBrightnessRange = undefined;
+  }
+  
+  // Accretion Style → Disk Brightness, Opacity, Temperature Ranges
+  let diskBrightnessRange: [number, number] | undefined;
+  let diskOpacityRange: [number, number] | undefined;
+  let diskTemperatureRange: [number, number] | undefined;
+  if (accretionStyle) {
+    switch (accretionStyle) {
+      case 'subtle':
+        diskBrightnessRange = [0.3, 0.6];
+        diskOpacityRange = [0.3, 0.6];
+        diskTemperatureRange = [3000, 10000];
+        break;
+      case 'normal':
+        diskBrightnessRange = [0.6, 0.9];
+        diskOpacityRange = [0.6, 0.9];
+        diskTemperatureRange = [5000, 20000];
+        break;
+      case 'quasar':
+        diskBrightnessRange = [0.9, 1.0];
+        diskOpacityRange = [0.8, 1.0];
+        diskTemperatureRange = [15000, 50000];
+        break;
+    }
+  }
+  
+  // Multiple per system
+  const multiplePerSystemProbability = allowMultiple ? 0.15 : undefined; // 15% chance when enabled
+  
+  // Secondary ring probability (based on FX intensity if set)
+  const secondaryRingProbability = fxIntensity !== undefined ? fxIntensity : undefined;
+  
+  return {
+    enableBlackHoles: enabled,
+    blackHoleSystemProbability: systemProbability,
+    blackHoleAsCompanionProbability: companionProbability,
+    blackHoleMassRange: [5, 50], // Base range, modified by mass class weights
+    blackHoleAccretionDiskProbability: diskProbability,
+    blackHoleJetProbability: jetProbability,
+    blackHolePhotonRingEnabled: photonRingEnabled,
+    blackHoleDopplerBeamingStrengthRange: dopplerStrength,
+    blackHoleLensingStrengthRange: lensingStrength,
+    blackHoleShadowRadiusRange: [0.3, 0.8],
+    blackHoleAccretionInnerRadiusMultiplier: [3, 4],
+    blackHoleAccretionOuterRadiusMultiplier: [10, 20],
+    blackHoleDiskThicknessRange: diskThicknessRange,
+    blackHoleJetLengthRange: jetLengthRange,
+    blackHoleJetOpeningAngleRange: [3, 8],
+    blackHoleSpinRange: spinRange,
+    
+    // Advanced parameters (optional, only set if user configured them)
+    blackHoleMassClassWeights: massClassWeights,
+    blackHoleMultiplePerSystemProbability: multiplePerSystemProbability,
+    blackHoleCenterBias: undefined, // Not exposed in UI yet
+    blackHoleSpinDistribution: spinDistribution,
+    blackHoleTiltRange: undefined, // Not exposed in UI yet
+    blackHoleShadowRadiusScaleMode: undefined, // Not exposed in UI yet (always cinematic for now)
+    blackHoleAccretionStyle: accretionStyle,
+    blackHoleDiskBrightnessRange: diskBrightnessRange,
+    blackHoleDiskOpacityRange: diskOpacityRange,
+    blackHoleDiskTemperatureRange: diskTemperatureRange,
+    blackHoleDiskClumpinessRange: diskClumpinessRange,
+    blackHoleJetBrightnessRange: jetBrightnessRange,
+    blackHoleSecondaryRingProbability: secondaryRingProbability,
+    blackHoleRotationSpeedMultiplierRange: undefined, // Use default [0.5, 1.5]
+  };
+}
+
+/**
  * Main generation function - bridge to internal generator
  */
 export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   console.log('[generateUniverse] Called with config:', {
+    enableBlackHoles: config.enableBlackHoles,
+    blackHoleFrequency: config.blackHoleFrequency,
     enableAsteroidBelts: config.enableAsteroidBelts,
     beltDensity: config.beltDensity,
     enableKuiperBelt: config.enableKuiperBelt,
@@ -850,6 +1119,12 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     kuiperBeltMaxCount: internalConfig.kuiperBeltMaxCount,
   });
   
+  console.log('[generateUniverse] Black hole config:', {
+    enableBlackHoles: internalConfig.enableBlackHoles,
+    blackHoleSystemProbability: internalConfig.blackHoleSystemProbability,
+    blackHoleAsCompanionProbability: internalConfig.blackHoleAsCompanionProbability,
+  });
+  
   // Use seed for deterministic generation
   const seed = config.seed || undefined; // Convert empty string to undefined
   
@@ -870,6 +1145,51 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   const totalLagrangePoints = allStars.filter((star) => star.bodyType === 'lagrangePoint').length;
   const totalLagrangeMarkers = totalLagrangePoints; // Same count
   const totalTrojanBodies = allStars.filter((star) => star.lagrangeHostId !== undefined).length;
+  
+  // Black hole stats
+  const blackHoles = allStars.filter((star) => star.bodyType === 'blackHole');
+  const totalBlackHoles = blackHoles.length;
+  const totalBlackHolesWithDisks = blackHoles.filter(
+    (bh) => bh.blackHole?.hasAccretionDisk
+  ).length;
+  const totalBlackHolesWithJets = blackHoles.filter(
+    (bh) => bh.blackHole?.hasRelativisticJet
+  ).length;
+  
+  // Enhanced black hole stats
+  const blackHolesByType = { stellar: 0, intermediate: 0, supermassive: 0 };
+  let totalSpin = 0;
+  let minSpin = Infinity;
+  let maxSpin = -Infinity;
+  let blackHolesWithPhotonRings = 0;
+  
+  blackHoles.forEach((bh) => {
+    if (!bh.blackHole) return;
+    
+    // Mass classification
+    if (bh.mass < 50) {
+      blackHolesByType.stellar++;
+    } else if (bh.mass < 10000) {
+      blackHolesByType.intermediate++;
+    } else {
+      blackHolesByType.supermassive++;
+    }
+    
+    // Spin stats
+    const spin = bh.blackHole.spin;
+    totalSpin += spin;
+    minSpin = Math.min(minSpin, spin);
+    maxSpin = Math.max(maxSpin, spin);
+    
+    // Photon rings
+    if (bh.blackHole.hasPhotonRing) {
+      blackHolesWithPhotonRings++;
+    }
+  });
+  
+  const avgBlackHoleSpin = totalBlackHoles > 0 ? totalSpin / totalBlackHoles : 0;
+  const finalMinSpin = totalBlackHoles > 0 ? minSpin : 0;
+  const finalMaxSpin = totalBlackHoles > 0 ? maxSpin : 0;
   
   // Legacy asteroid/KBO counts from Star entities (for backwards compatibility)
   const totalKuiperObjects = allStars.filter((star) => star.asteroidSubType === 'kuiperBelt').length;
@@ -958,6 +1278,16 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     // Rogue planet stats
     roguePlanetIds,
     totalRoguePlanets,
+    // Black hole stats
+    totalBlackHoles,
+    totalBlackHolesWithDisks,
+    totalBlackHolesWithJets,
+    totalBlackHolesByType: blackHolesByType,
+    avgBlackHoleSpin: avgBlackHoleSpin,
+    minBlackHoleSpin: finalMinSpin,
+    maxBlackHoleSpin: finalMaxSpin,
+    blackHolesWithPhotonRings: blackHolesWithPhotonRings,
+    blackHolesWithQuasarAccretion: 0, // Can't detect from current data, would need style flag
     // Small body fields (new)
     smallBodyFields: result.smallBodyFields,
     generatedAt: new Date(),

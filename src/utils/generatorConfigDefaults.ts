@@ -84,6 +84,13 @@ export const defaultConfig: GenerationConfig = {
   rogueCurvatureMax: 0,
   rogueTrajectoryShow: true,
   rogueTrajectoryPreviewLength: 0.5,
+  
+  // Black holes defaults (disabled by default - exotic feature)
+  enableBlackHoles: false,
+  blackHoleFrequency: 0.5, // Default to 50% when enabled
+  blackHoleAccretionIntensity: 0.7,
+  blackHoleJetFrequency: 0.6,
+  blackHoleVisualComplexity: 'normal',
 };
 
 /**
@@ -156,6 +163,24 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         rogueCurvatureMax: 0,
         rogueTrajectoryShow: false,
         rogueTrajectoryPreviewLength: 0.3,
+        
+        // Black holes - disabled for sparse preset
+        enableBlackHoles: false,
+        blackHoleFrequency: 0,
+        blackHoleAccretionIntensity: 0.5,
+        blackHoleJetFrequency: 0.5,
+        blackHoleVisualComplexity: 'minimal',
+        
+        // Advanced black hole settings (sparse = ultra rare if enabled)
+        blackHoleMassProfile: 'stellarOnly',
+        blackHoleSpinLevel: 0.3,
+        blackHoleDiskThicknessLevel: 0.3,
+        blackHoleDiskClumpinessLevel: 0.3,
+        blackHoleJetDramaLevel: 0.3,
+        blackHoleFxIntensity: 0.2,
+        blackHoleRarityStyle: 'ultraRare',
+        blackHoleAccretionStyle: 'subtle',
+        blackHoleAllowMultiplePerSystem: false,
       };
       
     case "solarLike":
@@ -224,6 +249,24 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         rogueCurvatureMax: 0.3,
         rogueTrajectoryShow: true,
         rogueTrajectoryPreviewLength: 0.5,
+        
+        // Black holes - rare exotic addition
+        enableBlackHoles: false,
+        blackHoleFrequency: 0,
+        blackHoleAccretionIntensity: 0.6,
+        blackHoleJetFrequency: 0.4,
+        blackHoleVisualComplexity: 'normal',
+        
+        // Advanced black hole settings (solar-like = rare, realistic)
+        blackHoleMassProfile: 'stellarOnly',
+        blackHoleSpinLevel: 0.5,
+        blackHoleDiskThicknessLevel: 0.4,
+        blackHoleDiskClumpinessLevel: 0.5,
+        blackHoleJetDramaLevel: 0.4,
+        blackHoleFxIntensity: 0.5,
+        blackHoleRarityStyle: 'rare',
+        blackHoleAccretionStyle: 'normal',
+        blackHoleAllowMultiplePerSystem: false,
       };
       
     case "crowded":
@@ -292,6 +335,24 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         rogueCurvatureMax: 0.6,
         rogueTrajectoryShow: true,
         rogueTrajectoryPreviewLength: 0.6,
+        
+        // Black holes - occasional exotic systems
+        enableBlackHoles: false,
+        blackHoleFrequency: 0,
+        blackHoleAccretionIntensity: 0.7,
+        blackHoleJetFrequency: 0.6,
+        blackHoleVisualComplexity: 'normal',
+        
+        // Advanced black hole settings (crowded = more variety, dramatic)
+        blackHoleMassProfile: 'mixed',
+        blackHoleSpinLevel: 0.6,
+        blackHoleDiskThicknessLevel: 0.6,
+        blackHoleDiskClumpinessLevel: 0.7,
+        blackHoleJetDramaLevel: 0.7,
+        blackHoleFxIntensity: 0.7,
+        blackHoleRarityStyle: 'rare',
+        blackHoleAccretionStyle: 'normal',
+        blackHoleAllowMultiplePerSystem: false,
       };
       
     case "superDenseExperimental":
@@ -363,6 +424,24 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         rogueCurvatureMax: 1.0,
         rogueTrajectoryShow: true,
         rogueTrajectoryPreviewLength: 0.8,
+        
+        // Black holes - rare but dramatic when present
+        enableBlackHoles: false,
+        blackHoleFrequency: 0,
+        blackHoleAccretionIntensity: 0.9,
+        blackHoleJetFrequency: 0.8,
+        blackHoleVisualComplexity: 'cinematic',
+        
+        // Advanced black hole settings (super dense = extreme, varied, dramatic)
+        blackHoleMassProfile: 'supermassiveCentres',
+        blackHoleSpinLevel: 0.8,
+        blackHoleDiskThicknessLevel: 0.7,
+        blackHoleDiskClumpinessLevel: 0.8,
+        blackHoleJetDramaLevel: 0.9,
+        blackHoleFxIntensity: 0.9,
+        blackHoleRarityStyle: 'common',
+        blackHoleAccretionStyle: 'quasar',
+        blackHoleAllowMultiplePerSystem: true,
       };
       
     default:

@@ -29,6 +29,20 @@ interface GenerationStats {
   totalNebulae?: number;
   // Rogue planet stats
   totalRoguePlanets?: number;
+  // Black hole stats
+  totalBlackHoles?: number;
+  totalBlackHolesWithDisks?: number;
+  totalBlackHolesWithJets?: number;
+  totalBlackHolesByType?: {
+    stellar: number;
+    intermediate: number;
+    supermassive: number;
+  };
+  avgBlackHoleSpin?: number;
+  minBlackHoleSpin?: number;
+  maxBlackHoleSpin?: number;
+  blackHolesWithPhotonRings?: number;
+  blackHolesWithQuasarAccretion?: number;
   generatedAt: string;
 }
 
@@ -122,6 +136,16 @@ export const UniverseGeneratorPanel: React.FC = () => {
         totalNebulae: result.totalNebulae || 0,
         // Rogue planet stats
         totalRoguePlanets: result.totalRoguePlanets || 0,
+        // Black hole stats
+        totalBlackHoles: result.totalBlackHoles || 0,
+        totalBlackHolesWithDisks: result.totalBlackHolesWithDisks || 0,
+        totalBlackHolesWithJets: result.totalBlackHolesWithJets || 0,
+        totalBlackHolesByType: result.totalBlackHolesByType,
+        avgBlackHoleSpin: result.avgBlackHoleSpin,
+        minBlackHoleSpin: result.minBlackHoleSpin,
+        maxBlackHoleSpin: result.maxBlackHoleSpin,
+        blackHolesWithPhotonRings: result.blackHolesWithPhotonRings,
+        blackHolesWithQuasarAccretion: result.blackHolesWithQuasarAccretion,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -1243,6 +1267,291 @@ export const UniverseGeneratorPanel: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Black Holes Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">Black Holes 🕳️</h3>
+        
+        {/* Enable Black Holes */}
+        <div className="generator-field">
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableBlackHoles ?? false}
+              onChange={(e) => {
+                updateConfig('enableBlackHoles', e.target.checked);
+                // Set default frequency if enabling for the first time
+                if (e.target.checked && (config.blackHoleFrequency === undefined || config.blackHoleFrequency === 0)) {
+                  updateConfig('blackHoleFrequency', 0.5);
+                }
+              }}
+            />
+            <span>Enable Black Holes</span>
+          </label>
+          <small className="generator-hint">⚠️ Experimental: Black holes can replace stars as system centers</small>
+        </div>
+        
+        {config.enableBlackHoles && (
+          <>
+            {/* Black Hole Frequency */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Black Hole Frequency
+                <span className="generator-value">{((config.blackHoleFrequency ?? 0) * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.blackHoleFrequency ?? 0}
+                onChange={(e) => updateConfig('blackHoleFrequency', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>None</span>
+                <span>Common</span>
+              </div>
+              <small className="generator-hint">Chance systems have black holes (rare exotic objects)</small>
+            </div>
+            
+            {/* Accretion Disk Intensity */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Accretion Disk Intensity
+                <span className="generator-value">{((config.blackHoleAccretionIntensity ?? 0.5) * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.blackHoleAccretionIntensity ?? 0.5}
+                onChange={(e) => updateConfig('blackHoleAccretionIntensity', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Faint</span>
+                <span>Blinding</span>
+              </div>
+              <small className="generator-hint">Brightness and density of accretion disks</small>
+            </div>
+            
+            {/* Jet Frequency */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Relativistic Jet Frequency
+                <span className="generator-value">{((config.blackHoleJetFrequency ?? 0.5) * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value={config.blackHoleJetFrequency ?? 0.5}
+                onChange={(e) => updateConfig('blackHoleJetFrequency', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Rare</span>
+                <span>Common</span>
+              </div>
+              <small className="generator-hint">Likelihood of powerful jets emerging from poles</small>
+            </div>
+            
+            {/* Visual Complexity */}
+            <div className="generator-field">
+              <label className="generator-label">Visual Complexity</label>
+              <select
+                className="generator-select"
+                value={config.blackHoleVisualComplexity ?? 'normal'}
+                onChange={(e) => updateConfig('blackHoleVisualComplexity', e.target.value as GenerationConfig["blackHoleVisualComplexity"])}
+              >
+                <option value="minimal">Minimal (Fast)</option>
+                <option value="normal">Normal</option>
+                <option value="cinematic">Cinematic (Intensive)</option>
+              </select>
+              <small className="generator-hint">
+                Lensing, Doppler beaming, and photon ring effects
+              </small>
+            </div>
+            
+            {/* Advanced Black Hole Settings (Collapsible) */}
+            <details style={{ marginTop: '15px', padding: '10px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '5px' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
+                ⚙️ Advanced Black Hole Settings
+              </summary>
+              
+              {/* Mass Profile */}
+              <div className="generator-field">
+                <label className="generator-label">Mass Profile</label>
+                <select
+                  className="generator-select"
+                  value={config.blackHoleMassProfile ?? 'stellarOnly'}
+                  onChange={(e) => updateConfig('blackHoleMassProfile', e.target.value as GenerationConfig["blackHoleMassProfile"])}
+                >
+                  <option value="stellarOnly">Stellar Only (5-50 M☉)</option>
+                  <option value="mixed">Mixed (stellar + intermediate)</option>
+                  <option value="supermassiveCentres">Supermassive Centres</option>
+                </select>
+                <small className="generator-hint">Distribution of black hole mass types</small>
+              </div>
+              
+              {/* Spin Level */}
+              <div className="generator-field">
+                <label className="generator-label">
+                  Spin Level
+                  <span className="generator-value">{((config.blackHoleSpinLevel ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={config.blackHoleSpinLevel ?? 0.5}
+                  onChange={(e) => updateConfig('blackHoleSpinLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Slow</span>
+                  <span>Near-Extremal</span>
+                </div>
+                <small className="generator-hint">Low: slow rotation; High: extreme Kerr-like spin</small>
+              </div>
+              
+              {/* Disk Thickness */}
+              <div className="generator-field">
+                <label className="generator-label">
+                  Disk Thickness
+                  <span className="generator-value">{((config.blackHoleDiskThicknessLevel ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={config.blackHoleDiskThicknessLevel ?? 0.5}
+                  onChange={(e) => updateConfig('blackHoleDiskThicknessLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Thin</span>
+                  <span>Thick</span>
+                </div>
+              </div>
+              
+              {/* Disk Clumpiness */}
+              <div className="generator-field">
+                <label className="generator-label">
+                  Disk Clumpiness
+                  <span className="generator-value">{((config.blackHoleDiskClumpinessLevel ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={config.blackHoleDiskClumpinessLevel ?? 0.5}
+                  onChange={(e) => updateConfig('blackHoleDiskClumpinessLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Smooth</span>
+                  <span>Clumpy</span>
+                </div>
+                <small className="generator-hint">Density variation in accretion disk</small>
+              </div>
+              
+              {/* Jet Drama */}
+              <div className="generator-field">
+                <label className="generator-label">
+                  Jet Drama Level
+                  <span className="generator-value">{((config.blackHoleJetDramaLevel ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={config.blackHoleJetDramaLevel ?? 0.5}
+                  onChange={(e) => updateConfig('blackHoleJetDramaLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Subtle</span>
+                  <span>Dramatic</span>
+                </div>
+                <small className="generator-hint">Affects jet length and brightness</small>
+              </div>
+              
+              {/* FX Intensity */}
+              <div className="generator-field">
+                <label className="generator-label">
+                  Relativistic FX Intensity
+                  <span className="generator-value">{((config.blackHoleFxIntensity ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={config.blackHoleFxIntensity ?? 0.5}
+                  onChange={(e) => updateConfig('blackHoleFxIntensity', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Low</span>
+                  <span>Extreme</span>
+                </div>
+                <small className="generator-hint">Scales Doppler beaming and gravitational lensing</small>
+              </div>
+              
+              {/* Accretion Style */}
+              <div className="generator-field">
+                <label className="generator-label">Accretion Style</label>
+                <select
+                  className="generator-select"
+                  value={config.blackHoleAccretionStyle ?? 'normal'}
+                  onChange={(e) => updateConfig('blackHoleAccretionStyle', e.target.value as GenerationConfig["blackHoleAccretionStyle"])}
+                >
+                  <option value="subtle">Subtle (dim, low-temp)</option>
+                  <option value="normal">Normal</option>
+                  <option value="quasar">Quasar (ultra-bright, hot)</option>
+                </select>
+                <small className="generator-hint">Overall disk brightness and temperature preset</small>
+              </div>
+              
+              {/* Rarity Style */}
+              <div className="generator-field">
+                <label className="generator-label">Rarity Style</label>
+                <select
+                  className="generator-select"
+                  value={config.blackHoleRarityStyle ?? 'rare'}
+                  onChange={(e) => updateConfig('blackHoleRarityStyle', e.target.value as GenerationConfig["blackHoleRarityStyle"])}
+                >
+                  <option value="ultraRare">Ultra Rare (1%)</option>
+                  <option value="rare">Rare (5%)</option>
+                  <option value="common">Common (30%)</option>
+                </select>
+                <small className="generator-hint">Overrides frequency slider when set</small>
+              </div>
+              
+              {/* Allow Multiple */}
+              <div className="generator-field">
+                <label className="generator-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={config.blackHoleAllowMultiplePerSystem ?? false}
+                    onChange={(e) => updateConfig('blackHoleAllowMultiplePerSystem', e.target.checked)}
+                  />
+                  <span>Allow Multiple Black Holes per System</span>
+                </label>
+                <small className="generator-hint">Enable binary black holes and multiple BH systems</small>
+              </div>
+            </details>
+          </>
+        )}
+      </div>
       
       {/* Actions */}
       <div className="generator-actions">
@@ -1369,6 +1678,71 @@ export const UniverseGeneratorPanel: React.FC = () => {
                 <span className="generator-stat-label">🧭 Rogue Planets</span>
                 <span className="generator-stat-value">{stats.totalRoguePlanets}</span>
               </div>
+            )}
+            
+            {/* Black Hole Stats */}
+            {(stats.totalBlackHoles ?? 0) > 0 && (
+              <>
+                <div className="generator-stat" style={{ borderTop: '1px solid #3a3a3a', paddingTop: '8px', marginTop: '8px' }}>
+                  <span className="generator-stat-label">🕳️ Black Holes</span>
+                  <span className="generator-stat-value">{stats.totalBlackHoles}</span>
+                </div>
+                
+                {/* Mass class breakdown */}
+                {stats.totalBlackHolesByType && (
+                  <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                    <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#aaa' }}>
+                      ↳ By Type
+                    </span>
+                    <span className="generator-stat-value" style={{ fontSize: '0.85em' }}>
+                      S:{stats.totalBlackHolesByType.stellar} I:{stats.totalBlackHolesByType.intermediate} SM:{stats.totalBlackHolesByType.supermassive}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Spin stats */}
+                {stats.avgBlackHoleSpin !== undefined && stats.avgBlackHoleSpin > 0 && (
+                  <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                    <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#aaa' }}>
+                      ↳ Avg Spin
+                    </span>
+                    <span className="generator-stat-value" style={{ fontSize: '0.85em' }}>
+                      {stats.avgBlackHoleSpin.toFixed(2)} (min: {(stats.minBlackHoleSpin ?? 0).toFixed(2)}, max: {(stats.maxBlackHoleSpin ?? 0).toFixed(2)})
+                    </span>
+                  </div>
+                )}
+                
+                {(stats.totalBlackHolesWithDisks ?? 0) > 0 && (
+                  <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                    <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#ffaa44' }}>
+                      ↳ With Accretion Disks
+                    </span>
+                    <span className="generator-stat-value" style={{ fontSize: '0.9em' }}>
+                      {stats.totalBlackHolesWithDisks}
+                    </span>
+                  </div>
+                )}
+                {(stats.totalBlackHolesWithJets ?? 0) > 0 && (
+                  <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                    <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#66ccff' }}>
+                      ↳ With Relativistic Jets
+                    </span>
+                    <span className="generator-stat-value" style={{ fontSize: '0.9em' }}>
+                      {stats.totalBlackHolesWithJets}
+                    </span>
+                  </div>
+                )}
+                {(stats.blackHolesWithPhotonRings ?? 0) > 0 && (
+                  <div className="generator-stat" style={{ paddingLeft: '12px' }}>
+                    <span className="generator-stat-label" style={{ fontSize: '0.85em', color: '#ffdd99' }}>
+                      ↳ With Photon Rings
+                    </span>
+                    <span className="generator-stat-value" style={{ fontSize: '0.9em' }}>
+                      {stats.blackHolesWithPhotonRings}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
             
             <div className="generator-stat">
