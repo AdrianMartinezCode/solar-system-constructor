@@ -5,6 +5,7 @@ import { useSystemStore } from '../state/systemStore';
 import { StarObject } from './StarObject';
 import { GroupBox } from './GroupBox';
 import { AsteroidBeltObject } from './AsteroidBeltObject';
+import { NebulaObject } from './NebulaObject';
 import { BodyCameraController } from './BodyCameraController';
 import { computeVisibleItems } from '../utils/groupUtils';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -38,6 +39,7 @@ export const Scene: React.FC = () => {
   const belts = useSystemStore((state) => state.belts);
   const smallBodyFields = useSystemStore((state) => state.smallBodyFields);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
+  const nebulae = useSystemStore((state) => state.nebulae);
   const nestingLevel = useSystemStore((state) => state.nestingLevel);
   const time = useSystemStore((state) => state.time);
   const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -67,6 +69,7 @@ export const Scene: React.FC = () => {
     })));
   }
   console.log('Total Protoplanetary Disks:', Object.keys(protoplanetaryDisks).length);
+  console.log('Total Nebulae:', Object.keys(nebulae).length);
   console.log('Nesting Level:', nestingLevel);
   console.log('Visible Items:', visibleItems);
   console.log('Time:', time);
@@ -74,7 +77,7 @@ export const Scene: React.FC = () => {
   
   return (
     <Canvas
-      camera={{ position: [0, 30, 50], fov: 60 }}
+      camera={{ position: [0, 30, 50], fov: 60, near: 0.1, far: 50000 }}
       style={{ background: '#000011', width: '100%', height: '100%' }}
       gl={{ antialias: true }}
     >
@@ -123,6 +126,13 @@ export const Scene: React.FC = () => {
       ))}
       
       {/* Note: Small body fields and protoplanetary disks are rendered inside StarObject for correct positioning */}
+      
+      {/* Render nebulae (galaxy-scale volumetric regions) */}
+      {Object.values(nebulae).map((nebula) =>
+        nebula.visible !== false ? (
+          <NebulaObject key={nebula.id} nebula={nebula} />
+        ) : null
+      )}
       
       <OrbitControls 
         ref={controlsRef} 

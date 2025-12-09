@@ -6,6 +6,7 @@ import { HierarchyTree } from '../ui/HierarchyTree';
 import { UniverseGeneratorPanel } from './UniverseGeneratorPanel';
 import { GroupEditorPanel } from '../ui/GroupEditorPanel';
 import { StarEditorPanel } from '../ui/StarEditorPanel';
+import { NebulaEditorPanel } from '../ui/NebulaEditorPanel';
 import { StarListPanel } from '../ui/StarListPanel';
 import { SystemOverview } from './SystemOverview';
 import { StatsPanel } from './StatsPanel';
@@ -38,6 +39,12 @@ function getWindowContent(type: string, data?: any): React.ReactNode {
       return <StarEditorPanel />;
     case 'groupEditor':
       return <GroupEditorPanel />;
+    case 'nebulaEditor':
+      return data?.nebulaId ? (
+        <NebulaEditorPanel nebulaId={data.nebulaId} />
+      ) : (
+        <div>No nebula selected</div>
+      );
     case 'stats':
       return <StatsPanel />;
     case 'starList':

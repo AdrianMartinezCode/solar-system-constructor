@@ -77,6 +77,13 @@ export interface GenerationConfig {
   protoplanetaryDiskPresence: number;          // 0..1 slider mapping to probability of having a disk
   protoplanetaryDiskDensity: number;           // 0..1 slider mapping to particle count
   protoplanetaryDiskProminence: number;        // 0..1 slider mapping to opacity/brightness/thickness
+
+  // Nebulae Regions (galaxy-scale visual-only volumetric clouds)
+  enableNebulae: boolean;                      // Master switch for nebula generation
+  nebulaDensity: number;                       // 0..1 slider controlling nebula count/frequency
+  nebulaSizeBias?: 'small' | 'medium' | 'giant'; // Optional size bias control
+  nebulaColorStyle?: 'random' | 'warm' | 'cool' | 'mixed'; // Optional color palette filter
+  nebulaBrightness?: number;                   // 0..1 optional brightness slider (if exposed)
 }
 
 export interface GeneratedUniverse {
@@ -139,9 +146,19 @@ export interface GeneratedUniverse {
   /** Approximate total visual particles across all disks (after LOD scaling) */
   totalProtoplanetaryDiskParticles?: number;
   
+  // ============================================================================
+  // Nebulae Regions (galaxy-scale volumetric clouds)
+  // ============================================================================
+  
+  /** All nebula regions keyed by ID */
+  nebulae?: Record<string, NebulaRegion>;
+  
+  /** Total number of nebula regions generated */
+  totalNebulae?: number;
+  
   generatedAt: Date;
 }
 
 // Re-export types from main types file
-import type { Star, Group, AsteroidBelt, ProtoplanetaryDisk, SmallBodyField } from '../types';
+import type { Star, Group, AsteroidBelt, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../types';
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, NestingLevel, AsteroidBelt, PlanetaryRing, ProtoplanetaryDisk, SmallBodyField } from '../types';
+import { Star, Group, GroupChild, NestingLevel, AsteroidBelt, PlanetaryRing, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../types';
 import { saveSystem, loadSystem } from '../utils/persistence';
 import { createExampleSystem } from '../utils/exampleData';
 import { findHeaviestStar } from '../utils/physics';
@@ -23,6 +23,10 @@ interface SystemStore {
   // Protoplanetary disk management (visual-only particle fields)
   protoplanetaryDisks: Record<string, ProtoplanetaryDisk>;
   selectedProtoplanetaryDiskId: string | null;
+  
+  // Nebula management (galaxy-scale visual-only volumetric regions)
+  nebulae: Record<string, NebulaRegion>;
+  selectedNebulaId: string | null;
   
   // Group management
   groups: Record<string, Group>;
@@ -59,6 +63,12 @@ interface SystemStore {
   selectProtoplanetaryDisk: (id: string | null) => void;
   updateProtoplanetaryDisk: (id: string, patch: Partial<ProtoplanetaryDisk>) => void;
   removeProtoplanetaryDisk: (id: string) => void;
+  
+  // Nebula operations
+  setNebulae: (nebulae: Record<string, NebulaRegion>) => void;
+  selectNebula: (id: string | null) => void;
+  updateNebula: (id: string, patch: Partial<NebulaRegion>) => void;
+  removeNebula: (id: string) => void;
   
   // CRUD operations for groups
   addGroup: (payload: Omit<Group, 'id'>) => string;
@@ -97,6 +107,9 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   selectedStarId: null,
   time: 0,
   timeScale: 1.0, // Default to normal speed (1x)
+  
+  nebulae: {},
+  selectedNebulaId: null,
   
   // Belt state (legacy)
   belts: {},
@@ -317,6 +330,47 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
         protoplanetaryDisks: newDisks,
         selectedProtoplanetaryDiskId:
           state.selectedProtoplanetaryDiskId === id ? null : state.selectedProtoplanetaryDiskId,
+      };
+    });
+
+    get().save();
+  },
+  
+  // Nebula operations
+  setNebulae: (nebulae) => {
+    set({ nebulae });
+    get().save();
+  },
+
+  selectNebula: (id) => {
+    set({ selectedNebulaId: id });
+  },
+
+  updateNebula: (id, patch) => {
+    set((state) => {
+      const nebula = state.nebulae[id];
+      if (!nebula) return state;
+
+      return {
+        nebulae: {
+          ...state.nebulae,
+          [id]: { ...nebula, ...patch },
+        },
+      };
+    });
+
+    get().save();
+  },
+
+  removeNebula: (id) => {
+    set((state) => {
+      const newNebulae = { ...state.nebulae };
+      delete newNebulae[id];
+
+      return {
+        nebulae: newNebulae,
+        selectedNebulaId:
+          state.selectedNebulaId === id ? null : state.selectedNebulaId,
       };
     });
 
@@ -787,11 +841,13 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       belts: example.belts || {},
       smallBodyFields: example.smallBodyFields || {},
       protoplanetaryDisks: example.protoplanetaryDisks || {},
+      nebulae: {},
       selectedStarId: null,
       selectedGroupId: null,
       selectedBeltId: null,
       selectedSmallBodyFieldId: null,
       selectedProtoplanetaryDiskId: null,
+      selectedNebulaId: null,
       time: 0,
     });
     get().save();

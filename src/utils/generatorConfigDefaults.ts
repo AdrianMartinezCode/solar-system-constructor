@@ -64,6 +64,13 @@ export const defaultConfig: GenerationConfig = {
   protoplanetaryDiskPresence: 0,
   protoplanetaryDiskDensity: 0.5,
   protoplanetaryDiskProminence: 0.5,
+
+  // Nebulae regions defaults (disabled by default)
+  enableNebulae: false,
+  nebulaDensity: 0.5,
+  nebulaSizeBias: 'medium',
+  nebulaColorStyle: 'random',
+  nebulaBrightness: 0.7,
 };
 
 /**
@@ -116,6 +123,13 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         protoplanetaryDiskPresence: 0,
         protoplanetaryDiskDensity: 0.3,
         protoplanetaryDiskProminence: 0.3,
+
+        // Nebulae - disabled for sparse preset
+        enableNebulae: false,
+        nebulaDensity: 0,
+        nebulaSizeBias: 'medium',
+        nebulaColorStyle: 'random',
+        nebulaBrightness: 0.5,
       };
       
     case "solarLike":
@@ -164,6 +178,13 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         protoplanetaryDiskPresence: 0,
         protoplanetaryDiskDensity: 0.5,
         protoplanetaryDiskProminence: 0.5,
+
+        // Nebulae - moderate presence for visual interest
+        enableNebulae: true,
+        nebulaDensity: 0.2,  // Few nebulae
+        nebulaSizeBias: 'medium',
+        nebulaColorStyle: 'mixed',
+        nebulaBrightness: 0.7,
       };
       
     case "crowded":
@@ -212,6 +233,13 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         protoplanetaryDiskPresence: 0.2,  // 20% chance of young systems
         protoplanetaryDiskDensity: 0.5,
         protoplanetaryDiskProminence: 0.6,
+
+        // Nebulae - moderate to high presence for visual richness
+        enableNebulae: true,
+        nebulaDensity: 0.5,  // Moderate nebula count
+        nebulaSizeBias: 'medium',
+        nebulaColorStyle: 'mixed',
+        nebulaBrightness: 0.7,
       };
       
     case "superDenseExperimental":
@@ -263,6 +291,13 @@ export function getPresetConfig(preset: GenerationConfig["stylePreset"]): Genera
         protoplanetaryDiskPresence: 0.5,  // 50% chance of young systems
         protoplanetaryDiskDensity: 0.8,   // High particle count
         protoplanetaryDiskProminence: 0.9, // Very visible
+
+        // Nebulae - high density for dramatic visual effect
+        enableNebulae: true,
+        nebulaDensity: 0.8,  // Many overlapping nebulae
+        nebulaSizeBias: 'giant',
+        nebulaColorStyle: 'mixed',
+        nebulaBrightness: 0.9,
       };
       
     default:

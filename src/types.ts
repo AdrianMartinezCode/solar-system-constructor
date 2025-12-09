@@ -317,3 +317,60 @@ export interface SmallBodyField {
   visible?: boolean;
 }
 
+/**
+ * Nebula Region - a large-scale volumetric gas/dust cloud at galactic scale.
+ * 
+ * These are visual-only regions that exist outside star/group clusters,
+ * primarily for dramatic visual effect and scene composition at universe scale.
+ * They are NOT physical bodies and do not participate in orbital mechanics.
+ * 
+ * Rendered as volumetric fog or GPU particle fields with noise-based density.
+ */
+export interface NebulaRegion {
+  /** Unique identifier for this nebula */
+  id: string;
+  
+  /** Display name (e.g. "Orion Nebula", "Eagle Nebula") */
+  name: string;
+  
+  // Position (in the same coordinate space as groups/systems)
+  /** 3D position in universe space */
+  position: Position;
+  
+  // Geometry (spherical or ellipsoidal volume)
+  /** Primary radius (for spherical) or half-dimensions (for ellipsoid) */
+  radius: number;
+  
+  /** Optional dimensions for ellipsoidal nebulae (x, y, z half-extents) */
+  dimensions?: { x: number; y: number; z: number };
+  
+  // Visual parameters
+  /** Density/opacity control (0-1), drives visual thickness */
+  density: number;
+  
+  /** Brightness/emissive intensity (0-1) */
+  brightness: number;
+  
+  /** Base/dominant color (hex string) */
+  baseColor: string;
+  
+  /** Accent/highlight color for gradients and edges (hex string) */
+  accentColor: string;
+  
+  /** 3D noise scale parameter (controls noise frequency) */
+  noiseScale: number;
+  
+  /** Noise detail/octaves parameter (controls noise complexity) */
+  noiseDetail: number;
+  
+  // Optional metadata
+  /** Associated group IDs (groups this nebula borders or surrounds) */
+  associatedGroupIds?: string[];
+  
+  /** Per-nebula PRNG seed for deterministic noise/particle distribution */
+  seed: string | number;
+  
+  /** Optional visibility toggle for UI control */
+  visible?: boolean;
+}
+

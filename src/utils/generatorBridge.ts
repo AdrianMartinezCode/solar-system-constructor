@@ -204,6 +204,122 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
 
     // Protoplanetary disks
     ...mapProtoplanetaryDiskConfig(config),
+
+    // Nebulae regions
+    ...mapNebulaConfig(config),
+  };
+}
+
+/**
+ * Map nebula UI config to internal generator config
+ */
+function mapNebulaConfig(config: GenerationConfig): {
+  enableNebulae: boolean;
+  nebulaDensity: number;
+  nebulaCountRange: [number, number];
+  nebulaSizeRange: [number, number];
+  nebulaThicknessRange: [number, number];
+  nebulaDistanceFromGroups: [number, number];
+  nebulaColorPalettes: Array<{ base: string; accent: string }>;
+  nebulaBrightnessRange: [number, number];
+  nebulaDensityRange: [number, number];
+  nebulaNoiseScaleRange: [number, number];
+  nebulaNoiseDetailRange: [number, number];
+} {
+  const density = config.nebulaDensity ?? 0.5;
+  const sizeBias = config.nebulaSizeBias ?? 'medium';
+  const colorStyle = config.nebulaColorStyle ?? 'random';
+  const brightness = config.nebulaBrightness ?? 0.7;
+
+  // Map density (0-1) to count range
+  // Low density: 1-3 nebulae, High density: 5-12 nebulae
+  const nebulaCountRange: [number, number] = [
+    Math.max(1, Math.floor(1 + density * 4)),
+    Math.max(2, Math.floor(3 + density * 9)),
+  ];
+
+  // Map size bias to radius range
+  let nebulaSizeRange: [number, number];
+  switch (sizeBias) {
+    case 'small':
+      nebulaSizeRange = [40, 100];
+      break;
+    case 'giant':
+      nebulaSizeRange = [120, 250];
+      break;
+    case 'medium':
+    default:
+      nebulaSizeRange = [80, 200];
+      break;
+  }
+
+  // Filter color palettes based on style
+  const allPalettes = [
+    // HII regions (emission nebulae, pinkish-red)
+    { base: '#FF6B9D', accent: '#FFB3D9' },
+    { base: '#FF4D88', accent: '#FF99CC' },
+    // Blue reflection nebulae
+    { base: '#4DA6FF', accent: '#99CCFF' },
+    { base: '#3399FF', accent: '#66B2FF' },
+    // Dark / mixed nebulae (dust + emission)
+    { base: '#9966CC', accent: '#CC99FF' },
+    { base: '#FF8C42', accent: '#FFB380' },
+    // Greenish (rare, oxygen lines)
+    { base: '#5BC95B', accent: '#99E699' },
+  ];
+
+  let nebulaColorPalettes: Array<{ base: string; accent: string }>;
+  switch (colorStyle) {
+    case 'warm':
+      // HII + mixed warm
+      nebulaColorPalettes = [
+        { base: '#FF6B9D', accent: '#FFB3D9' },
+        { base: '#FF4D88', accent: '#FF99CC' },
+        { base: '#FF8C42', accent: '#FFB380' },
+      ];
+      break;
+    case 'cool':
+      // Blue reflection + greenish
+      nebulaColorPalettes = [
+        { base: '#4DA6FF', accent: '#99CCFF' },
+        { base: '#3399FF', accent: '#66B2FF' },
+        { base: '#5BC95B', accent: '#99E699' },
+        { base: '#9966CC', accent: '#CC99FF' },
+      ];
+      break;
+    case 'mixed':
+      // Balanced mix
+      nebulaColorPalettes = [
+        { base: '#FF6B9D', accent: '#FFB3D9' },
+        { base: '#4DA6FF', accent: '#99CCFF' },
+        { base: '#9966CC', accent: '#CC99FF' },
+        { base: '#FF8C42', accent: '#FFB380' },
+      ];
+      break;
+    case 'random':
+    default:
+      nebulaColorPalettes = allPalettes;
+      break;
+  }
+
+  // Map brightness slider to brightness range (boosted for far distance visibility)
+  const nebulaBrightnessRange: [number, number] = [
+    0.7 + brightness * 0.3,  // Boosted minimum
+    0.9 + brightness * 0.1,  // Near maximum
+  ];
+
+  return {
+    enableNebulae: config.enableNebulae ?? false,
+    nebulaDensity: density,
+    nebulaCountRange,
+    nebulaSizeRange,
+    nebulaThicknessRange: [0.6, 1.4],
+    nebulaDistanceFromGroups: [800, 2000],  // VERY far - pure galactic background
+    nebulaColorPalettes,
+    nebulaBrightnessRange,
+    nebulaDensityRange: [0.7, 0.95],  // Higher density for visibility at distance
+    nebulaNoiseScaleRange: [0.8, 2.5],
+    nebulaNoiseDetailRange: [3, 6],
   };
 }
 
@@ -664,6 +780,12 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
   const totalProtoplanetaryDisks = allDisks.length;
   const totalProtoplanetaryDiskParticles = allDisks.reduce((sum, disk) => sum + disk.particleCount, 0);
   
+  // ============================================================================
+  // Nebula Stats
+  // ============================================================================
+  const allNebulae = Object.values(result.nebulae || {});
+  const totalNebulae = allNebulae.length;
+  
   return {
     ...result,
     totalStars: Object.keys(result.stars).length,
@@ -690,6 +812,9 @@ export function generateUniverse(config: GenerationConfig): GeneratedUniverse {
     protoplanetaryDisks: result.protoplanetaryDisks,
     totalProtoplanetaryDisks,
     totalProtoplanetaryDiskParticles,
+    // Nebula stats
+    nebulae: result.nebulae,
+    totalNebulae,
     // Small body fields (new)
     smallBodyFields: result.smallBodyFields,
     generatedAt: new Date(),

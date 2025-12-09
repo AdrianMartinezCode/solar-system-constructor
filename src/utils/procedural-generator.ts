@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta, ProtoplanetaryDisk, SmallBodyField } from '../types';
+import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../types';
 import { createPRNG, PRNG } from '../../prng';
 
 /**
@@ -117,6 +117,20 @@ interface GeneratorConfig {
   protoplanetaryDiskBrightnessRange: [number, number];   // Brightness/emissive intensity range
   protoplanetaryDiskClumpinessRange: [number, number];   // Clumpiness factor range (0-1)
   protoplanetaryDiskRotationSpeedMultiplierRange: [number, number]; // Rotation speed multiplier range
+
+  // Nebula Region parameters (galaxy-scale visual-only volumetric clouds)
+  enableNebulae: boolean;                                 // Master switch for nebula generation
+  nebulaDensity: number;                                  // 0-1 slider controlling nebula count/frequency
+  nebulaCountRange: [number, number];                     // [min, max] total nebula regions for universe
+  nebulaSizeRange: [number, number];                      // Approximate radius range (in group distance units)
+  nebulaThicknessRange: [number, number];                 // Controls elongation for ellipsoids (1 = sphere, <1 = disk, >1 = cigar)
+  nebulaDistanceFromGroups: [number, number];             // [min, max] distance from group centers where nebulae spawn
+  nebulaColorPalettes: Array<{ base: string; accent: string }>; // Curated color palettes (HII, reflection, dark)
+  nebulaBrightnessRange: [number, number];                // Emissive brightness range (0-1)
+  nebulaDensityRange: [number, number];                   // Visual density/opacity range (0-1)
+  nebulaNoiseScaleRange: [number, number];                // 3D noise scale range (controls frequency)
+  nebulaNoiseDetailRange: [number, number];               // 3D noise detail/octaves range
+  nebulaDetail?: 'low' | 'medium' | 'high' | 'ultra';     // Optional LOD control (mirrors smallBodyDetail)
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
@@ -214,6 +228,32 @@ const DEFAULT_CONFIG: GeneratorConfig = {
   protoplanetaryDiskBrightnessRange: [0.3, 0.8],
   protoplanetaryDiskClumpinessRange: [0.2, 0.6],
   protoplanetaryDiskRotationSpeedMultiplierRange: [0.1, 0.5],
+
+  // Nebula regions (disabled by default, galaxy-scale visual fields)
+  enableNebulae: false,
+  nebulaDensity: 0.5,                                   // Moderate density
+  nebulaCountRange: [2, 8],                             // Few large nebulae per universe
+  nebulaSizeRange: [80, 200],                           // Large radii (in group distance scale)
+  nebulaThicknessRange: [0.6, 1.4],                     // Slightly elongated (1 = sphere)
+  nebulaDistanceFromGroups: [800, 2000],                // VERY far from clusters - pure background elements
+  nebulaColorPalettes: [
+    // HII regions (emission nebulae, pinkish-red)
+    { base: '#FF6B9D', accent: '#FFB3D9' },
+    { base: '#FF4D88', accent: '#FF99CC' },
+    // Blue reflection nebulae
+    { base: '#4DA6FF', accent: '#99CCFF' },
+    { base: '#3399FF', accent: '#66B2FF' },
+    // Dark / mixed nebulae (dust + emission)
+    { base: '#9966CC', accent: '#CC99FF' },
+    { base: '#FF8C42', accent: '#FFB380' },
+    // Greenish (rare, oxygen lines)
+    { base: '#5BC95B', accent: '#99E699' },
+  ],
+  nebulaBrightnessRange: [0.8, 1.0],                    // Very high brightness (maximum visibility at distance)
+  nebulaDensityRange: [0.7, 0.95],                      // High opacity to stay visible far away
+  nebulaNoiseScaleRange: [0.8, 2.5],                    // Medium frequency noise
+  nebulaNoiseDetailRange: [3, 6],                       // Moderate detail/octaves
+  nebulaDetail: 'medium',                               // Default quality level
 };
 
 // ============================================================================
@@ -2135,6 +2175,308 @@ class ProtoplanetaryDiskGenerator {
 }
 
 // ============================================================================
+// Nebula Generator (Galaxy-Scale Visual-Only Volumetric Regions)
+// ============================================================================
+
+/**
+ * Generates large volumetric nebula regions at galaxy/universe scale.
+ * These are visual-only fields that sit mostly between or around galaxy groups,
+ * not as circumstellar features. They are highly visible and meant for scene composition.
+ */
+class NebulaGenerator {
+  private config: GeneratorConfig;
+  private rng: RandomGenerator;
+
+  constructor(config: GeneratorConfig, rng: RandomGenerator) {
+    this.config = config;
+    this.rng = rng;
+  }
+
+  /**
+   * Generate nebulae for the universe at group scale.
+   * @param groups - All groups in the universe
+   * @param rootGroupIds - Root group IDs
+   * @param stars - All stars (for deriving system extents if no groups)
+   * @param rootIds - Root star IDs (fallback if no grouping)
+   * @returns Record of NebulaRegion objects keyed by ID
+   */
+  generate(
+    groups: Record<string, Group>,
+    rootGroupIds: string[],
+    stars: Record<string, Star>,
+    rootIds: string[]
+  ): Record<string, NebulaRegion> {
+    if (!this.config.enableNebulae) {
+      return {};
+    }
+
+    const nebulae: Record<string, NebulaRegion> = {};
+
+    // Decide nebula count based on density slider
+    const targetCount = this.calculateNebulaCount();
+    
+    if (targetCount === 0) {
+      return {};
+    }
+
+    // Precompute group/cluster extents for spatial placement
+    const clusterCenters = this.computeClusterCenters(groups, rootGroupIds, stars, rootIds);
+
+    if (clusterCenters.length === 0) {
+      // No spatial reference, place nebulae at random positions
+      for (let i = 0; i < targetCount; i++) {
+        const nebula = this.createRandomNebula(i);
+        nebulae[nebula.id] = nebula;
+      }
+    } else {
+      // Place nebulae outside clusters
+      for (let i = 0; i < targetCount; i++) {
+        const nebula = this.createNebulaOutsideClusters(i, clusterCenters);
+        nebulae[nebula.id] = nebula;
+      }
+    }
+
+    return nebulae;
+  }
+
+  /**
+   * Calculate target nebula count based on density and range
+   */
+  private calculateNebulaCount(): number {
+    const [minCount, maxCount] = this.config.nebulaCountRange;
+    const density = this.config.nebulaDensity;
+    
+    // Map density 0-1 to count range with geometric scaling
+    // density 0 → minCount, density 1 → maxCount (with some nonlinearity)
+    const t = Math.pow(density, 0.8); // Slight nonlinearity
+    const targetCount = Math.round(minCount + t * (maxCount - minCount));
+    
+    return targetCount;
+  }
+
+  /**
+   * Compute cluster centers from groups or stars
+   */
+  private computeClusterCenters(
+    groups: Record<string, Group>,
+    rootGroupIds: string[],
+    stars: Record<string, Star>,
+    rootIds: string[]
+  ): Array<{ position: Position; radius: number; groupId?: string }> {
+    const centers: Array<{ position: Position; radius: number; groupId?: string }> = [];
+
+    if (rootGroupIds.length > 0) {
+      // Use group positions and estimate radius
+      rootGroupIds.forEach(groupId => {
+        const group = groups[groupId];
+        if (group?.position) {
+          centers.push({
+            position: group.position,
+            radius: this.config.groupPositionSigma * 1.5, // Approximate cluster extent
+            groupId: group.id,
+          });
+        }
+      });
+    } else if (rootIds.length > 0) {
+      // Fallback: create synthetic clusters from root star positions
+      // (In practice, stars are at origin unless grouping is enabled, so this is mostly for completeness)
+      const clusterSize = 50; // Default radius
+      rootIds.forEach((rootId, index) => {
+        centers.push({
+          position: { x: 0, y: 0, z: 0 }, // Stars default to origin
+          radius: clusterSize,
+        });
+      });
+    }
+
+    return centers;
+  }
+
+  /**
+   * Create a nebula positioned outside cluster regions
+   */
+  private createNebulaOutsideClusters(
+    index: number,
+    clusterCenters: Array<{ position: Position; radius: number; groupId?: string }>
+  ): NebulaRegion {
+    // Fork RNG for this nebula
+    const nebulaRng = this.rng.fork(`nebula-${index}`);
+
+    // Pick a "host" cluster to position relative to
+    const hostCluster = nebulaRng.choice(clusterCenters);
+    
+    // Sample distance from host cluster
+    const [minDist, maxDist] = this.config.nebulaDistanceFromGroups;
+    const distance = nebulaRng.uniform(minDist, maxDist);
+
+    // Sample random direction (uniform on sphere)
+    const theta = nebulaRng.uniform(0, Math.PI * 2);
+    const phi = Math.acos(nebulaRng.uniform(-1, 1));
+    
+    const dirX = Math.sin(phi) * Math.cos(theta);
+    const dirY = Math.sin(phi) * Math.sin(theta);
+    const dirZ = Math.cos(phi);
+
+    // Compute nebula position
+    const position: Position = {
+      x: hostCluster.position.x + dirX * distance,
+      y: hostCluster.position.y + dirY * distance,
+      z: hostCluster.position.z + dirZ * distance,
+    };
+
+    // Sample geometry and visual parameters
+    return this.createNebulaAtPosition(index, position, hostCluster.groupId ? [hostCluster.groupId] : undefined, nebulaRng);
+  }
+
+  /**
+   * Create a nebula at a random position (no clusters available)
+   */
+  private createRandomNebula(index: number): NebulaRegion {
+    // Fork RNG for this nebula
+    const nebulaRng = this.rng.fork(`nebula-${index}`);
+
+    // Random position in a VERY large spherical shell (far background)
+    const minDistance = 1000; // Very far from origin
+    const maxDistance = 2500; // Extreme distance for pure background
+    
+    // Sample distance and direction
+    const distance = nebulaRng.uniform(minDistance, maxDistance);
+    const theta = nebulaRng.uniform(0, Math.PI * 2);
+    const phi = Math.acos(nebulaRng.uniform(-1, 1));
+    
+    const position: Position = {
+      x: distance * Math.sin(phi) * Math.cos(theta),
+      y: distance * Math.sin(phi) * Math.sin(theta),
+      z: distance * Math.cos(phi),
+    };
+
+    return this.createNebulaAtPosition(index, position, undefined, nebulaRng);
+  }
+
+  /**
+   * Create a nebula with full parameters at a given position
+   */
+  private createNebulaAtPosition(
+    index: number,
+    position: Position,
+    associatedGroupIds: string[] | undefined,
+    nebulaRng: RandomGenerator
+  ): NebulaRegion {
+    // Sample geometry
+    const radius = nebulaRng.uniform(
+      this.config.nebulaSizeRange[0],
+      this.config.nebulaSizeRange[1]
+    );
+
+    const thicknessFactor = nebulaRng.uniform(
+      this.config.nebulaThicknessRange[0],
+      this.config.nebulaThicknessRange[1]
+    );
+
+    // Decide if ellipsoid or sphere
+    const isEllipsoid = thicknessFactor !== 1.0 || nebulaRng.bool(0.3); // 30% chance of ellipsoid even if thickness=1
+
+    let dimensions: { x: number; y: number; z: number } | undefined;
+    if (isEllipsoid) {
+      // Create ellipsoidal dimensions
+      // thicknessFactor < 1 → disk-like, thicknessFactor > 1 → cigar-like
+      const xRad = radius;
+      const yRad = radius * thicknessFactor;
+      const zRad = radius * nebulaRng.uniform(0.8, 1.2); // Slight variation
+      
+      dimensions = { x: xRad, y: yRad, z: zRad };
+    }
+
+    // Sample visual parameters
+    const density = nebulaRng.uniform(
+      this.config.nebulaDensityRange[0],
+      this.config.nebulaDensityRange[1]
+    );
+
+    const brightness = nebulaRng.uniform(
+      this.config.nebulaBrightnessRange[0],
+      this.config.nebulaBrightnessRange[1]
+    );
+
+    // Pick color palette
+    const palette = nebulaRng.choice(this.config.nebulaColorPalettes);
+
+    const noiseScale = nebulaRng.uniform(
+      this.config.nebulaNoiseScaleRange[0],
+      this.config.nebulaNoiseScaleRange[1]
+    );
+
+    const noiseDetail = Math.floor(nebulaRng.uniform(
+      this.config.nebulaNoiseDetailRange[0],
+      this.config.nebulaNoiseDetailRange[1]
+    ));
+
+    // Generate seed for per-nebula PRNG
+    const seed = nebulaRng.randInt(0, 2147483647);
+
+    // Generate name
+    const name = this.generateNebulaName(index);
+
+    const nebulaId = uuidv4();
+
+    return {
+      id: nebulaId,
+      name,
+      position,
+      radius,
+      dimensions,
+      density,
+      brightness,
+      baseColor: palette.base,
+      accentColor: palette.accent,
+      noiseScale,
+      noiseDetail,
+      associatedGroupIds,
+      seed,
+      visible: true,
+    };
+  }
+
+  /**
+   * Generate a nebula name
+   */
+  private generateNebulaName(index: number): string {
+    const names = [
+      'Orion Nebula',
+      'Eagle Nebula',
+      'Horsehead Nebula',
+      'Carina Nebula',
+      'Helix Nebula',
+      'Ring Nebula',
+      'Crab Nebula',
+      'Lagoon Nebula',
+      'Trifid Nebula',
+      'Rosette Nebula',
+      'Veil Nebula',
+      'Pillars of Creation',
+      'Cat\'s Eye Nebula',
+      'Tarantula Nebula',
+      'Omega Nebula',
+      'North America Nebula',
+      'Crescent Nebula',
+      'Dumbbell Nebula',
+      'Butterfly Nebula',
+      'Iris Nebula',
+    ];
+
+    if (index < names.length) {
+      return names[index];
+    }
+
+    // Generate alphanumeric designations
+    const catalogPrefix = ['NGC', 'IC', 'M', 'SH2', 'LDN', 'VdB'];
+    const prefix = this.rng.choice(catalogPrefix);
+    const number = 100 + index;
+    return `${prefix} ${number}`;
+  }
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -2154,6 +2496,7 @@ export function generateSolarSystem(
   belts: Record<string, AsteroidBelt>;
   smallBodyFields: Record<string, SmallBodyField>;
   protoplanetaryDisks: Record<string, ProtoplanetaryDisk>;
+  nebulae: Record<string, NebulaRegion>;
 } {
   const fullConfig = { ...DEFAULT_CONFIG, ...config };
   
@@ -2171,6 +2514,7 @@ export function generateSolarSystem(
   const cometRng = new RandomGenerator(masterRng.fork('comets'));
   const lagrangeRng = new RandomGenerator(masterRng.fork('lagrange'));
   const diskRng = new RandomGenerator(masterRng.fork('protoplanetary-disks'));
+  const nebulaRng = new RandomGenerator(masterRng.fork('nebulae'));
   
   // 1. Generate L-System topology
   const lsystem = new LSystemGenerator(fullConfig, lsystemRng);
@@ -2282,6 +2626,10 @@ export function generateSolarSystem(
     .filter(g => g.parentGroupId === null)
     .map(g => g.id);
   
+  // 11. Generate nebulae (galaxy-scale visual regions, if enabled)
+  const nebulaGen = new NebulaGenerator(fullConfig, nebulaRng);
+  const nebulaMap = nebulaGen.generate(groupMap, rootGroupIds, starMap, systemData.rootIds);
+  
   return {
     stars: starMap,
     rootIds: systemData.rootIds,
@@ -2290,6 +2638,7 @@ export function generateSolarSystem(
     belts: beltMap,  // Legacy, kept empty
     smallBodyFields: smallBodyFieldMap,
     protoplanetaryDisks: diskMap,
+    nebulae: nebulaMap,
   };
 }
 
@@ -2311,6 +2660,7 @@ export function generateMultipleSystems(
   belts: Record<string, AsteroidBelt>;
   smallBodyFields: Record<string, SmallBodyField>;
   protoplanetaryDisks: Record<string, ProtoplanetaryDisk>;
+  nebulae: Record<string, NebulaRegion>;
 } {
   const fullConfig = { ...DEFAULT_CONFIG, ...config, enableGrouping: true };
   
@@ -2319,6 +2669,7 @@ export function generateMultipleSystems(
   const allBelts: Record<string, AsteroidBelt> = {};
   const allSmallBodyFields: Record<string, SmallBodyField> = {};
   const allDisks: Record<string, ProtoplanetaryDisk> = {};
+  const allNebulae: Record<string, NebulaRegion> = {};
   
   // Use seed to create deterministic sequence for multiple systems
   const actualSeed = seed ?? Date.now();
@@ -2333,6 +2684,7 @@ export function generateMultipleSystems(
     Object.assign(allBelts, system.belts);
     Object.assign(allSmallBodyFields, system.smallBodyFields);
     Object.assign(allDisks, system.protoplanetaryDisks);
+    Object.assign(allNebulae, system.nebulae);
     allRootIds.push(...system.rootIds);
   }
   
@@ -2350,6 +2702,12 @@ export function generateMultipleSystems(
     .filter(g => g.parentGroupId === null)
     .map(g => g.id);
   
+  // Generate nebulae at universe scale (after groups are established)
+  const nebulaRng = new RandomGenerator(masterRng.fork('nebulae'));
+  const nebulaGen = new NebulaGenerator(fullConfig, nebulaRng);
+  const nebulaMap = nebulaGen.generate(groupMap, rootGroupIds, allStars, allRootIds);
+  Object.assign(allNebulae, nebulaMap);
+  
   return {
     stars: allStars,
     rootIds: allRootIds,
@@ -2358,6 +2716,7 @@ export function generateMultipleSystems(
     belts: allBelts,
     smallBodyFields: allSmallBodyFields,
     protoplanetaryDisks: allDisks,
+    nebulae: allNebulae,
   };
 }
 

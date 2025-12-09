@@ -25,6 +25,8 @@ interface GenerationStats {
   // Protoplanetary disk stats
   totalProtoplanetaryDisks?: number;
   totalProtoplanetaryDiskParticles?: number;
+  // Nebula stats
+  totalNebulae?: number;
   generatedAt: string;
 }
 
@@ -79,11 +81,13 @@ export const UniverseGeneratorPanel: React.FC = () => {
         belts: result.belts,
         smallBodyFields: result.smallBodyFields || {},
         protoplanetaryDisks: result.protoplanetaryDisks || {},
+        nebulae: result.nebulae || {},
         selectedStarId: null,
         selectedGroupId: null,
         selectedBeltId: null,
         selectedSmallBodyFieldId: null,
         selectedProtoplanetaryDiskId: null,
+        selectedNebulaId: null,
       });
       
       console.log('[UniverseGeneratorPanel] Store updated. Current smallBodyFields:', Object.keys(useSystemStore.getState().smallBodyFields).length);
@@ -112,6 +116,8 @@ export const UniverseGeneratorPanel: React.FC = () => {
         // Protoplanetary disk stats
         totalProtoplanetaryDisks: result.totalProtoplanetaryDisks || 0,
         totalProtoplanetaryDiskParticles: result.totalProtoplanetaryDiskParticles || 0,
+        // Nebula stats
+        totalNebulae: result.totalNebulae || 0,
         generatedAt: result.generatedAt.toLocaleTimeString(),
       });
     } catch (error) {
@@ -705,6 +711,109 @@ export const UniverseGeneratorPanel: React.FC = () => {
         )}
       </div>
 
+      {/* Nebulae Region Controls */}
+      <div className="generator-section">
+        <h3 className="generator-section-title">🌫 Interstellar Nebulae (Visual Fields)</h3>
+        
+        {/* Divider for Nebulae */}
+        <div style={{ borderTop: '1px solid #3a3a3a', margin: '16px 0', paddingTop: '12px' }}>
+          <label className="generator-checkbox">
+            <input
+              type="checkbox"
+              checked={config.enableNebulae}
+              onChange={(e) => updateConfig('enableNebulae', e.target.checked)}
+            />
+            <span>🌫 Nebulae Regions (galaxy-scale clouds)</span>
+          </label>
+          <small className="generator-hint" style={{ display: 'block', marginTop: '4px' }}>
+            Large volumetric gas/dust clouds at universe scale for dramatic visual effect
+          </small>
+        </div>
+        
+        {config.enableNebulae && (
+          <>
+            {/* Nebula Density */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Nebula Density
+                <span className="generator-value">{(config.nebulaDensity * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.nebulaDensity}
+                onChange={(e) => updateConfig('nebulaDensity', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Few Large Clouds</span>
+                <span>Many Overlapping Regions</span>
+              </div>
+              <small className="generator-hint">Number of nebula regions in the universe</small>
+            </div>
+            
+            {/* Nebula Color Style */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Color Style
+              </label>
+              <select
+                className="generator-select"
+                value={config.nebulaColorStyle || 'random'}
+                onChange={(e) => updateConfig('nebulaColorStyle', e.target.value as any)}
+              >
+                <option value="random">Random (All Types)</option>
+                <option value="warm">Warm (HII Regions)</option>
+                <option value="cool">Cool (Reflection Nebulae)</option>
+                <option value="mixed">Mixed Palette</option>
+              </select>
+              <small className="generator-hint">Color palette for nebula generation</small>
+            </div>
+            
+            {/* Nebula Size Bias */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Typical Size
+              </label>
+              <select
+                className="generator-select"
+                value={config.nebulaSizeBias || 'medium'}
+                onChange={(e) => updateConfig('nebulaSizeBias', e.target.value as any)}
+              >
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="giant">Giant</option>
+              </select>
+              <small className="generator-hint">Typical radius of generated nebulae</small>
+            </div>
+            
+            {/* Nebula Brightness */}
+            <div className="generator-field">
+              <label className="generator-label">
+                Brightness
+                <span className="generator-value">{((config.nebulaBrightness || 0.7) * 100).toFixed(0)}%</span>
+              </label>
+              <input
+                type="range"
+                className="generator-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                value={config.nebulaBrightness || 0.7}
+                onChange={(e) => updateConfig('nebulaBrightness', parseFloat(e.target.value))}
+              />
+              <div className="generator-slider-labels">
+                <span>Subtle Glow</span>
+                <span>Bright & Vivid</span>
+              </div>
+              <small className="generator-hint">Emissive intensity of nebulae</small>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Planetary Ring Controls */}
       <div className="generator-section">
         <h3 className="generator-section-title">Planetary Rings</h3>
@@ -1053,6 +1162,15 @@ export const UniverseGeneratorPanel: React.FC = () => {
                 </div>
               </>
             )}
+            
+            {/* Nebulae Stats */}
+            {(stats.totalNebulae ?? 0) > 0 && (
+              <div className="generator-stat">
+                <span className="generator-stat-label">🌫 Nebulae Regions</span>
+                <span className="generator-stat-value">{stats.totalNebulae}</span>
+              </div>
+            )}
+            
             <div className="generator-stat">
               <span className="generator-stat-label">Generated At</span>
               <span className="generator-stat-value">{stats.generatedAt}</span>
