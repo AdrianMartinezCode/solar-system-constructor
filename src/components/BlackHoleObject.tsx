@@ -607,32 +607,47 @@ const RelativisticJet: React.FC<RelativisticJetProps> = ({
     }
   });
   
-  // Calculate cone dimensions - anchored at the inner disk edge
+  // Calculate cone dimensions - narrow at black hole, expanding outward
   const angleRad = (jetOpeningAngle * Math.PI) / 180;
-  const baseRadius = shadowRadius * 0.8; // Anchor near the shadow
-  const tipRadius = baseRadius + jetLength * Math.tan(angleRad);
+  const baseRadius = shadowRadius * 0.5; // Narrow anchor near the shadow
+  const tipRadius = baseRadius + jetLength * Math.tan(angleRad); // Wider at the far end
   
   // Position starts just above/below the disk
-  const baseOffset = shadowRadius * 0.5;
+  const baseOffset = shadowRadius * 0.3;
   const yPosition = direction === 'up' 
     ? baseOffset + jetLength / 2 
     : -(baseOffset + jetLength / 2);
   
-  // Create cone geometry with custom UVs for gradient
+  // Create cone geometry with proper orientation
+  // For BOTH directions, the narrow end should be at the black hole
   const coneGeometry = useMemo(() => {
-    const geometry = new THREE.CylinderGeometry(
-      tipRadius,    // radiusTop (wider at tip for expanding jet)
-      baseRadius,   // radiusBottom (narrower at base)
-      jetLength,
-      48,           // radialSegments
-      32,           // heightSegments
-      true          // Open-ended for better blending
-    );
+    // CylinderGeometry: radiusTop is at +Y, radiusBottom is at -Y
+    // For "up" jet: narrow at bottom (near BH), wide at top (away from BH)
+    // For "down" jet: narrow at top (near BH), wide at bottom (away from BH)
+    const geometry = direction === 'up'
+      ? new THREE.CylinderGeometry(
+          tipRadius,    // radiusTop (wide, far from BH)
+          baseRadius,   // radiusBottom (narrow, near BH)
+          jetLength,
+          48,           // radialSegments
+          32,           // heightSegments
+          true          // Open-ended for better blending
+        )
+      : new THREE.CylinderGeometry(
+          baseRadius,   // radiusTop (narrow, near BH) 
+          tipRadius,    // radiusBottom (wide, far from BH)
+          jetLength,
+          48,
+          32,
+          true
+        );
     
-    // Set up UVs so v coordinate represents distance from base (0) to tip (1)
+    // Set up UVs so v=0 is at black hole (base), v=1 is at tip (far end)
     const uvs = geometry.attributes.uv;
     for (let i = 0; i < uvs.count; i++) {
       const v = uvs.getY(i);
+      // For "up" jet: v=0 at bottom (BH), v=1 at top (tip) - natural
+      // For "down" jet: v=0 at top (BH), v=1 at bottom (tip) - need to flip
       uvs.setY(i, direction === 'up' ? v : 1 - v);
     }
     
