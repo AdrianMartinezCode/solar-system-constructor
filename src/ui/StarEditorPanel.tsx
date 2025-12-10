@@ -715,6 +715,41 @@ export const StarEditorPanel: React.FC = () => {
                     <span>Photon Ring</span>
                   </label>
                 </div>
+                
+                {selectedStar.blackHole.hasPhotonRing && (
+                  <div style={{ marginTop: '8px', marginLeft: '16px' }}>
+                    <div className="form-group">
+                      <label>Multi-Image Count (1-3)</label>
+                      <input
+                        type="number"
+                        value={selectedStar.blackHole.photonRingMultiImageCount ?? 3}
+                        onChange={(e) => handleUpdate('blackHole', {
+                          ...selectedStar.blackHole,
+                          photonRingMultiImageCount: Math.min(3, Math.max(1, Number(e.target.value)))
+                        })}
+                        min="1"
+                        max="3"
+                        step="1"
+                      />
+                      <small>Number of lensed ring images</small>
+                    </div>
+                    <div className="form-group">
+                      <label>Ring Width</label>
+                      <input
+                        type="number"
+                        value={selectedStar.blackHole.photonRingWidth ?? 0.15}
+                        onChange={(e) => handleUpdate('blackHole', {
+                          ...selectedStar.blackHole,
+                          photonRingWidth: Number(e.target.value)
+                        })}
+                        min="0.05"
+                        max="0.5"
+                        step="0.05"
+                      />
+                      <small>Width relative to shadow</small>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Geometry Section */}
@@ -853,6 +888,38 @@ export const StarEditorPanel: React.FC = () => {
                     />
                     <small>{selectedStar.blackHole.diskClumpiness.toFixed(2)} - density variation</small>
                   </div>
+                  
+                  <div className="form-group">
+                    <label>Streakiness (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={selectedStar.blackHole.diskStreakiness ?? 0.5}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        diskStreakiness: Number(e.target.value)
+                      })}
+                    />
+                    <small>{(selectedStar.blackHole.diskStreakiness ?? 0.5).toFixed(2)} - spiral pattern strength</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Turbulence Scale (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={selectedStar.blackHole.diskTurbulenceScale ?? 0.5}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        diskTurbulenceScale: Number(e.target.value)
+                      })}
+                    />
+                    <small>{(selectedStar.blackHole.diskTurbulenceScale ?? 0.5).toFixed(2)} - noise detail level</small>
+                  </div>
                 </div>
               )}
               
@@ -904,6 +971,47 @@ export const StarEditorPanel: React.FC = () => {
                       })}
                     />
                     <small>{selectedStar.blackHole.jetBrightness.toFixed(2)}</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Gradient Power</label>
+                    <input
+                      type="number"
+                      value={selectedStar.blackHole.jetGradientPower ?? 2.0}
+                      onChange={(e) => handleUpdate('blackHole', {
+                        ...selectedStar.blackHole,
+                        jetGradientPower: Number(e.target.value)
+                      })}
+                      min="0.5"
+                      max="4"
+                      step="0.1"
+                    />
+                    <small>Falloff rate (lower = slower fade)</small>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label>Base Color</label>
+                      <input
+                        type="color"
+                        value={selectedStar.blackHole.jetBaseColor ?? '#e8f4ff'}
+                        onChange={(e) => handleUpdate('blackHole', {
+                          ...selectedStar.blackHole,
+                          jetBaseColor: e.target.value
+                        })}
+                      />
+                    </div>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label>Tip Color</label>
+                      <input
+                        type="color"
+                        value={selectedStar.blackHole.jetTipColor ?? '#4488ff'}
+                        onChange={(e) => handleUpdate('blackHole', {
+                          ...selectedStar.blackHole,
+                          jetTipColor: e.target.value
+                        })}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -990,6 +1098,47 @@ export const StarEditorPanel: React.FC = () => {
                   <label style={{ fontSize: '0.85em', color: '#aaa' }}>Seed: {selectedStar.blackHole.seed}</label>
                   <br />
                   <small style={{ fontSize: '0.75em' }}>Deterministic noise/variation</small>
+                </div>
+              </div>
+              
+              {/* Disk Orientation */}
+              <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: 'rgba(226,74,144,0.1)', borderRadius: '4px' }}>
+                <h6 style={{ marginTop: 0, marginBottom: '8px', fontSize: '0.9em' }}>Disk Orientation</h6>
+                
+                <div className="form-group">
+                  <label>Disk Tilt (degrees)</label>
+                  <input
+                    type="number"
+                    value={selectedStar.blackHole.diskTilt !== undefined 
+                      ? Math.round((selectedStar.blackHole.diskTilt * 180) / Math.PI) 
+                      : 0}
+                    onChange={(e) => handleUpdate('blackHole', {
+                      ...selectedStar.blackHole,
+                      diskTilt: (Number(e.target.value) * Math.PI) / 180
+                    })}
+                    min="0"
+                    max="90"
+                    step="5"
+                  />
+                  <small>0° = face-on, 90° = edge-on</small>
+                </div>
+                
+                <div className="form-group">
+                  <label>Tilt Axis Angle (degrees)</label>
+                  <input
+                    type="number"
+                    value={selectedStar.blackHole.diskTiltAxisAngle !== undefined 
+                      ? Math.round((selectedStar.blackHole.diskTiltAxisAngle * 180) / Math.PI) 
+                      : 0}
+                    onChange={(e) => handleUpdate('blackHole', {
+                      ...selectedStar.blackHole,
+                      diskTiltAxisAngle: (Number(e.target.value) * Math.PI) / 180
+                    })}
+                    min="0"
+                    max="360"
+                    step="15"
+                  />
+                  <small>Direction of tilt axis (0-360°)</small>
                 </div>
               </div>
             </div>

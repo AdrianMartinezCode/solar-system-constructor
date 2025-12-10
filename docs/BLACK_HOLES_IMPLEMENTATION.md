@@ -57,6 +57,17 @@ export interface BlackHoleProperties {
   
   // Determinism
   seed: string | number;            // Per-black-hole seed for noise/variation
+  
+  // Enhanced visual parameters (optional, for improved realism)
+  diskTurbulenceScale?: number;     // 0-1 scale of turbulent noise patterns in disk
+  diskInnerColor?: string;          // Hex color for inner disk edge (overrides temperature)
+  diskOuterColor?: string;          // Hex color for outer disk edge (overrides temperature)
+  diskStreakiness?: number;         // 0-1 azimuthal streaking/shear strength
+  jetBaseColor?: string;            // Hex color for jet base (default: white/blue)
+  jetTipColor?: string;             // Hex color for jet tip (default: blue/cyan)
+  jetGradientPower?: number;        // Exponent for opacity/brightness falloff (default: 2.0)
+  photonRingMultiImageCount?: number; // Number of sub-rings/lensed images (1-3, default: 2)
+  photonRingWidth?: number;         // Relative width of photon ring (default: 0.4 shadow radii)
 }
 ```
 
@@ -226,86 +237,199 @@ Black holes are rendered via `BlackHoleObject.tsx`, following the pattern of `Pr
 - **Material**: `meshBasicMaterial` with `color: #000000` (perfectly black)
 - **Purpose**: Represents the region where no light escapes
 
-#### 2. Photon Ring
+#### 2. Photon Ring (Enhanced)
 
-- **Geometry**: Ring geometry at ~2× shadow radius (thin annulus)
-- **Material**: Additive blending, bright white, semi-transparent
+- **Implementation**: Dedicated `PhotonRingObject` component with custom shader
+- **Geometry**: Ring geometry at ~1.8-2.2× shadow radius
+- **Features**:
+  - **Multiple Lensed Images**: Shows 2-3 concentric bright bands representing light that orbited multiple times
+  - **Intensity Control**: Driven by `lensingStrength` - stronger lensing creates more prominent multi-image structure
+  - **Temperature-Based Color**: Inherits color from `diskTemperature` for consistency
+  - **Angular Asymmetry**: Slight brightness variations around the ring for realism
+- **Parameters**:
+  - `photonRingMultiImageCount`: Number of visible sub-rings (1-3)
+  - `photonRingWidth`: Width of the ring in shadow radii units
 - **Conditional**: Only rendered if `hasPhotonRing === true`
-- **Purpose**: Represents light orbiting the black hole multiple times
 
-#### 3. Accretion Disk
+#### 3. Accretion Disk (Completely Reworked)
 
-- **System**: GPU particle field (THREE.Points)
-- **Particle Count**: ~3000 particles, scaled by disk area
-- **Distribution**:
-  - Radial: Non-uniform (denser near inner edge) using √u distribution
-  - Angular: Uniform 0-2π
-  - Vertical: Gaussian with thickness σ
-- **Colors**: Temperature gradient from inner (hot, blue-white, ~20000K) to outer (cool, red-orange, ~5000K)
+- **System**: Mesh-based continuous disk (THREE.Mesh with custom shader material)
+- **Geometry**: Ring geometry with 128 radial segments for smooth appearance
+- **Shader-Based Rendering**: All effects computed in GPU shaders for performance
+- **Visual Features**:
+  - **Continuous Dense Flow**: Appears as a solid, glowing sheet rather than separated particles
+  - **Radial Intensity Gradient**: Intense white-hot glow at inner edge, fading toward outer edge
+  - **Azimuthal Streaking**: Spiral patterns simulating gas streams being dragged into rotation
+  - **Multi-Scale Turbulence**: 3D noise at multiple frequencies creates realistic density variations
+  - **Temperature Gradient**: Inner regions 3× hotter than outer, with black-body color mapping
+  - **Custom Color Support**: Optional `diskInnerColor` and `diskOuterColor` override temperature gradient
 - **Shader Effects**:
-  - **Gravitational Lensing**: Vertex shader warps positions near black hole to approximate light bending
-  - **Doppler Beaming**: Fragment shader modulates brightness based on tangential velocity relative to camera:
+  - **Gravitational Lensing**: Vertex shader warps disk geometry near shadow, creating visible bending
+  - **Doppler Beaming**: Fragment shader modulates brightness and color:
     - Approaching side: brighter, blue-shifted
     - Receding side: dimmer, red-shifted
-  - **Clumpiness**: Density variations via sin-based noise
-- **Animation**: Rotates around Y-axis, speed scaled by `timeScale` and `rotationSpeedMultiplier`
+  - **Clumpiness**: Controlled by `diskClumpiness` parameter via turbulent noise
+  - **Streakiness**: Controlled by `diskStreakiness` parameter for spiral pattern strength
+- **Animation**: Rotates around Y-axis, speed scaled by `timeScale`, `rotationSpeedMultiplier`, and `spin`
+- **Parameters**:
+  - `diskTurbulenceScale`: Controls scale of noise patterns (0.4-0.7)
+  - `diskStreakiness`: Controls strength of spiral streaking (0.4-0.9 for quasars)
 
-#### 4. Relativistic Jets
+#### 4. Lensed Far-Side Disk Image (New)
 
-- **Geometry**: Two cylindrical cones along Y-axis (top and bottom)
-- **Material**: Additive blending, cyan-blue color, semi-transparent
-- **Core**: Thin bright cylinder at center for enhanced visibility
+- **Implementation**: Separate `LensedDiskImage` component
+- **Purpose**: Represents the far side of the disk bent over the top by gravitational lensing
+- **Geometry**: Warped ring positioned above the black hole
+- **Features**:
+  - **Warped Geometry**: Vertex shader bends the mesh to simulate light path bending
+  - **Synchronized Rotation**: Matches main disk rotation for consistency
+  - **Dimmer Appearance**: Secondary image is ~30% brightness of main disk
+  - **Temperature Offset**: Slightly cooler color than main disk
+- **Conditional**: Only visible if `lensingStrength > 0.3`
+- **Visual Impact**: Creates the iconic "wraparound" effect seen in realistic black hole visualizations
+
+#### 5. Relativistic Jets (Completely Reworked)
+
+- **Implementation**: Dedicated `RelativisticJet` component with custom shader
+- **Geometry**: True cone geometry (CylinderGeometry with different top/bottom radii)
+- **Shape**: Wider at base near black hole, narrowing toward tip
+- **Features**:
+  - **Color Gradient**: Smooth transition from `jetBaseColor` (base) to `jetTipColor` (tip)
+  - **Brightness Gradient**: Intense at base, fades to zero at tip using power curve
+  - **Radial Falloff**: Brighter in center, dimmer at edges for 3D volume appearance
+  - **Smooth Fade**: Jets "disappear completely" at far tips for natural look
+- **Default Colors**:
+  - Base: White/blue-white (#ffffff)
+  - Tip: Cyan-blue (#66ccff)
+- **Parameters**:
+  - `jetGradientPower`: Controls falloff curve (1.5-2.5, lower = slower fade)
+  - `jetBaseColor`, `jetTipColor`: Optional custom colors
 - **Conditional**: Only rendered if `hasRelativisticJet === true`
-- **Opening Angle**: Controlled by `jetOpeningAngle` (typically 3-8°)
-
-#### 5. Secondary Lensing Ring (Optional)
-
-- **Geometry**: Outer ring at ~3× shadow radius
-- **Purpose**: Represents secondary lensed images (far side of disk wrapped around)
-- **Material**: Faint orange/red ring, additive blending
-- **Conditional**: Only visible if `lensingStrength > 0.5`
+- **Visual Impact**: Much more dramatic and realistic than previous cylindrical jets
 
 ### Shader Implementation
 
-Key shader techniques:
+The new implementation uses sophisticated GPU shaders for all visual effects:
 
-**Vertex Shader** (Accretion Disk):
+#### Accretion Disk Vertex Shader
+
 ```glsl
-// Approximate gravitational lensing
-float distFromCenter = length(pos.xz);
-float lensingFactor = lensingStrength * smoothstep(shadowRadius * 5.0, shadowRadius * 2.0, distFromCenter);
-if (distFromCenter < shadowRadius * 4.0) {
-  float bendAmount = lensingFactor * 0.3;
-  pos.y += bendAmount * shadowRadius * (1.0 - distFromCenter / (shadowRadius * 4.0));
+// Gravitational lensing with improved warping
+vec3 pos = position;
+float distFromCenter = length(pos.xy);
+float lensingFactor = lensingStrength * smoothstep(outerRadius, innerRadius * 1.5, distFromCenter);
+
+// Bend light paths near black hole (creates visible far-side wraparound)
+if (distFromCenter < innerRadius * 2.0) {
+  float bendAmount = lensingFactor * 0.5;
+  float proximityFactor = 1.0 - (distFromCenter / (innerRadius * 2.0));
+  pos.z += bendAmount * shadowRadius * proximityFactor;
 }
 ```
 
-**Fragment Shader** (Doppler Beaming):
-```glsl
-// Approximate Doppler shift and beaming
-float angle = atan(vPosition.z, vPosition.x);
-float velocityFactor = cos(angle); // Positive = toward camera
-float dopplerBrightness = 1.0 + dopplerStrength * velocityFactor * 0.5;
+#### Accretion Disk Fragment Shader
 
-// Color shift
-vec3 dopplerShift = vColor;
+Key techniques:
+
+**Radial Intensity Gradient**:
+```glsl
+// Intense inner glow, fades outward
+float radialIntensity = pow(1.0 - radial, 2.5) * 2.0 + 0.2;
+```
+
+**Azimuthal Streaking** (spiral gas streams):
+```glsl
+float spiralFactor = radial * 8.0 - time * 0.5;
+float streaks = sin(angle * 12.0 + spiralFactor) * 0.5 + 0.5;
+streaks = mix(1.0, streaks, streakiness);
+```
+
+**Multi-Scale Turbulence**:
+```glsl
+vec3 noiseCoord = vec3(vWorldPosition.x, vWorldPosition.z, time * 0.1) * turbulenceScale;
+float turbulence = noise3D(noiseCoord);
+turbulence += noise3D(noiseCoord * 2.4) * 0.5;
+turbulence += noise3D(noiseCoord * 5.8) * 0.25;
+turbulence /= 1.75;
+```
+
+**Temperature Gradient**:
+```glsl
+// Inner regions 3× hotter than outer
+float localTemp = temperature * (1.0 + (1.0 - radial) * 2.0);
+vec3 baseColor = temperatureToColor(localTemp);
+```
+
+**Doppler Beaming** (enhanced):
+```glsl
+float velocityFactor = cos(angle);
+float dopplerBrightness = 1.0 + dopplerStrength * velocityFactor;
+
+vec3 dopplerShift = baseColor;
 if (velocityFactor > 0.0) {
-  // Blue shift (approaching)
-  dopplerShift += vec3(-0.1, 0.0, 0.2) * dopplerStrength * velocityFactor;
+  // Approaching: blue shift
+  dopplerShift += vec3(-0.2, 0.0, 0.3) * dopplerStrength * velocityFactor;
 } else {
-  // Red shift (receding)
-  dopplerShift += vec3(0.2, 0.0, -0.1) * dopplerStrength * abs(velocityFactor);
+  // Receding: red shift
+  dopplerShift += vec3(0.3, 0.0, -0.2) * dopplerStrength * abs(velocityFactor);
 }
+```
+
+#### Photon Ring Shader
+
+```glsl
+// Multiple lensed image rings
+float imagePattern = 0.0;
+for (float i = 0.0; i < multiImageCount; i += 1.0) {
+  float ringPos = 0.3 + i * 0.3;
+  float ringDist = abs(radial - ringPos);
+  float ringIntensity = smoothstep(0.15, 0.05, ringDist);
+  imagePattern += ringIntensity * (1.0 - i * 0.3); // Outer rings dimmer
+}
+
+float intensity = imagePattern * lensingStrength * diskBrightness * 1.5;
+```
+
+#### Relativistic Jet Shader
+
+```glsl
+// Distance from base (0) to tip (1)
+float dist = vUv.y;
+
+// Power curve for gradient falloff
+float falloff = pow(1.0 - dist, gradientPower);
+
+// Color gradient from base to tip
+vec3 color = mix(baseColor, tipColor, dist);
+
+// Radial falloff (brighter in center)
+float radialDist = length(vUv.x - 0.5) * 2.0;
+float radialFalloff = 1.0 - smoothstep(0.3, 1.0, radialDist);
+
+// Combine falloffs
+float intensity = falloff * radialFalloff * jetBrightness;
+
+// Smooth fade at tip
+intensity *= smoothstep(1.0, 0.8, dist);
 ```
 
 ### Performance
 
-- **GPU-Driven**: All particles rendered via instanced points, no CPU per-frame updates
-- **LOD Aware**: Particle counts scale with disk area (capped at reasonable limits)
-- **Shader Complexity**: Three presets:
-  - **Minimal**: Simplified shaders, no photon ring
-  - **Normal**: Full effects with moderate parameters
-  - **Cinematic**: Maximum visual quality, strongest effects
+- **GPU-Driven**: All rendering done via mesh geometries with custom shaders, no CPU per-frame updates
+- **Mesh-Based Efficiency**: Accretion disk uses a single ring mesh (128 segments) instead of thousands of particles
+- **Shader Optimization**:
+  - All visual effects computed in shaders (turbulence, streaking, gradients)
+  - No texture lookups required (procedural noise only)
+  - Additive blending minimizes overdraw cost
+- **Component Architecture**: Photon ring, lensed disk, and jets are separate components for clean composition
+- **Complexity Presets**: Three visual quality levels:
+  - **Minimal**: Simplified shaders, basic photon ring, fewer jet segments
+  - **Normal**: Full effects with moderate parameters, 2 photon ring images
+  - **Cinematic**: Maximum visual quality, 3 photon ring images, strongest lensing effects
+- **Performance Impact**: New implementation is actually **more efficient** than particle-based approach:
+  - Fewer draw calls (1 mesh vs 1 point cloud)
+  - Better GPU cache coherency
+  - Reduced vertex processing (128 vertices vs 3000+ particles)
 
 ## Selection-Time Customization
 
@@ -456,10 +580,49 @@ Possible extensions:
 
 ## Technical Notes
 
-- **Not Physically Accurate**: This is an approximation of GR effects using simplified shaders, not a full relativistic simulation
+- **Not Physically Accurate**: This is an approximation of GR effects using simplified shaders, not a full relativistic simulation or raytraced solution
+- **Artistic License**: Visual effects are tuned for dramatic, cinematic appearance while maintaining physical plausibility
 - **Mass Scale**: Black hole masses are in solar mass units (typically 5-50 M☉ for stellar-mass black holes)
 - **Visual Scale**: Shadow radius is scaled for visibility; not strictly proportional to physical Schwarzschild radius
-- **Color Temperature**: Simplified black-body approximation; actual accretion disk spectra are more complex
+- **Color Temperature**: Simplified black-body approximation; actual accretion disk spectra are more complex (include X-ray emission, etc.)
+- **Lensing Approximation**: Gravitational lensing is approximated via vertex displacement and secondary geometry, not full geodesic integration
+- **Doppler Effect**: Simplified relativistic beaming calculation; does not account for full special/general relativistic effects
+- **Jet Physics**: Jets are purely visual; no actual particle acceleration or magnetic field simulation
+
+## Visual Quality Comparison
+
+### Before (Particle-Based)
+
+- Accretion disk looked like separated asteroid belt particles
+- Simple cylindrical jets with uniform color
+- Basic photon ring (single bright ring)
+- Minimal lensing effect
+- Obvious individual point sprites
+
+### After (Mesh + Shader-Based)
+
+- Accretion disk appears as continuous, dense glowing fluid
+- Cone-shaped jets with realistic color/brightness gradients that fade to zero
+- Photon ring shows multiple lensed images (2-3 sub-rings)
+- Strong lensing with visible far-side disk wraparound
+- Intense inner-edge glow with radial temperature gradient
+- Azimuthal streaking simulates spiral gas streams
+- Multi-scale turbulence creates realistic density variations
+- Much more cinematic and physically suggestive appearance
+
+## Configuration Impact
+
+Existing UI controls now have enhanced visual impact:
+
+- **blackHoleAccretionIntensity**: Now controls both brightness AND how continuous/dense the disk appears
+- **blackHoleFxIntensity**: Scales both Doppler beaming and lensing strength, making photon ring and far-side image more prominent in cinematic mode
+- **blackHoleAccretionStyle**:
+  - `subtle`: Dimmer disk, less streaking, faster jet fade
+  - `normal`: Balanced appearance
+  - `quasar`: Intense disk, strong spiral patterns, slower jet fade (more dramatic)
+- **blackHoleJetDramaLevel**: Now affects both jet length and gradient power (higher = longer, slower fade)
+
+All existing saves and presets remain compatible; new parameters have sensible defaults that improve visuals automatically.
 
 ## References
 

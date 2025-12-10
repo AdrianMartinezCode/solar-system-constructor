@@ -1063,20 +1063,25 @@ export function mapBlackHoleConfig(config: GenerationConfig): {
     blackHolePhotonRingEnabled: photonRingEnabled,
     blackHoleDopplerBeamingStrengthRange: dopplerStrength,
     blackHoleLensingStrengthRange: lensingStrength,
-    blackHoleShadowRadiusRange: [0.3, 0.8],
-    blackHoleAccretionInnerRadiusMultiplier: [3, 4],
-    blackHoleAccretionOuterRadiusMultiplier: [10, 20],
+    // More compact shadow radius for better proportions (Interstellar-like scale)
+    blackHoleShadowRadiusRange: [0.5, 1.2],
+    // Disk radii: more compact, cinematic proportions (inner ~2.5×, outer ~6-10×)
+    blackHoleAccretionInnerRadiusMultiplier: [2.0, 3.0],
+    blackHoleAccretionOuterRadiusMultiplier: [6, 10],
     blackHoleDiskThicknessRange: diskThicknessRange,
     blackHoleJetLengthRange: jetLengthRange,
-    blackHoleJetOpeningAngleRange: [3, 8],
+    // Narrower jets for more realistic appearance
+    blackHoleJetOpeningAngleRange: [2, 6],
     blackHoleSpinRange: spinRange,
+    
+    // Default tilt for interesting viewing angle (15-35 degrees)
+    blackHoleTiltRange: [15, 35],
     
     // Advanced parameters (optional, only set if user configured them)
     blackHoleMassClassWeights: massClassWeights,
     blackHoleMultiplePerSystemProbability: multiplePerSystemProbability,
     blackHoleCenterBias: undefined, // Not exposed in UI yet
     blackHoleSpinDistribution: spinDistribution,
-    blackHoleTiltRange: undefined, // Not exposed in UI yet
     blackHoleShadowRadiusScaleMode: undefined, // Not exposed in UI yet (always cinematic for now)
     blackHoleAccretionStyle: accretionStyle,
     blackHoleDiskBrightnessRange: diskBrightnessRange,
@@ -1085,7 +1090,7 @@ export function mapBlackHoleConfig(config: GenerationConfig): {
     blackHoleDiskClumpinessRange: diskClumpinessRange,
     blackHoleJetBrightnessRange: jetBrightnessRange,
     blackHoleSecondaryRingProbability: secondaryRingProbability,
-    blackHoleRotationSpeedMultiplierRange: undefined, // Use default [0.5, 1.5]
+    blackHoleRotationSpeedMultiplierRange: [0.8, 1.5], // Moderate rotation speed
   };
 }
 

@@ -150,6 +150,29 @@ export interface BlackHoleProperties {
   
   // Determinism
   seed: string | number;            // Per-black-hole seed for noise/variation
+  
+  // ============================================================================
+  // Enhanced Visual Parameters (optional, for improved realism)
+  // ============================================================================
+  
+  // Accretion disk advanced appearance (optional)
+  diskTurbulenceScale?: number;     // 0-1 scale of turbulent noise patterns in disk
+  diskInnerColor?: string;          // Hex color for inner disk edge (overrides temperature)
+  diskOuterColor?: string;          // Hex color for outer disk edge (overrides temperature)
+  diskStreakiness?: number;         // 0-1 azimuthal streaking/shear strength
+  
+  // Jet advanced appearance (optional)
+  jetBaseColor?: string;            // Hex color for jet base (default: white/blue)
+  jetTipColor?: string;             // Hex color for jet tip (default: blue/cyan)
+  jetGradientPower?: number;        // Exponent for opacity/brightness falloff (default: 2.0)
+  
+  // Photon ring advanced parameters (optional)
+  photonRingMultiImageCount?: number; // Number of sub-rings/lensed images (1-3, default: 2)
+  photonRingWidth?: number;         // Relative width of photon ring (default: 0.4 shadow radii)
+  
+  // Orientation and tilt (optional)
+  diskTilt?: number;                // Disk tilt angle in radians (default: 0, ~Math.PI/2 for edge-on)
+  diskTiltAxisAngle?: number;       // Azimuthal angle of tilt axis in radians (default: 0)
 }
 
 // Rogue Planet metadata for planets not gravitationally bound to any star

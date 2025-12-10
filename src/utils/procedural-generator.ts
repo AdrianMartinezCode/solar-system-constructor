@@ -1244,6 +1244,54 @@ class StarDataGenerator {
     );
     
     // ============================================================================
+    // Enhanced Visual Parameters (optional, for improved realism)
+    // ============================================================================
+    // These are generated based on existing properties for backward compatibility
+    const accretionStyle = this.config.blackHoleAccretionStyle ?? 'normal';
+    
+    // Disk turbulence and streaking
+    const diskTurbulenceScale = rng.uniform(0.4, 0.7);
+    const diskStreakiness = accretionStyle === 'quasar' 
+      ? rng.uniform(0.7, 0.9)  // Quasars have strong spiral patterns
+      : rng.uniform(0.4, 0.6);  // Normal disks have moderate streaking
+    
+    // Jet color gradient (optional - depends on style)
+    let jetBaseColor: string | undefined;
+    let jetTipColor: string | undefined;
+    let jetGradientPower: number | undefined;
+    
+    if (hasRelativisticJet) {
+      // Vary jet colors slightly for diversity
+      const jetHue = rng.uniform(0.5, 0.65); // Blue-cyan range
+      jetBaseColor = undefined; // Use defaults in renderer
+      jetTipColor = undefined;  // Use defaults in renderer
+      jetGradientPower = accretionStyle === 'quasar' 
+        ? rng.uniform(1.5, 2.0)  // Quasar jets fade slower
+        : rng.uniform(2.0, 2.5); // Normal jets fade faster
+    }
+    
+    // Photon ring parameters
+    const photonRingMultiImageCount = lensingStrength > 0.7 ? 3 : 2;
+    const photonRingWidth = rng.uniform(0.3, 0.5);
+    
+    // Disk tilt and orientation
+    let diskTilt: number | undefined;
+    let diskTiltAxisAngle: number | undefined;
+    
+    if (this.config.blackHoleTiltRange) {
+      // Use configured tilt range
+      const tiltMin = this.config.blackHoleTiltRange[0] * (Math.PI / 180); // Convert to radians
+      const tiltMax = this.config.blackHoleTiltRange[1] * (Math.PI / 180);
+      diskTilt = rng.uniform(tiltMin, tiltMax);
+      // Random azimuthal angle for tilt axis (0-2π)
+      diskTiltAxisAngle = rng.uniform(0, Math.PI * 2);
+    } else {
+      // Default: slight random tilt for visual variety (0-15 degrees)
+      diskTilt = rng.uniform(0, 15 * (Math.PI / 180));
+      diskTiltAxisAngle = rng.uniform(0, Math.PI * 2);
+    }
+    
+    // ============================================================================
     // Orbit Parameters
     // ============================================================================
     const eccentricity = orbitalDistance > 0 ? this.physics.generateEccentricity() : 0;
@@ -1288,6 +1336,17 @@ class StarDataGenerator {
         lensingStrength: ensureFinite(lensingStrength, 0.6),
         rotationSpeedMultiplier: ensureFinite(rotationSpeedMultiplier, 1.0),
         seed: rng.randInt(0, 999999),
+        
+        // Enhanced visual parameters (optional)
+        diskTurbulenceScale: ensureFinite(diskTurbulenceScale, 0.5),
+        diskStreakiness: ensureFinite(diskStreakiness, 0.5),
+        jetGradientPower: jetGradientPower !== undefined ? ensureFinite(jetGradientPower, 2.0) : undefined,
+        photonRingMultiImageCount,
+        photonRingWidth: ensureFinite(photonRingWidth, 0.4),
+        diskTilt: diskTilt !== undefined ? ensureFinite(diskTilt, 0) : undefined,
+        diskTiltAxisAngle: diskTiltAxisAngle !== undefined ? ensureFinite(diskTiltAxisAngle, 0) : undefined,
+        // jetBaseColor and jetTipColor left undefined to use renderer defaults
+        // diskInnerColor and diskOuterColor left undefined to use temperature gradient
       },
       orbitalDistance,
       orbitalSpeed,
