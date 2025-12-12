@@ -334,10 +334,12 @@ export interface GroupChild {
 export type NestingLevel = number | 'max';
 
 /**
- * Protoplanetary Disk - a visual-only particle field representing
+ * Protoplanetary Disk - a visual-only shader-driven disk representing
  * a young circumstellar disk of gas and dust around a star.
  * 
- * This is rendered as GPU-friendly particles, NOT as individual Star objects.
+ * Rendered as a GPU-efficient mesh with a fragment shader for continuous
+ * disk appearance with bands, gaps, and radial gradients, plus an optional
+ * lightweight particle overlay for sparkle. NOT individual Star objects.
  * The disk is purely visual and does not affect physics.
  */
 export interface ProtoplanetaryDisk {
@@ -357,11 +359,11 @@ export interface ProtoplanetaryDisk {
   /** Outer radius of the disk (end of particle distribution) */
   outerRadius: number;
   
-  /** Half-height thickness of the disk (controls vertical spread) */
+  /** Half-height thickness of the disk (controls vertical spread and volumetric feel) */
   thickness: number;
   
   // Visual parameters
-  /** Target particle count before LOD/smallBodyDetail scaling */
+  /** Target particle count for sparkle overlay (much lower than before) */
   particleCount: number;
   
   /** Base color for dust/gas (hex string, e.g. warm dusty colors) */
@@ -383,7 +385,7 @@ export interface ProtoplanetaryDisk {
   rotationSpeedMultiplier: number;
   
   // PRNG and style
-  /** Seed for deterministic particle distribution */
+  /** Seed for deterministic particle distribution and shader noise */
   seed: string | number;
   
   /** Visual style preset */
@@ -391,6 +393,79 @@ export interface ProtoplanetaryDisk {
   
   /** Optional display name */
   name?: string;
+  
+  // ============================================================================
+  // Shader-Specific Visual Controls (new fields for realistic disk appearance)
+  // ============================================================================
+  
+  /**
+   * Band/ring structure strength (0-1).
+   * Controls how pronounced the concentric bright/dark rings are.
+   * 0 = uniform disk, 1 = very strong ring contrast
+   */
+  bandStrength?: number;
+  
+  /**
+   * Band frequency - typical number of visible bright/dark bands.
+   * Higher values create more fine rings, lower values create broader bands.
+   * Range: 2-12 (default: 5)
+   */
+  bandFrequency?: number;
+  
+  /**
+   * Gap sharpness (0-1).
+   * Controls how sharp/crisp the dark gaps between rings appear.
+   * 0 = soft, gradient gaps, 1 = sharp, defined gaps
+   */
+  gapSharpness?: number;
+  
+  /**
+   * Inner glow strength (0-1).
+   * Extra brightness/emission boost near the inner edge close to the star.
+   * Simulates hotter, denser material at smaller radii.
+   */
+  innerGlowStrength?: number;
+  
+  /**
+   * Noise scale for radial/azimuthal variation.
+   * Controls the spatial frequency of noise patterns that break up perfect circles.
+   * Lower = larger scale variations, higher = finer detail (0.5-3.0)
+   */
+  noiseScale?: number;
+  
+  /**
+   * Noise strength (0-1).
+   * How much the noise modulates brightness and color.
+   * 0 = perfectly uniform rings, 1 = highly varied/turbulent appearance
+   */
+  noiseStrength?: number;
+  
+  /**
+   * Spiral arm perturbation strength (0-1), optional.
+   * Small non-axisymmetric wave that creates subtle spiral structure.
+   * 0 = no spiral, 1 = prominent spiral arms
+   */
+  spiralStrength?: number;
+  
+  /**
+   * Spiral arm count (1-4), optional.
+   * Number of spiral arms when spiralStrength > 0.
+   */
+  spiralArmCount?: number;
+  
+  /**
+   * Edge softness (0-1).
+   * Controls how soft/gradual the outer edge falloff is.
+   * 0 = hard edge, 1 = very soft, diffuse edge
+   */
+  edgeSoftness?: number;
+  
+  /**
+   * Temperature gradient exponent.
+   * Controls how quickly color transitions from hot (inner) to cool (outer).
+   * Higher = steeper gradient near inner edge (0.5-3.0, default: 1.5)
+   */
+  temperatureGradient?: number;
 }
 
 /**

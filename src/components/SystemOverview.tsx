@@ -119,8 +119,10 @@ export const SystemOverview: React.FC = () => {
       selectGroup(obj.data.id);
       openWindow('groupEditor');
     } else if (obj.type === 'disk') {
+      // Select the disk's central star and open planet editor
       selectProtoplanetaryDisk(obj.data.id);
-      // Could open a disk editor window here if one exists
+      selectStar(obj.data.centralStarId);
+      openWindow('planetEditor');
     } else {
       selectStar(obj.data.id);
       openWindow('planetEditor');

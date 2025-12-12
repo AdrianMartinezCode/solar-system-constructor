@@ -77,6 +77,13 @@ export interface GenerationConfig {
   protoplanetaryDiskPresence: number;          // 0..1 slider mapping to probability of having a disk
   protoplanetaryDiskDensity: number;           // 0..1 slider mapping to particle count
   protoplanetaryDiskProminence: number;        // 0..1 slider mapping to opacity/brightness/thickness
+  
+  // Advanced Protoplanetary Disk Controls
+  protoplanetaryDiskStyleBias?: 'mostlyThin' | 'balanced' | 'mostlyThick' | 'extremeShowcase'; // Style preset distribution
+  protoplanetaryDiskBandingLevel?: number;     // 0..1 controls band strength and frequency
+  protoplanetaryDiskGapSharpnessLevel?: number; // 0..1 controls gap sharpness
+  protoplanetaryDiskSpiralLevel?: number;      // 0..1 controls spiral strength and arm count
+  protoplanetaryDiskNoiseLevel?: number;       // 0..1 controls noise scale and strength
 
   // Nebulae Regions (galaxy-scale visual-only volumetric clouds)
   enableNebulae: boolean;                      // Master switch for nebula generation

@@ -63,6 +63,7 @@ interface SystemStore {
   selectProtoplanetaryDisk: (id: string | null) => void;
   updateProtoplanetaryDisk: (id: string, patch: Partial<ProtoplanetaryDisk>) => void;
   removeProtoplanetaryDisk: (id: string) => void;
+  addProtoplanetaryDisk: (centralStarId: string) => string;
   
   // Nebula operations
   setNebulae: (nebulae: Record<string, NebulaRegion>) => void;
@@ -334,6 +335,57 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
     });
 
     get().save();
+  },
+
+  addProtoplanetaryDisk: (centralStarId) => {
+    const diskId = `disk-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const centerStar = get().stars[centralStarId];
+    
+    if (!centerStar) {
+      console.error(`Cannot add disk: star ${centralStarId} not found`);
+      return diskId;
+    }
+
+    // Create a default disk with moderate style
+    const newDisk: ProtoplanetaryDisk = {
+      id: diskId,
+      systemId: centralStarId,
+      centralStarId: centralStarId,
+      innerRadius: 1.0,
+      outerRadius: 5.0,
+      thickness: 0.3,
+      particleCount: 5000,
+      baseColor: '#D4A574',
+      highlightColor: '#FFD700',
+      opacity: 0.5,
+      brightness: 0.5,
+      clumpiness: 0.3,
+      rotationSpeedMultiplier: 0.3,
+      seed: Math.floor(Math.random() * 2147483647),
+      style: 'moderate',
+      name: `${centerStar.name} Protoplanetary Disk`,
+      // Shader-specific parameters (moderate defaults)
+      bandStrength: 0.5,
+      bandFrequency: 5,
+      gapSharpness: 0.5,
+      innerGlowStrength: 0.6,
+      noiseScale: 1.5,
+      noiseStrength: 0.4,
+      spiralStrength: 0.1,
+      spiralArmCount: 2,
+      edgeSoftness: 0.4,
+      temperatureGradient: 1.5,
+    };
+
+    set((state) => ({
+      protoplanetaryDisks: {
+        ...state.protoplanetaryDisks,
+        [diskId]: newDisk,
+      },
+    }));
+
+    get().save();
+    return diskId;
   },
   
   // Nebula operations

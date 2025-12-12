@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { ProtoplanetaryDiskEditor } from './ProtoplanetaryDiskEditor';
 import './StarEditorPanel.css';
 
 type OrbitMode = 'simple' | 'advanced';
@@ -18,6 +19,10 @@ export const StarEditorPanel: React.FC = () => {
   const cameraTargetBodyId = useSystemStore((state) => state.cameraTargetBodyId);
   const setCameraMode = useSystemStore((state) => state.setCameraMode);
   const resetCamera = useSystemStore((state) => state.resetCamera);
+  const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
+  const addProtoplanetaryDisk = useSystemStore((state) => state.addProtoplanetaryDisk);
+  const updateProtoplanetaryDisk = useSystemStore((state) => state.updateProtoplanetaryDisk);
+  const removeProtoplanetaryDisk = useSystemStore((state) => state.removeProtoplanetaryDisk);
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [orbitMode, setOrbitMode] = useState<OrbitMode>('simple');
@@ -1268,6 +1273,53 @@ export const StarEditorPanel: React.FC = () => {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* Protoplanetary Disk - only for root stars (no parent) */}
+          {!selectedStar.parentId && selectedStar.bodyType !== 'blackHole' && (
+            <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <h5 style={{ marginTop: 0, marginBottom: '8px' }}>💿 Protoplanetary Disk</h5>
+              
+              {(() => {
+                // Find disk for this star
+                const disk = Object.values(protoplanetaryDisks).find(
+                  d => d.centralStarId === selectedStar.id
+                );
+                
+                return (
+                  <>
+                    <div className="form-group">
+                      <label className="generator-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={!!disk}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              addProtoplanetaryDisk(selectedStar.id);
+                            } else if (disk) {
+                              removeProtoplanetaryDisk(disk.id);
+                            }
+                          }}
+                        />
+                        <span>Has Protoplanetary Disk</span>
+                      </label>
+                    </div>
+                    
+                    {disk && (
+                      <div style={{ marginTop: '10px' }}>
+                        <ProtoplanetaryDiskEditor
+                          disk={disk}
+                          onUpdate={(field, value) => {
+                            updateProtoplanetaryDisk(disk.id, { [field]: value });
+                          }}
+                          compact={true}
+                        />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
           

@@ -472,6 +472,13 @@ function mapProtoplanetaryDiskConfig(config: GenerationConfig): {
   protoplanetaryDiskBrightnessRange: [number, number];
   protoplanetaryDiskClumpinessRange: [number, number];
   protoplanetaryDiskRotationSpeedMultiplierRange: [number, number];
+  protoplanetaryDiskStyleWeights?: { thin: number; moderate: number; thick: number; extreme: number };
+  protoplanetaryDiskBandStrengthRange?: [number, number];
+  protoplanetaryDiskBandFrequencyRange?: [number, number];
+  protoplanetaryDiskGapSharpnessRange?: [number, number];
+  protoplanetaryDiskSpiralStrengthRange?: [number, number];
+  protoplanetaryDiskNoiseScaleRange?: [number, number];
+  protoplanetaryDiskNoiseStrengthRange?: [number, number];
 } {
   const presence = config.protoplanetaryDiskPresence ?? 0;
   const density = config.protoplanetaryDiskDensity ?? 0.5;
@@ -504,6 +511,62 @@ function mapProtoplanetaryDiskConfig(config: GenerationConfig): {
     0.5 + prominence * 0.3,
   ];
 
+  // ============================================================================
+  // Advanced Disk Controls
+  // ============================================================================
+  
+  // Style Bias → Style Weights
+  let styleWeights: { thin: number; moderate: number; thick: number; extreme: number } | undefined;
+  if (config.protoplanetaryDiskStyleBias) {
+    switch (config.protoplanetaryDiskStyleBias) {
+      case 'mostlyThin':
+        styleWeights = { thin: 0.6, moderate: 0.3, thick: 0.08, extreme: 0.02 };
+        break;
+      case 'balanced':
+        styleWeights = { thin: 0.25, moderate: 0.4, thick: 0.25, extreme: 0.1 };
+        break;
+      case 'mostlyThick':
+        styleWeights = { thin: 0.08, moderate: 0.3, thick: 0.5, extreme: 0.12 };
+        break;
+      case 'extremeShowcase':
+        styleWeights = { thin: 0.05, moderate: 0.15, thick: 0.3, extreme: 0.5 };
+        break;
+    }
+  }
+  
+  // Banding Level → Band Strength and Frequency Ranges
+  let bandStrengthRange: [number, number] | undefined;
+  let bandFrequencyRange: [number, number] | undefined;
+  if (config.protoplanetaryDiskBandingLevel !== undefined) {
+    const level = config.protoplanetaryDiskBandingLevel;
+    // Low level: subtle bands, High level: prominent bands with more rings
+    bandStrengthRange = [0.2 + level * 0.3, 0.5 + level * 0.4]; // 0.2-0.5 to 0.5-0.9
+    bandFrequencyRange = [2 + level * 2, 5 + level * 7]; // 2-5 to 4-12
+  }
+  
+  // Gap Sharpness Level → Gap Sharpness Range
+  let gapSharpnessRange: [number, number] | undefined;
+  if (config.protoplanetaryDiskGapSharpnessLevel !== undefined) {
+    const level = config.protoplanetaryDiskGapSharpnessLevel;
+    gapSharpnessRange = [0.2 + level * 0.2, 0.5 + level * 0.4]; // 0.2-0.5 to 0.4-0.9
+  }
+  
+  // Spiral Level → Spiral Strength Range
+  let spiralStrengthRange: [number, number] | undefined;
+  if (config.protoplanetaryDiskSpiralLevel !== undefined) {
+    const level = config.protoplanetaryDiskSpiralLevel;
+    spiralStrengthRange = [0.0 + level * 0.05, 0.1 + level * 0.4]; // 0.0-0.1 to 0.05-0.5
+  }
+  
+  // Noise Level → Noise Scale and Strength Ranges
+  let noiseScaleRange: [number, number] | undefined;
+  let noiseStrengthRange: [number, number] | undefined;
+  if (config.protoplanetaryDiskNoiseLevel !== undefined) {
+    const level = config.protoplanetaryDiskNoiseLevel;
+    noiseScaleRange = [0.5 + level * 1.0, 1.5 + level * 1.5]; // 0.5-1.5 to 1.5-3.0
+    noiseStrengthRange = [0.1 + level * 0.2, 0.3 + level * 0.5]; // 0.1-0.3 to 0.3-0.8
+  }
+
   return {
     enableProtoplanetaryDisks: config.enableProtoplanetaryDisks ?? false,
     protoplanetaryDiskProbability: probability,
@@ -515,6 +578,14 @@ function mapProtoplanetaryDiskConfig(config: GenerationConfig): {
     protoplanetaryDiskBrightnessRange: brightnessRange,
     protoplanetaryDiskClumpinessRange: clumpinessRange,
     protoplanetaryDiskRotationSpeedMultiplierRange: [0.1, 0.5],
+    // Advanced controls (optional)
+    protoplanetaryDiskStyleWeights: styleWeights,
+    protoplanetaryDiskBandStrengthRange: bandStrengthRange,
+    protoplanetaryDiskBandFrequencyRange: bandFrequencyRange,
+    protoplanetaryDiskGapSharpnessRange: gapSharpnessRange,
+    protoplanetaryDiskSpiralStrengthRange: spiralStrengthRange,
+    protoplanetaryDiskNoiseScaleRange: noiseScaleRange,
+    protoplanetaryDiskNoiseStrengthRange: noiseStrengthRange,
   };
 }
 

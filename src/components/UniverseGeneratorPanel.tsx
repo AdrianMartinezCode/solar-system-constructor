@@ -735,6 +735,115 @@ export const UniverseGeneratorPanel: React.FC = () => {
               </div>
               <small className="generator-hint">Brightness and thickness of the disk</small>
             </div>
+
+            {/* Advanced Disk Details (collapsible) */}
+            <details style={{ marginTop: '12px', padding: '8px', backgroundColor: 'rgba(230, 190, 138, 0.05)', borderRadius: '4px', border: '1px solid rgba(230, 190, 138, 0.2)' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '8px', color: '#e6be8a' }}>
+                Advanced Disk Details
+              </summary>
+              
+              <div className="generator-field">
+                <label className="generator-label">
+                  Disk Style Bias
+                </label>
+                <select
+                  className="generator-select"
+                  value={config.protoplanetaryDiskStyleBias || 'balanced'}
+                  onChange={(e) => updateConfig('protoplanetaryDiskStyleBias', e.target.value as any)}
+                  style={{ width: '100%', padding: '4px', backgroundColor: '#2a2a2a', color: '#fff', border: '1px solid #444', borderRadius: '3px' }}
+                >
+                  <option value="mostlyThin">Mostly Thin</option>
+                  <option value="balanced">Balanced Mix</option>
+                  <option value="mostlyThick">Mostly Thick</option>
+                  <option value="extremeShowcase">Extreme Showcase</option>
+                </select>
+                <small className="generator-hint">Distribution of disk thickness styles</small>
+              </div>
+
+              <div className="generator-field" style={{ marginTop: '8px' }}>
+                <label className="generator-label">
+                  Banding Level
+                  <span className="generator-value">{((config.protoplanetaryDiskBandingLevel ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={config.protoplanetaryDiskBandingLevel ?? 0.5}
+                  onChange={(e) => updateConfig('protoplanetaryDiskBandingLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Subtle</span>
+                  <span>Prominent Rings</span>
+                </div>
+                <small className="generator-hint">Strength and frequency of concentric bands</small>
+              </div>
+
+              <div className="generator-field" style={{ marginTop: '8px' }}>
+                <label className="generator-label">
+                  Gap Sharpness
+                  <span className="generator-value">{((config.protoplanetaryDiskGapSharpnessLevel ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={config.protoplanetaryDiskGapSharpnessLevel ?? 0.5}
+                  onChange={(e) => updateConfig('protoplanetaryDiskGapSharpnessLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Soft Gaps</span>
+                  <span>Sharp Gaps</span>
+                </div>
+                <small className="generator-hint">How defined the dark gaps between rings are</small>
+              </div>
+
+              <div className="generator-field" style={{ marginTop: '8px' }}>
+                <label className="generator-label">
+                  Spiral Level
+                  <span className="generator-value">{((config.protoplanetaryDiskSpiralLevel ?? 0.3) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={config.protoplanetaryDiskSpiralLevel ?? 0.3}
+                  onChange={(e) => updateConfig('protoplanetaryDiskSpiralLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>No Spirals</span>
+                  <span>Strong Spirals</span>
+                </div>
+                <small className="generator-hint">Frequency and strength of spiral arms</small>
+              </div>
+
+              <div className="generator-field" style={{ marginTop: '8px' }}>
+                <label className="generator-label">
+                  Noise Level
+                  <span className="generator-value">{((config.protoplanetaryDiskNoiseLevel ?? 0.5) * 100).toFixed(0)}%</span>
+                </label>
+                <input
+                  type="range"
+                  className="generator-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={config.protoplanetaryDiskNoiseLevel ?? 0.5}
+                  onChange={(e) => updateConfig('protoplanetaryDiskNoiseLevel', parseFloat(e.target.value))}
+                />
+                <div className="generator-slider-labels">
+                  <span>Smooth</span>
+                  <span>Turbulent</span>
+                </div>
+                <small className="generator-hint">Scale and strength of noise patterns</small>
+              </div>
+            </details>
           </>
         )}
       </div>

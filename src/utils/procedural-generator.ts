@@ -2694,6 +2694,80 @@ class ProtoplanetaryDiskGenerator {
     const diskId = uuidv4();
     const diskSeed = diskRng.randInt(0, 2147483647);
 
+    // ========================================================================
+    // Shader-Specific Visual Parameters (based on style + randomization)
+    // ========================================================================
+    
+    // Style-based parameter ranges for realistic ALMA-like disk appearance
+    const stylePresets = {
+      thin: {
+        bandStrength: [0.3, 0.5],
+        bandFrequency: [4, 7],
+        gapSharpness: [0.3, 0.5],
+        innerGlowStrength: [0.4, 0.6],
+        noiseScale: [1.0, 2.0],
+        noiseStrength: [0.2, 0.4],
+        spiralStrength: [0.0, 0.1],
+        edgeSoftness: [0.4, 0.6],
+        temperatureGradient: [1.2, 1.8],
+      },
+      moderate: {
+        bandStrength: [0.4, 0.7],
+        bandFrequency: [3, 6],
+        gapSharpness: [0.4, 0.7],
+        innerGlowStrength: [0.5, 0.8],
+        noiseScale: [0.8, 1.8],
+        noiseStrength: [0.3, 0.5],
+        spiralStrength: [0.0, 0.2],
+        edgeSoftness: [0.3, 0.5],
+        temperatureGradient: [1.0, 2.0],
+      },
+      thick: {
+        bandStrength: [0.5, 0.8],
+        bandFrequency: [2, 5],
+        gapSharpness: [0.5, 0.8],
+        innerGlowStrength: [0.6, 0.9],
+        noiseScale: [0.6, 1.5],
+        noiseStrength: [0.4, 0.6],
+        spiralStrength: [0.1, 0.3],
+        edgeSoftness: [0.2, 0.4],
+        temperatureGradient: [0.8, 1.5],
+      },
+      extreme: {
+        bandStrength: [0.6, 0.95],
+        bandFrequency: [2, 4],
+        gapSharpness: [0.6, 0.9],
+        innerGlowStrength: [0.7, 1.0],
+        noiseScale: [0.5, 1.2],
+        noiseStrength: [0.5, 0.8],
+        spiralStrength: [0.2, 0.5],
+        edgeSoftness: [0.15, 0.3],
+        temperatureGradient: [0.6, 1.2],
+      },
+    };
+    
+    const preset = stylePresets[style];
+    
+    // Sample shader parameters from style-based ranges
+    const bandStrength = diskRng.uniform(preset.bandStrength[0], preset.bandStrength[1]);
+    const bandFrequency = Math.round(diskRng.uniform(preset.bandFrequency[0], preset.bandFrequency[1]));
+    const gapSharpness = diskRng.uniform(preset.gapSharpness[0], preset.gapSharpness[1]);
+    const innerGlowStrength = diskRng.uniform(preset.innerGlowStrength[0], preset.innerGlowStrength[1]);
+    const noiseScale = diskRng.uniform(preset.noiseScale[0], preset.noiseScale[1]);
+    const noiseStrength = diskRng.uniform(preset.noiseStrength[0], preset.noiseStrength[1]);
+    const spiralStrength = diskRng.uniform(preset.spiralStrength[0], preset.spiralStrength[1]);
+    const edgeSoftness = diskRng.uniform(preset.edgeSoftness[0], preset.edgeSoftness[1]);
+    const temperatureGradient = diskRng.uniform(preset.temperatureGradient[0], preset.temperatureGradient[1]);
+    
+    // Spiral arm count: 1-3 arms, biased toward 2
+    const spiralArmCount = spiralStrength > 0.05 
+      ? (diskRng.uniform(0, 1) < 0.6 ? 2 : (diskRng.bool(0.5) ? 1 : 3))
+      : 2;
+    
+    // Reduce particle count since shader now does the heavy lifting
+    // Particles are now just for sparkle/dust overlay
+    const sparkleParticleCount = Math.max(100, Math.floor(particleCount * 0.02)); // 2% of original
+
     return {
       id: diskId,
       systemId: centerStarId,
@@ -2701,7 +2775,7 @@ class ProtoplanetaryDiskGenerator {
       innerRadius: Math.max(innerRadius, innerRef), // Ensure outside star
       outerRadius: Math.max(outerRadius, innerRadius + 1), // Ensure outer > inner
       thickness,
-      particleCount,
+      particleCount: sparkleParticleCount, // Reduced for sparkle overlay only
       baseColor,
       highlightColor,
       opacity,
@@ -2711,6 +2785,17 @@ class ProtoplanetaryDiskGenerator {
       seed: diskSeed,
       style,
       name: `${centerStar.name} Protoplanetary Disk`,
+      // Shader-specific visual parameters
+      bandStrength,
+      bandFrequency,
+      gapSharpness,
+      innerGlowStrength,
+      noiseScale,
+      noiseStrength,
+      spiralStrength,
+      spiralArmCount,
+      edgeSoftness,
+      temperatureGradient,
     };
   }
 }
