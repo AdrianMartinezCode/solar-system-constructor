@@ -63,7 +63,7 @@ const windowDefaults: Record<WindowType, { width: number; height: number; title:
   overview: { width: 350, height: 500, title: 'System Overview' },
   hierarchy: { width: 280, height: 600, title: 'Hierarchy Tree' },
   generator: { width: 400, height: 700, title: 'Procedural Universe Generator' },
-  planetEditor: { width: 350, height: 600, title: 'Planet Editor' },
+  planetEditor: { width: 350, height: 600, title: 'Body Inspector' },
   groupEditor: { width: 380, height: 550, title: 'Group Editor' },
   nebulaEditor: { width: 380, height: 600, title: 'Nebula Editor' },
   stats: { width: 220, height: 400, title: 'Stats' },

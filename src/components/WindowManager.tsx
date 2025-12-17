@@ -5,7 +5,7 @@ import { SimulationSpeedControl } from '../ui/SimulationSpeedControl';
 import { HierarchyTree } from '../ui/HierarchyTree';
 import { UniverseGeneratorPanel } from './UniverseGeneratorPanel';
 import { GroupEditorPanel } from '../ui/GroupEditorPanel';
-import { StarEditorPanel } from '../ui/StarEditorPanel';
+import { BodyEditorPanel } from '../ui/BodyEditorPanel';
 import { NebulaEditorPanel } from '../ui/NebulaEditorPanel';
 import { StarListPanel } from '../ui/StarListPanel';
 import { SystemOverview } from './SystemOverview';
@@ -36,7 +36,7 @@ function getWindowContent(type: string, data?: any): React.ReactNode {
     case 'generator':
       return <UniverseGeneratorPanel />;
     case 'planetEditor':
-      return <StarEditorPanel />;
+      return <BodyEditorPanel />;
     case 'groupEditor':
       return <GroupEditorPanel />;
     case 'nebulaEditor':
