@@ -3,6 +3,7 @@ import { useSystemStore } from '../state/systemStore';
 import type { GenerationConfig } from '../types/generationConfig';
 import { defaultConfig, getPresetConfig, generateRandomSeed } from '../utils/generatorConfigDefaults';
 import { generateUniverse, getSmallBodyDetailLabel } from '../utils/generatorBridge';
+import { cacheGenerationMetadata } from '../utils/stats/generationMetadataCache';
 import './UniverseGeneratorPanel.css';
 
 interface GenerationStats {
@@ -110,6 +111,9 @@ export const UniverseGeneratorPanel: React.FC = () => {
       
       // Save to localStorage
       useSystemStore.getState().save();
+      
+      // Cache generation metadata for stats panel
+      cacheGenerationMetadata(config, result);
       
       // Update stats
       setStats({

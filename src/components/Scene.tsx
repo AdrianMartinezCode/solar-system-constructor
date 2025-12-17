@@ -7,6 +7,7 @@ import { GroupBox } from './GroupBox';
 import { AsteroidBeltObject } from './AsteroidBeltObject';
 import { NebulaObject } from './NebulaObject';
 import { BodyCameraController } from './BodyCameraController';
+import { PerformanceTelemetryCollector } from '../hooks/usePerformanceTelemetry';
 import { computeVisibleItems, getGroupSystems, getGroupAndDescendants } from '../utils/groupUtils';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { Star } from '../types';
@@ -154,6 +155,7 @@ export const Scene: React.FC = () => {
     >
       <AnimationController />
       <BodyCameraController />
+      <PerformanceTelemetryCollector />
       
       {/* Lighting - brighter for better visibility */}
       <ambientLight intensity={1} />

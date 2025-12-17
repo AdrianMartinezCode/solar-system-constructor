@@ -66,7 +66,7 @@ const windowDefaults: Record<WindowType, { width: number; height: number; title:
   planetEditor: { width: 350, height: 600, title: 'Body Inspector' },
   groupEditor: { width: 380, height: 550, title: 'Group Editor' },
   nebulaEditor: { width: 380, height: 600, title: 'Nebula Editor' },
-  stats: { width: 220, height: 400, title: 'Stats' },
+  stats: { width: 420, height: 680, title: 'Simulation Stats & Analytics' },
   starList: { width: 300, height: 500, title: 'Star List' },
 };
 

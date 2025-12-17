@@ -30,7 +30,7 @@ import './StatsPanel.css';
 type TabType = 'overview' | 'performance' | 'population' | 'orbits' | 'specials' | 'generation';
 type ContextType = 'global' | 'isolated' | 'selected';
 
-export const StatsPanel: React.FC = () => {
+export const StatsPanelNew: React.FC = () => {
   const stars = useSystemStore((state) => state.stars);
   const groups = useSystemStore((state) => state.groups);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
@@ -386,26 +386,22 @@ export const StatsPanel: React.FC = () => {
       </div>
 
       <div className="stats-section">
+        <div className="stats-section-title">FPS History (60s)</div>
         <Sparkline
           data={perfHistory.map((s, i) => ({ x: i, y: s.fps }))}
           width={360}
           height={80}
           color="#50c878"
-          title="FPS History"
-          label="Last 60 seconds"
-          showMinMax={true}
         />
       </div>
 
       <div className="stats-section">
+        <div className="stats-section-title">Frame Time History (60s)</div>
         <Sparkline
           data={perfHistory.map((s, i) => ({ x: i, y: s.frameTime }))}
           width={360}
           height={80}
           color="#ffaa00"
-          title="Frame Time History"
-          label="Last 60 seconds (milliseconds)"
-          showMinMax={true}
         />
       </div>
 
@@ -481,23 +477,27 @@ export const StatsPanel: React.FC = () => {
 
     return (
       <div className="stats-tab-content">
-          <div className="stats-section">
-            <div className="stats-section-title">Population by Type</div>
-            {bodyTypeData.length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
-                <DonutChart data={bodyTypeData} size={220} showLegend={true} />
-              </div>
-            )}
-          </div>
-
-          {specialsData.length > 0 && (
-            <div className="stats-section">
-              <div className="stats-section-title">Special Features</div>
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
-                <DonutChart data={specialsData} size={220} showLegend={true} />
-              </div>
+        <div className="stats-section">
+          <div className="stats-section-title">Population by Type</div>
+          {bodyTypeData.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
+              <DonutChart data={bodyTypeData} size={220} />
             </div>
           )}
+          <div className="stat-row">
+            <span className="stat-label">Total Bodies:</span>
+            <span className="stat-value">{popCounts.total}</span>
+          </div>
+        </div>
+
+        {specialsData.length > 0 && (
+          <div className="stats-section">
+            <div className="stats-section-title">Special Features</div>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
+              <DonutChart data={specialsData} size={220} />
+            </div>
+          </div>
+        )}
 
         <div className="stats-section">
           <div className="stats-section-title">Detailed Counts</div>
@@ -586,14 +586,7 @@ export const StatsPanel: React.FC = () => {
         </div>
         {!isSectionCollapsed('semiMajorAxis') && semiMajorAxisDist.length > 0 && (
           <div style={{ padding: '10px 0' }}>
-            <Histogram 
-              data={semiMajorAxisDist} 
-              width={380} 
-              height={170} 
-              title="Orbital Distance Distribution"
-              xLabel="Semi-Major Axis"
-              yLabel="Count"
-            />
+            <Histogram data={semiMajorAxisDist} width={380} height={150} />
           </div>
         )}
       </div>
@@ -604,15 +597,7 @@ export const StatsPanel: React.FC = () => {
         </div>
         {!isSectionCollapsed('eccentricity') && eccentricityDist.length > 0 && (
           <div style={{ padding: '10px 0' }}>
-            <Histogram 
-              data={eccentricityDist} 
-              width={380} 
-              height={170} 
-              color="#ff6b9d"
-              title="Orbit Shape Distribution"
-              xLabel="Eccentricity (0 = circular, 1 = parabolic)"
-              yLabel="Count"
-            />
+            <Histogram data={eccentricityDist} width={380} height={150} color="#ff6b9d" />
           </div>
         )}
       </div>
@@ -623,15 +608,7 @@ export const StatsPanel: React.FC = () => {
         </div>
         {!isSectionCollapsed('inclination') && inclinationDist.length > 0 && (
           <div style={{ padding: '10px 0' }}>
-            <Histogram 
-              data={inclinationDist} 
-              width={380} 
-              height={170} 
-              color="#50c878"
-              title="Orbital Tilt Distribution"
-              xLabel="Inclination (degrees)"
-              yLabel="Count"
-            />
+            <Histogram data={inclinationDist} width={380} height={150} color="#50c878" />
           </div>
         )}
       </div>
@@ -645,12 +622,9 @@ export const StatsPanel: React.FC = () => {
             <ScatterPlot
               data={orbitalScatter}
               width={380}
-              height={220}
-              title="Orbital Parameters"
+              height={200}
               xLabel="Semi-Major Axis"
               yLabel="Eccentricity"
-              showLegend={true}
-              legendLabel="Orbiting Bodies"
             />
           </div>
         )}
@@ -658,20 +632,11 @@ export const StatsPanel: React.FC = () => {
 
       <div className="stats-section">
         <div className="stats-section-title-clickable" onClick={() => toggleSection('massDistribution')}>
-          Mass Distribution {isSectionCollapsed('massDistribution') ? '▶' : '▼'}
+          Mass Distribution (log scale) {isSectionCollapsed('massDistribution') ? '▶' : '▼'}
         </div>
         {!isSectionCollapsed('massDistribution') && massDist.length > 0 && (
           <div style={{ padding: '10px 0' }}>
-            <Histogram 
-              data={massDist} 
-              width={380} 
-              height={170} 
-              color="#ffa500" 
-              showLabels={false}
-              title="Mass Distribution (Log Scale)"
-              xLabel="Mass (logarithmic)"
-              yLabel="Count"
-            />
+            <Histogram data={massDist} width={380} height={150} color="#ffa500" showLabels={false} />
           </div>
         )}
       </div>
