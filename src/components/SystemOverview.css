@@ -1,12 +1,22 @@
+/* Override window-content scroll behavior for system overview */
+.window-content:has(.system-overview) {
+  overflow: hidden !important;
+}
+
 .system-overview {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   height: 100%;
+  min-height: 0; /* Critical: allows flex child to shrink below content size */
+  max-height: 100%; /* Don't exceed window height */
+  box-sizing: border-box; /* Include padding in height calculation */
+  overflow: hidden; /* Prevent the overview itself from scrolling */
 }
 
 .overview-search {
+  flex-shrink: 0; /* Don't shrink the search */
   position: relative;
 }
 
@@ -51,6 +61,7 @@
 }
 
 .overview-filters {
+  flex-shrink: 0; /* Don't shrink the filters */
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -83,6 +94,7 @@
 }
 
 .overview-sort {
+  flex-shrink: 0; /* Don't shrink the sort section */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -107,13 +119,16 @@
 }
 
 .overview-results {
-  flex: 1;
+  flex: 1 1 0; /* Allow shrinking to fit available space */
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 100px; /* Reduced minimum to ensure summary is visible */
+  max-height: 100%; /* Don't exceed available space */
+  overflow: hidden; /* Prevent parent from scrolling */
 }
 
 .results-header {
+  flex-shrink: 0; /* Don't shrink the header */
   font-size: 12px;
   color: #aaa;
   padding: 8px 0;
@@ -123,7 +138,9 @@
 .results-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 0;
+  min-height: 0; /* Critical: allows proper scrolling */
 }
 
 .results-list::-webkit-scrollbar {
@@ -220,10 +237,26 @@
 }
 
 .overview-summary {
+  flex-shrink: 0; /* Don't shrink the summary section */
   padding: 16px;
   background: #2a2a2a;
   border: 1px solid #3a3a3a;
   border-radius: 6px;
+  max-height: 400px; /* Limit height so it doesn't push everything off screen */
+  overflow-y: auto; /* Allow scrolling if summary is very tall */
+}
+
+.overview-summary::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overview-summary::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overview-summary::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 4px;
 }
 
 .summary-title {
@@ -278,6 +311,7 @@
 }
 
 .overview-actions {
+  flex-shrink: 0; /* Don't shrink the actions section */
   display: flex;
   gap: 8px;
 }
