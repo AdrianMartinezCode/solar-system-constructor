@@ -8,12 +8,14 @@ export const GroupEditorPanel: React.FC = () => {
   const groups = useSystemStore((state) => state.groups);
   const rootIds = useSystemStore((state) => state.rootIds);
   const stars = useSystemStore((state) => state.stars);
+  const isolatedGroupId = useSystemStore((state) => state.isolatedGroupId);
   const updateGroup = useSystemStore((state) => state.updateGroup);
   const removeGroup = useSystemStore((state) => state.removeGroup);
   const addGroup = useSystemStore((state) => state.addGroup);
   const addToGroup = useSystemStore((state) => state.addToGroup);
   const removeFromGroup = useSystemStore((state) => state.removeFromGroup);
   const moveToGroup = useSystemStore((state) => state.moveToGroup);
+  const toggleIsolatedGroup = useSystemStore((state) => state.toggleIsolatedGroup);
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [newGroupForm, setNewGroupForm] = useState({
@@ -67,6 +69,12 @@ export const GroupEditorPanel: React.FC = () => {
   
   const handleMoveChild = (childId: string, childType: 'system' | 'group', targetGroupId: string | null) => {
     moveToGroup(childId, childType, targetGroupId);
+  };
+  
+  const handleToggleIsolation = () => {
+    if (selectedGroupId) {
+      toggleIsolatedGroup(selectedGroupId);
+    }
   };
   
   // Get available systems (root systems not in any group)
@@ -148,6 +156,21 @@ export const GroupEditorPanel: React.FC = () => {
       {selectedGroup && !showAddForm && (
         <div className="edit-form">
           <h4>Editing: {selectedGroup.name}</h4>
+          
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={isolatedGroupId === selectedGroupId}
+                onChange={handleToggleIsolation}
+                style={{ cursor: 'pointer' }}
+              />
+              <span style={{ fontWeight: 500 }}>Solo in viewport (show only this group)</span>
+            </label>
+            <small style={{ color: '#888', marginLeft: '1.5rem', display: 'block', marginTop: '0.25rem' }}>
+              When enabled, only systems in this group are visible in the 3D scene
+            </small>
+          </div>
           
           <div className="form-group">
             <label>Group Name</label>

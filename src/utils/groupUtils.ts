@@ -155,3 +155,21 @@ export function getGroupSystems(groupId: string, groups: Record<string, Group>):
   return systems;
 }
 
+/**
+ * Get all descendant group IDs of a group (recursively), including the group itself
+ */
+export function getGroupAndDescendants(groupId: string, groups: Record<string, Group>): string[] {
+  const group = groups[groupId];
+  if (!group) return [];
+  
+  const groupIds: string[] = [groupId];
+  
+  group.children.forEach(child => {
+    if (child.type === 'group') {
+      groupIds.push(...getGroupAndDescendants(child.id, groups));
+    }
+  });
+  
+  return groupIds;
+}
+

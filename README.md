@@ -12,6 +12,7 @@ An interactive 3D web application for building nested solar systems with infinit
 - **Procedural Generation**: L-System based automatic system generator with Kepler-inspired orbits
 - **Grouping System**: Organize solar systems into hierarchical groups (galaxies, clusters, etc.)
 - **Black-box Groups**: Groups act as single entities with controllable nesting depth
+- **Group Isolation**: Solo/isolate individual groups to focus on specific regions
 - **Interactive Editor**: Full CRUD operations with visual editing panels
 - **Hierarchy View**: Tree-based visualization of system structure
 - **Auto-centering**: Heaviest object becomes the center of each local system
@@ -154,6 +155,24 @@ Control how many levels of group hierarchy are visible:
 - **Max**: Fully expand all groups to show all systems
 
 This allows you to view your universe at different scales - from individual systems to galaxy clusters.
+
+### Solo / Isolate Group in Viewport
+
+Focus on a specific group by hiding everything else:
+
+1. Select a group (click on it or find it in System Overview)
+2. Enable the **"Solo in viewport"** checkbox in the Group Editor, or
+3. Click the **lock icon** (🔒) next to the group in System Overview
+
+When a group is isolated:
+- ✅ The isolated group stays in its original position
+- ✅ All systems in the group (including nested groups) remain visible
+- ✅ Everything else is hidden: other groups, ungrouped systems, rogue planets
+- ✅ No camera movement or repositioning occurs
+
+Click the toggle again or the unlock icon (🔓) to exit isolation mode.
+
+See [`docs/GROUP_ISOLATION_FEATURE.md`](docs/GROUP_ISOLATION_FEATURE.md) for complete documentation.
 
 ### Black-box Behavior
 

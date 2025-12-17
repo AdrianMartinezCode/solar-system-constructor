@@ -33,6 +33,7 @@ interface SystemStore {
   rootGroupIds: string[]; // Top-level groups
   selectedGroupId: string | null;
   nestingLevel: NestingLevel; // View control for group expansion
+  isolatedGroupId: string | null; // Group to isolate in viewport (solo mode)
   
   // Camera mode
   cameraMode: 'overview' | 'body';
@@ -92,6 +93,10 @@ interface SystemStore {
   setNestingLevel: (level: NestingLevel) => void;
   setTimeScale: (value: number) => void;
   
+  // Group isolation operations
+  setIsolatedGroupId: (id: string | null) => void;
+  toggleIsolatedGroup: (id: string) => void;
+  
   // Camera operations
   setCameraMode: (mode: 'overview' | 'body', targetBodyId?: string) => void;
   resetCamera: () => void;
@@ -129,6 +134,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   rootGroupIds: [],
   selectedGroupId: null,
   nestingLevel: 'max', // Default to showing everything
+  isolatedGroupId: null, // No isolation by default
   
   // Camera state
   cameraMode: 'overview',
@@ -676,10 +682,14 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
         // Systems just become ungrouped (remain in rootIds)
       });
       
+      // Clear isolation if this group was isolated
+      const newIsolatedGroupId = state.isolatedGroupId === id ? null : state.isolatedGroupId;
+      
       return {
         groups: newGroups,
         rootGroupIds: newRootGroupIds,
         selectedGroupId: state.selectedGroupId === id ? null : state.selectedGroupId,
+        isolatedGroupId: newIsolatedGroupId,
       };
     });
     
@@ -844,6 +854,16 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
   
   resetCamera: () => {
     set({ cameraMode: 'overview', cameraTargetBodyId: null });
+  },
+  
+  setIsolatedGroupId: (id) => {
+    set({ isolatedGroupId: id });
+  },
+  
+  toggleIsolatedGroup: (id) => {
+    set((state) => ({
+      isolatedGroupId: state.isolatedGroupId === id ? null : id,
+    }));
   },
   
   save: () => {

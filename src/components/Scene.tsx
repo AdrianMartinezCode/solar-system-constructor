@@ -7,8 +7,9 @@ import { GroupBox } from './GroupBox';
 import { AsteroidBeltObject } from './AsteroidBeltObject';
 import { NebulaObject } from './NebulaObject';
 import { BodyCameraController } from './BodyCameraController';
-import { computeVisibleItems } from '../utils/groupUtils';
+import { computeVisibleItems, getGroupSystems, getGroupAndDescendants } from '../utils/groupUtils';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { Star } from '../types';
 
 // Animation component that runs inside Canvas
 const AnimationController: React.FC = () => {
@@ -41,8 +42,49 @@ export const Scene: React.FC = () => {
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const nebulae = useSystemStore((state) => state.nebulae);
   const nestingLevel = useSystemStore((state) => state.nestingLevel);
+  const isolatedGroupId = useSystemStore((state) => state.isolatedGroupId);
   const time = useSystemStore((state) => state.time);
   const controlsRef = useRef<OrbitControlsImpl>(null);
+  
+  // Helper function to recursively collect all star IDs in a system tree
+  const collectSystemStarIds = (rootStarId: string, starsMap: Record<string, Star>): string[] => {
+    const ids: string[] = [rootStarId];
+    const star = starsMap[rootStarId];
+    if (star && star.children) {
+      star.children.forEach((childId) => {
+        ids.push(...collectSystemStarIds(childId, starsMap));
+      });
+    }
+    return ids;
+  };
+  
+  // Compute isolation sets when a group is isolated
+  const isolationSets = useMemo(() => {
+    if (!isolatedGroupId || !groups[isolatedGroupId]) {
+      return null;
+    }
+    
+    // Get all system root IDs in the isolated group and its descendants
+    const allowedSystemRootIds = getGroupSystems(isolatedGroupId, groups);
+    
+    // Collect all star IDs in those systems (including planets, moons, etc.)
+    const allowedStarIdsSet = new Set<string>();
+    allowedSystemRootIds.forEach((rootId) => {
+      const systemStarIds = collectSystemStarIds(rootId, stars);
+      systemStarIds.forEach((id) => allowedStarIdsSet.add(id));
+    });
+    
+    // Get all group IDs (isolated group + descendants)
+    const allowedGroupIdsSet = new Set<string>(
+      getGroupAndDescendants(isolatedGroupId, groups)
+    );
+    
+    return {
+      allowedSystemRootIds: new Set(allowedSystemRootIds),
+      allowedStarIds: allowedStarIdsSet,
+      allowedGroupIds: allowedGroupIdsSet,
+    };
+  }, [isolatedGroupId, groups, stars]);
   
   // Collect rogue planet IDs (planets not bound to any system)
   const roguePlanetIds = useMemo(() => {
@@ -53,10 +95,31 @@ export const Scene: React.FC = () => {
   
   // Note: Protoplanetary disks are now rendered inside StarObject for correct positioning
   
-  // Compute which items should be visible based on nesting level
+  // Compute which items should be visible based on nesting level or isolation
   const visibleItems = useMemo(() => {
+    // If a group is isolated, show only the isolated group with its contents
+    // This preserves the group's spatial position and layout
+    if (isolationSets && isolatedGroupId) {
+      const items: typeof computeVisibleItems extends (...args: any[]) => infer R ? R : never = [];
+      
+      // Render the isolated group itself - this maintains its position and layout
+      const isolatedGroup = groups[isolatedGroupId];
+      if (isolatedGroup) {
+        items.push({
+          id: isolatedGroupId,
+          type: 'group',
+          position: isolatedGroup.position
+            ? [isolatedGroup.position.x, isolatedGroup.position.y, isolatedGroup.position.z] as [number, number, number]
+            : undefined,
+        });
+      }
+      
+      return items;
+    }
+    
+    // Normal visibility based on nesting level
     return computeVisibleItems(groups, rootGroupIds, rootIds, nestingLevel);
-  }, [groups, rootGroupIds, rootIds, nestingLevel]);
+  }, [groups, rootGroupIds, rootIds, nestingLevel, isolatedGroupId, isolationSets]);
   
   console.log('=== Scene Debug Info ===');
   console.log('Root Star IDs:', rootIds);
@@ -128,24 +191,47 @@ export const Scene: React.FC = () => {
         <DebugCube />
       )}
       
-      {/* Render rogue planets (not bound to any system) */}
-      {roguePlanetIds.map(rogueId => (
+      {/* Render rogue planets (not bound to any system) - hide during isolation */}
+      {!isolationSets && roguePlanetIds.map(rogueId => (
         <StarObject key={`rogue-${rogueId}`} starId={rogueId} />
       ))}
       
       {/* Render asteroid belts (legacy - kept for backwards compatibility) */}
-      {Object.keys(belts).map(beltId => (
-        <AsteroidBeltObject key={`belt-${beltId}`} beltId={beltId} />
-      ))}
+      {Object.keys(belts)
+        .filter((beltId) => {
+          // When isolated, only show belts whose parent is in the allowed star set
+          if (isolationSets) {
+            const belt = belts[beltId];
+            return belt && isolationSets.allowedStarIds.has(belt.parentId);
+          }
+          return true;
+        })
+        .map(beltId => (
+          <AsteroidBeltObject key={`belt-${beltId}`} beltId={beltId} />
+        ))}
       
       {/* Note: Small body fields and protoplanetary disks are rendered inside StarObject for correct positioning */}
       
       {/* Render nebulae (galaxy-scale volumetric regions) */}
-      {Object.values(nebulae).map((nebula) =>
-        nebula.visible !== false ? (
+      {Object.values(nebulae)
+        .filter((nebula) => {
+          if (nebula.visible === false) return false;
+          
+          // When isolated, only show nebulae associated with the isolated group or its descendants
+          if (isolationSets && nebula.associatedGroupIds) {
+            return nebula.associatedGroupIds.some((groupId) =>
+              isolationSets.allowedGroupIds.has(groupId)
+            );
+          }
+          
+          // When isolated but nebula has no associations, hide it
+          if (isolationSets) return false;
+          
+          return true;
+        })
+        .map((nebula) => (
           <NebulaObject key={nebula.id} nebula={nebula} />
-        ) : null
-      )}
+        ))}
       
       <OrbitControls 
         ref={controlsRef} 
