@@ -6,27 +6,42 @@ This module implements a **Stochastic Hierarchical L-System** combined with **Ke
 
 ## Architecture
 
-### 1. L-System Topology Generator
+### 1. L-System Topology Generator (Pluggable)
 
-The generator uses a context-free grammar with stochastic production rules:
+The generator uses a **pluggable topology system** based on stochastic context-free L-system grammars. Different **topology presets** can dramatically alter the hierarchical structure of generated systems.
+
+#### Default (Classic) Grammar
 
 ```
-A → S P* | S S P* | S S S P*    (1-3 stars per system)
-P → p M*                         (planet with moons)
-M → m                            (moon)
-B → b*                           (asteroid belt with many asteroids)
+S  →  ★{1-3}  ●*                    System expands to 1-3 stars + planets
+★  →  ε                             Star is terminal
+●  →  ◦*                            Planet expands to moons
+◦  →  ε                             Moon is terminal
+B  →  b*                            Asteroid belt (post-processing)
 ```
 
 Where:
-- **Uppercase symbols** (A, S, P, M, B) are structural and define the hierarchy
-- **Lowercase symbols** (p, m, b) become actual Star objects
-- **S** represents a star node (structural, not rendered)
-- **p** represents a planet (rendered)
-- **m** represents a moon (rendered)
-- **B** represents an asteroid belt (collection of many asteroids)
-- **b** represents an individual asteroid (rendered as tiny body)
+- **S** = System (root node)
+- **★** = Star (terminal, becomes actual Star object)
+- **●** = Planet (may expand to moons)
+- **◦** = Moon (terminal or may have sub-moons in some presets)
+- **ε** = Empty (terminal, no expansion)
+- **B** = Asteroid belt (generated in post-processing phase)
 
-#### Stochastic Parameters
+#### Available Topology Presets
+
+| Preset | ID | Description |
+|--------|-----|-------------|
+| **Classic** | `classic` | Standard behavior: 1-3 stars, geometric planets/moons |
+| **Compact** | `compact` | 1-2 planets with 5-18 moons each (Jupiter-like) |
+| **Multi-Star Heavy** | `multiStarHeavy` | 95% binary/ternary systems |
+| **Moon-Rich** | `moonRich` | Every planet has 4-25 moons |
+| **Sparse Outpost** | `sparseOutpost` | Minimal: 0-2 planets, most moonless |
+| **Deep Hierarchy** | `deepHierarchy` | 50% of moons have sub-moons |
+
+See [TOPOLOGY_GRAMMAR_PRESETS.md](./TOPOLOGY_GRAMMAR_PRESETS.md) for complete grammar definitions and how to add new presets.
+
+#### Stochastic Parameters (Classic Preset)
 
 - **Star count probabilities**: [0.65, 0.25, 0.10] for 1, 2, or 3 stars
 - **Planet count**: Geometric distribution with p = 0.4
@@ -396,7 +411,10 @@ const galaxy = generateGalaxy(15); // 15 systems
 
 ```typescript
 interface GeneratorConfig {
-  // L-System parameters
+  // Topology preset (controls system hierarchy shape)
+  topologyPresetId: TopologyPresetId;  // 'classic' | 'compact' | 'multiStarHeavy' | ...
+  
+  // L-System parameters (may be overridden by topology preset)
   starProbabilities: [number, number, number]; // Must sum to 1.0
   planetGeometricP: number;  // 0 < p < 1
   moonGeometricP: number;    // 0 < p < 1
@@ -462,6 +480,9 @@ interface GeneratorConfig {
 
 ```typescript
 const DEFAULT_CONFIG = {
+  // Topology preset (default is 'classic')
+  topologyPresetId: 'classic',
+  
   starProbabilities: [0.65, 0.25, 0.10],
   planetGeometricP: 0.4,
   moonGeometricP: 0.3,
@@ -704,9 +725,54 @@ Potential enhancements:
 
 - ✅ **Protoplanetary Disks**: Visual-only GPU particle fields representing young circumstellar disks (see `PROTOPLANETARY_DISK_IMPLEMENTATION.md`)
 
+## Topology Presets
+
+The generator supports multiple topology presets that control the hierarchical structure of systems. Each preset defines an L-system grammar that determines:
+
+- How many stars per system
+- How planets are distributed
+- How moons are attached to planets
+- Whether sub-moons are allowed
+
+### Using Topology Presets
+
+```typescript
+import { generateSolarSystem } from './utils/procedural-generator';
+
+// Generate a moon-rich system
+const system = generateSolarSystem({
+  topologyPresetId: 'moonRich',
+  seed: 12345,
+});
+
+// Generate a sparse outpost
+const outpost = generateSolarSystem({
+  topologyPresetId: 'sparseOutpost',
+});
+
+// Generate with multi-star focus
+const multiStar = generateSolarSystem({
+  topologyPresetId: 'multiStarHeavy',
+});
+```
+
+### Available Presets Summary
+
+| Preset | Stars | Planets | Moons/Planet | Sub-moons |
+|--------|-------|---------|--------------|-----------|
+| `classic` | 1-3 | 0-5 | 0-5 | No |
+| `compact` | 1 | 1-2 | 5-18 | No |
+| `multiStarHeavy` | 2-3 (95%) | 1-4 | 0-3 | No |
+| `moonRich` | 1 | 3-6 | 4-25 | No |
+| `sparseOutpost` | 1 | 0-2 | 0-2 | No |
+| `deepHierarchy` | 1 | 2-5 | 2-6 | Yes (50%) |
+
+For complete documentation on topology presets, including how to create new ones, see [TOPOLOGY_GRAMMAR_PRESETS.md](./TOPOLOGY_GRAMMAR_PRESETS.md).
+
 ## References
 
 - **L-Systems**: Lindenmayer, A. (1968). "Mathematical models for cellular interactions"
+- **Stochastic Grammars**: Prusinkiewicz & Lindenmayer (1990). "The Algorithmic Beauty of Plants"
 - **Kepler's Laws**: Kepler, J. (1609). "Astronomia Nova"
 - **Procedural Generation**: Procedural Content Generation in Games (textbook)
 - **Stellar Classification**: Morgan-Keenan (MK) system

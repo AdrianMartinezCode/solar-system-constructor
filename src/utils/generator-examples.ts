@@ -979,3 +979,153 @@ export function printTestResults() {
   console.log('='.repeat(80));
 }
 
+// ============================================================================
+// Topology Preset Testing Utilities
+// ============================================================================
+
+import type { TopologyPresetId } from './topology';
+import { getTopologyPresetIds } from './topology';
+
+/**
+ * Test that topology presets produce deterministic results.
+ * Same seed + same preset = same topology structure.
+ * 
+ * @param seed - The seed to use for testing
+ * @returns Object with test results per preset
+ */
+export function testTopologyDeterminism(seed: string = 'test-seed-123'): Record<TopologyPresetId, {
+  deterministic: boolean;
+  run1Stats: { stars: number; planets: number; moons: number };
+  run2Stats: { stars: number; planets: number; moons: number };
+}> {
+  const results: Record<string, {
+    deterministic: boolean;
+    run1Stats: { stars: number; planets: number; moons: number };
+    run2Stats: { stars: number; planets: number; moons: number };
+  }> = {};
+  
+  const presetIds = getTopologyPresetIds();
+  
+  for (const presetId of presetIds) {
+    // Generate with the same seed twice
+    const config: Partial<GeneratorConfig> = {
+      topologyPresetId: presetId,
+    };
+    
+    const result1 = generateSolarSystem(seed, config);
+    const result2 = generateSolarSystem(seed, config);
+    
+    // Count body types
+    const countBodies = (system: ReturnType<typeof generateSolarSystem>) => {
+      const all = Object.values(system.stars);
+      return {
+        stars: all.filter(s => s.bodyType === 'star').length,
+        planets: all.filter(s => s.bodyType === 'planet').length,
+        moons: all.filter(s => s.bodyType === 'moon').length,
+      };
+    };
+    
+    const stats1 = countBodies(result1);
+    const stats2 = countBodies(result2);
+    
+    // Check if results are identical
+    const deterministic = 
+      stats1.stars === stats2.stars &&
+      stats1.planets === stats2.planets &&
+      stats1.moons === stats2.moons;
+    
+    results[presetId] = {
+      deterministic,
+      run1Stats: stats1,
+      run2Stats: stats2,
+    };
+  }
+  
+  return results as Record<TopologyPresetId, typeof results[string]>;
+}
+
+/**
+ * Compare topology outputs across different presets for a fixed seed.
+ * This helps verify that different presets actually produce different results.
+ * 
+ * @param seed - The seed to use for testing
+ * @returns Object with stats per preset
+ */
+export function compareTopologyPresets(seed: string = 'compare-seed-456'): Record<TopologyPresetId, {
+  totalBodies: number;
+  stars: number;
+  planets: number;
+  moons: number;
+  avgMoonsPerPlanet: number;
+}> {
+  const results: Record<string, {
+    totalBodies: number;
+    stars: number;
+    planets: number;
+    moons: number;
+    avgMoonsPerPlanet: number;
+  }> = {};
+  
+  const presetIds = getTopologyPresetIds();
+  
+  for (const presetId of presetIds) {
+    const config: Partial<GeneratorConfig> = {
+      topologyPresetId: presetId,
+    };
+    
+    const result = generateSolarSystem(seed, config);
+    const all = Object.values(result.stars);
+    
+    const stars = all.filter(s => s.bodyType === 'star').length;
+    const planets = all.filter(s => s.bodyType === 'planet').length;
+    const moons = all.filter(s => s.bodyType === 'moon').length;
+    
+    results[presetId] = {
+      totalBodies: all.length,
+      stars,
+      planets,
+      moons,
+      avgMoonsPerPlanet: planets > 0 ? moons / planets : 0,
+    };
+  }
+  
+  return results as Record<TopologyPresetId, typeof results[string]>;
+}
+
+/**
+ * Print topology preset comparison to console
+ */
+export function printTopologyPresetComparison(seed: string = 'compare-seed-456') {
+  console.log('='.repeat(80));
+  console.log('TOPOLOGY PRESET COMPARISON');
+  console.log(`Seed: ${seed}`);
+  console.log('='.repeat(80));
+  
+  const comparison = compareTopologyPresets(seed);
+  
+  console.log('\n%-18s | %6s | %7s | %6s | %8s', 'Preset', 'Stars', 'Planets', 'Moons', 'Moon/Plt');
+  console.log('-'.repeat(80));
+  
+  for (const [presetId, stats] of Object.entries(comparison)) {
+    console.log('%-18s | %6d | %7d | %6d | %8.2f', 
+      presetId, 
+      stats.stars, 
+      stats.planets, 
+      stats.moons, 
+      stats.avgMoonsPerPlanet
+    );
+  }
+  
+  console.log('\n' + '='.repeat(80));
+  
+  // Test determinism
+  console.log('\nDeterminism Test:');
+  const determinism = testTopologyDeterminism(seed);
+  
+  for (const [presetId, result] of Object.entries(determinism)) {
+    console.log(`  ${presetId}: ${result.deterministic ? '✅ PASS' : '❌ FAIL'}`);
+  }
+  
+  console.log('='.repeat(80));
+}
+

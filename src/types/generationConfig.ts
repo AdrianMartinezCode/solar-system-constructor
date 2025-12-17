@@ -9,6 +9,18 @@ export interface GenerationConfig {
   maxDepth: number;
 
   stylePreset: "sparse" | "solarLike" | "crowded" | "superDenseExperimental";
+  
+  /**
+   * Topology/Grammar preset controlling system hierarchy generation.
+   * - "classic": Standard L-system (1-3 stars, geometric planet/moon distribution)
+   * - "compact": Fewer planets (max 4) with many moons each
+   * - "multiStarHeavy": Favors binary (50%) and ternary (35%) systems
+   * - "moonRich": Many moons per planet (up to 12)
+   * - "sparseOutpost": Minimal systems (1 star, 1-3 planets)
+   * - "deepHierarchy": Allows sub-moons (moons of moons)
+   */
+  topologyPreset?: "classic" | "compact" | "multiStarHeavy" | "moonRich" | "sparseOutpost" | "deepHierarchy";
+  
   enableNarySystems: boolean;
   scaleMode: "realistic" | "compressed" | "toy";
 

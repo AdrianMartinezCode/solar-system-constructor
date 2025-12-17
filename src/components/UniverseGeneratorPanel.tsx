@@ -212,6 +212,26 @@ export const UniverseGeneratorPanel: React.FC = () => {
         </select>
       </div>
       
+      {/* Topology / Grammar Preset Selector */}
+      <div className="generator-section">
+        <label className="generator-label">Topology / Grammar</label>
+        <select
+          className="generator-select"
+          value={config.topologyPreset ?? 'classic'}
+          onChange={(e) => updateConfig('topologyPreset', e.target.value as GenerationConfig["topologyPreset"])}
+        >
+          <option value="classic">Classic (standard balanced system)</option>
+          <option value="compact">Compact (1-2 planets with 5-18 moons each!)</option>
+          <option value="multiStarHeavy">Multi-Star Heavy (95% binary/ternary!)</option>
+          <option value="moonRich">Moon-Rich (every planet has 4-25 moons!)</option>
+          <option value="sparseOutpost">Sparse Outpost (lonely frontier, 0-2 planets)</option>
+          <option value="deepHierarchy">Deep Hierarchy (50% of moons have sub-moons!)</option>
+        </select>
+        <small className="generator-hint">
+          Dramatically changes system structure (stars → planets → moons)
+        </small>
+      </div>
+      
       {/* Basic Controls */}
       <div className="generator-section">
         <h3 className="generator-section-title">Basic Settings</h3>

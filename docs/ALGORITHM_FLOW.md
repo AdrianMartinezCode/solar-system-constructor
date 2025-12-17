@@ -19,42 +19,59 @@
                                     │
                                     ▼
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║                        PHASE 1: L-SYSTEM TOPOLOGY                         ║
+║                  PHASE 1: L-SYSTEM TOPOLOGY (PLUGGABLE)                   ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
                                     │
                     ┌───────────────▼───────────────┐
-                    │    Start Symbol: A (system)   │
+                    │  Select TopologyPreset from   │
+                    │  config.topologyPresetId      │
+                    │  (default: 'classic')         │
                     └───────────────┬───────────────┘
                                     │
                     ┌───────────────▼───────────────┐
-                    │  Apply Production Rules:      │
-                    │                                │
-                    │  A → S P*                      │ 65% single star
-                    │  A → S S P*                    │ 25% binary
-                    │  A → S S S P*                  │ 10% ternary
+                    │  Create TopologyGenerator     │
+                    │  from preset's GrammarDef     │
                     └───────────────┬───────────────┘
                                     │
                     ┌───────────────▼───────────────┐
-                    │  For each S (star node):      │
-                    │  Add P (planets)               │
-                    │  Count ~ Geometric(p=0.4)     │
+                    │  Start Symbol: S (system)     │
                     └───────────────┬───────────────┘
                                     │
                     ┌───────────────▼───────────────┐
-                    │  For each P (planet node):    │
-                    │  P → p M*                      │
-                    │  Add M (moons)                 │
-                    │  Count ~ Geometric(p=0.3)     │
+                    │  Apply Grammar Productions:   │
+                    │  (varies by preset)           │
+                    │                               │
+                    │  Classic Example:             │
+                    │  S → ★{1-3} ●*                │ stars + planets
+                    │  ★ → ε                        │ star (terminal)
+                    │  ● → ◦*                       │ planet → moons
+                    │  ◦ → ε                        │ moon (terminal)
                     └───────────────┬───────────────┘
                                     │
                     ┌───────────────▼───────────────┐
-                    │  For each M (moon node):      │
-                    │  M → m (leaf node)             │
+                    │  Star count from grammar      │
+                    │  or starCount config:         │
+                    │  single: 65%, binary: 25%,    │
+                    │  ternary: 10% (varies by      │
+                    │  topology preset)             │
+                    └───────────────┬───────────────┘
+                                    │
+                    ┌───────────────▼───────────────┐
+                    │  Planet/Moon counts from      │
+                    │  grammar's repeat rules:      │
+                    │  - geometric(p), uniform(a,b) │
+                    │  - fixed(n), with min/max     │
+                    └───────────────┬───────────────┘
+                                    │
+                    ┌───────────────▼───────────────┐
+                    │  Deep Hierarchy preset only:  │
+                    │  50% of moons → submoons      │
+                    │  (moon can have children)     │
                     └───────────────┬───────────────┘
                                     │
                                     ▼
-                          Hierarchical Tree
-                    (system → stars → planets → moons)
+                          Hierarchical LSystemNode Tree
+                    (system → stars → planets → moons → [submoons])
 
 
 ╔═══════════════════════════════════════════════════════════════════════════╗

@@ -130,6 +130,9 @@ function mapConfigToInternal(config: GenerationConfig): Partial<GeneratorConfig>
   const kuiperBeltEccentricityRange: [number, number] = [0.0, 0.15]; // Slightly eccentric
   
   return {
+    // Topology preset
+    topologyPresetId: config.topologyPreset ?? 'classic',
+    
     starProbabilities,
     planetGeometricP,
     moonGeometricP,

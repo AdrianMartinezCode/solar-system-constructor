@@ -10,6 +10,7 @@ export const defaultConfig: GenerationConfig = {
   maxDepth: 3,
   
   stylePreset: "solarLike",
+  topologyPreset: "classic",  // Default topology: standard L-system behavior
   enableNarySystems: true,
   scaleMode: "realistic",
   

@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../types';
 import { createPRNG, PRNG } from '../../prng';
+import type { TopologyPresetId, LSystemNode as TopologyLSystemNode, TopologyRNG, TopologyGeneratorConfig } from './topology';
+import { createTopologyGenerator, DEFAULT_TOPOLOGY_PRESET, getTopologyPreset } from './topology';
 
 /**
  * Procedural Solar System Generator using L-System Grammar
@@ -18,6 +20,9 @@ import { createPRNG, PRNG } from '../../prng';
 // ============================================================================
 
 interface GeneratorConfig {
+  // Topology / Grammar preset
+  topologyPresetId?: TopologyPresetId; // Which topology grammar to use (default: 'classic')
+  
   // L-System parameters
   starProbabilities: [number, number, number]; // [1-star, 2-star, 3-star] must sum to 1.0
   planetGeometricP: number; // Geometric distribution parameter for planet count
@@ -188,6 +193,9 @@ interface GeneratorConfig {
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
+  // Topology preset (default to classic for backward compatibility)
+  topologyPresetId: 'classic',
+  
   starProbabilities: [0.65, 0.25, 0.10],
   planetGeometricP: 0.4,
   moonGeometricP: 0.3,
@@ -466,9 +474,63 @@ class RandomGenerator {
 }
 
 // ============================================================================
-// L-System Generator
+// L-System Generator (Pluggable Topology Support)
 // ============================================================================
 
+/**
+ * Adapter to convert RandomGenerator to TopologyRNG interface
+ */
+class RandomGeneratorAdapter implements TopologyRNG {
+  private rng: RandomGenerator;
+  
+  constructor(rng: RandomGenerator) {
+    this.rng = rng;
+  }
+  
+  float(): number {
+    return this.rng.uniform(0, 1);
+  }
+  
+  int(min: number, max: number): number {
+    return this.rng.randInt(min, max);
+  }
+  
+  weighted<T>(items: T[], weights: number[]): T {
+    return this.rng.weighted(items, weights);
+  }
+  
+  geometric(p: number): number {
+    return this.rng.geometric(p);
+  }
+  
+  poisson(lambda: number): number {
+    // Simple Poisson approximation using geometric
+    // For low lambda, this is reasonable
+    let count = 0;
+    let prob = Math.exp(-lambda);
+    let sum = prob;
+    const u = this.rng.uniform(0, 1);
+    
+    while (sum < u && count < 100) {
+      count++;
+      prob *= lambda / count;
+      sum += prob;
+    }
+    return count;
+  }
+  
+  fork(label: string): TopologyRNG {
+    return new RandomGeneratorAdapter(this.rng.fork(label));
+  }
+}
+
+/**
+ * L-System Generator with pluggable topology support.
+ * 
+ * Uses the topology module to generate the L-system tree based on the
+ * configured topology preset. The default 'classic' preset replicates
+ * the original hardcoded behavior for backward compatibility.
+ */
 class LSystemGenerator {
   private config: GeneratorConfig;
   private rng: RandomGenerator;
@@ -479,85 +541,69 @@ class LSystemGenerator {
   }
   
   /**
-   * Generate the root L-System node (A → system with stars and planets)
+   * Generate the root L-System node using the configured topology preset.
+   * 
+   * This method delegates to the appropriate topology generator based on
+   * config.topologyPresetId. The 'classic' preset exactly replicates the
+   * original behavior for backward compatibility.
    */
   generate(): LSystemNode {
-    const root: LSystemNode = {
-      type: 'system',
-      id: uuidv4(),
-      parent: null,
-      children: [],
-      depth: 0,
+    const presetId = this.config.topologyPresetId || DEFAULT_TOPOLOGY_PRESET;
+    
+    // Create topology generator for the preset
+    const topologyGenerator = createTopologyGenerator(presetId);
+    
+    // Create RNG adapter
+    const topologyRng = new RandomGeneratorAdapter(this.rng);
+    
+    // Get preset to check for suggested overrides
+    const preset = getTopologyPreset(presetId);
+    
+    // Build topology config, applying preset's suggested overrides
+    const topologyConfig: TopologyGeneratorConfig = {
+      starProbabilities: preset.suggestedOverrides?.starProbabilities 
+        ?? this.config.starProbabilities,
+      planetGeometricP: preset.suggestedOverrides?.planetGeometricP
+        ?? preset.grammar.defaultPlanetGeometricP
+        ?? this.config.planetGeometricP,
+      moonGeometricP: preset.suggestedOverrides?.moonGeometricP
+        ?? preset.grammar.defaultMoonGeometricP
+        ?? this.config.moonGeometricP,
+      maxDepth: preset.suggestedOverrides?.maxDepth
+        ?? preset.grammar.maxDepth
+        ?? this.config.maxDepth,
     };
     
-    this.expandSystem(root);
-    return root;
+    // Generate topology using pluggable generator
+    const topologyTree = topologyGenerator.generate(topologyRng, topologyConfig);
+    
+    // Convert TopologyLSystemNode to local LSystemNode format
+    // (They have the same structure, just different module sources)
+    return this.convertTopologyNode(topologyTree, null);
   }
   
   /**
-   * Expand A → S P* | S S P* | S S S P*
+   * Convert topology module's LSystemNode to local format.
+   * This is needed because the types come from different modules.
    */
-  private expandSystem(node: LSystemNode): void {
-    const numStars = this.rng.weighted(
-      [1, 2, 3],
-      this.config.starProbabilities
+  private convertTopologyNode(
+    node: TopologyLSystemNode,
+    parent: LSystemNode | null
+  ): LSystemNode {
+    const converted: LSystemNode = {
+      type: node.type as NodeType,
+      id: node.id,
+      parent,
+      children: [],
+      depth: node.depth,
+    };
+    
+    // Recursively convert children
+    converted.children = node.children.map(child => 
+      this.convertTopologyNode(child, converted)
     );
     
-    // Add stars
-    for (let i = 0; i < numStars; i++) {
-      const star: LSystemNode = {
-        type: 'star',
-        id: uuidv4(),
-        parent: node,
-        children: [],
-        depth: node.depth + 1,
-      };
-      node.children.push(star);
-    }
-    
-    // Add planets to the first (or heaviest, but we determine that later) star
-    // For now, attach planets to the first star
-    const primaryStar = node.children[0];
-    if (primaryStar) {
-      const numPlanets = this.rng.geometric(this.config.planetGeometricP);
-      for (let i = 0; i < numPlanets; i++) {
-        this.expandPlanet(primaryStar);
-      }
-    }
-  }
-  
-  /**
-   * Expand P → p M*
-   */
-  private expandPlanet(parent: LSystemNode): void {
-    const planet: LSystemNode = {
-      type: 'planet',
-      id: uuidv4(),
-      parent,
-      children: [],
-      depth: parent.depth + 1,
-    };
-    parent.children.push(planet);
-    
-    // Add moons
-    const numMoons = this.rng.geometric(this.config.moonGeometricP);
-    for (let i = 0; i < numMoons; i++) {
-      this.expandMoon(planet);
-    }
-  }
-  
-  /**
-   * Expand M → m
-   */
-  private expandMoon(parent: LSystemNode): void {
-    const moon: LSystemNode = {
-      type: 'moon',
-      id: uuidv4(),
-      parent,
-      children: [],
-      depth: parent.depth + 1,
-    };
-    parent.children.push(moon);
+    return converted;
   }
 }
 
@@ -935,8 +981,19 @@ class StarDataGenerator {
       }
     }
     
-    // Process planets (attached to center body, whether star or black hole)
-    const planetNodes = centerNode.children.filter(n => n.type === 'planet');
+    // Process planets
+    // FIX: With pluggable topology generators, planets may be attached to either:
+    // 1. The system node directly (new topology generators)
+    // 2. A star node (legacy behavior)
+    // We check both locations to ensure compatibility.
+    const planetNodesFromSystem = system.children.filter(n => n.type === 'planet');
+    const planetNodesFromCenter = centerNode.children.filter(n => n.type === 'planet');
+    
+    // Combine, preferring system-level planets (new behavior)
+    const planetNodes = planetNodesFromSystem.length > 0 
+      ? planetNodesFromSystem 
+      : planetNodesFromCenter;
+    
     planetNodes.forEach((planetNode, index) => {
       // Calculate companion star count for orbit index offset
       const companionCount = stars.filter(s => s.parentId === centerStar.id && s.bodyType === 'star').length;

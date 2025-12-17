@@ -18,6 +18,33 @@ useSystemStore.setState({
 });
 ```
 
+## Topology Presets (Structure Control)
+
+Topology presets control the **hierarchical structure** of generated systems:
+
+```typescript
+import { generateSolarSystem } from './utils/procedural-generator';
+
+// Use different topology presets
+const classic = generateSolarSystem({ topologyPresetId: 'classic' });
+const compact = generateSolarSystem({ topologyPresetId: 'compact' });      // 1-2 planets, 5-18 moons each
+const multiStar = generateSolarSystem({ topologyPresetId: 'multiStarHeavy' }); // 95% binary/ternary
+const moonRich = generateSolarSystem({ topologyPresetId: 'moonRich' });    // 4-25 moons per planet
+const sparse = generateSolarSystem({ topologyPresetId: 'sparseOutpost' }); // 0-2 planets, lonely
+const deep = generateSolarSystem({ topologyPresetId: 'deepHierarchy' });   // Moons with sub-moons
+```
+
+### Topology Preset Summary
+
+| Preset | Stars | Planets | Moons/Planet | Description |
+|--------|-------|---------|--------------|-------------|
+| `classic` | 1-3 | 0-5 | 0-5 | Standard behavior |
+| `compact` | 1 | 1-2 | 5-18 | Jupiter-like systems |
+| `multiStarHeavy` | 2-3 (95%) | 1-4 | 0-3 | Focus on stars |
+| `moonRich` | 1 | 3-6 | 4-25 | Moon swarms |
+| `sparseOutpost` | 1 | 0-2 | 0-2 | Lonely frontier |
+| `deepHierarchy` | 1 | 2-5 | 2-6 (+submoons) | Nested hierarchy |
+
 ## Presets (One-Liners)
 
 ```typescript
@@ -133,6 +160,14 @@ generateSolarSystem({
 ```
 
 ## Configuration Parameters
+
+### Topology
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `topologyPresetId` | `TopologyPresetId` | `'classic'` | Controls system structure (stars/planets/moons hierarchy) |
+
+### L-System Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -438,7 +473,7 @@ Bottlenecks:
 
 ## Algorithm Summary
 
-1. **Topology**: L-System grammar with stochastic rules
+1. **Topology**: Pluggable L-System grammar with stochastic rules (selectable via `topologyPresetId`)
 2. **Hierarchy**: Heaviest star becomes center
 3. **Orbits**: Exponential spacing + Kepler speed
 4. **Physics**: Log-normal mass, power-law radius
@@ -465,5 +500,7 @@ Bottlenecks:
 
 ## Further Reading
 
-See `docs/PROCEDURAL_GENERATOR.md` for complete documentation.
+- [PROCEDURAL_GENERATOR.md](./PROCEDURAL_GENERATOR.md) - Complete generator documentation
+- [TOPOLOGY_GRAMMAR_PRESETS.md](./TOPOLOGY_GRAMMAR_PRESETS.md) - Topology presets and L-system grammars
+- [ALGORITHM_FLOW.md](./ALGORITHM_FLOW.md) - Detailed algorithm flow
 
