@@ -7,6 +7,8 @@
 - n-body fisics
 - más tipos de astros
 - ✅ ~~elliptical orbit + translated orbit + rotated in xyz~~ **IMPLEMENTED!**
+- el fondo por defecto de estrellas es muy poco amplio y parece una esfera cuando alejas la cámara
+- crear más default presets
 
 ## Installation
 

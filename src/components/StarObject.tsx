@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
 import { calculateOrbitalPosition, calculateRoguePlanetPosition, generateOrbitPath, computeRogueTrajectoryPoints } from '../utils/physics';
@@ -11,6 +11,7 @@ import { ProtoplanetaryDiskObject } from './ProtoplanetaryDiskObject';
 import { SmallBodyFieldObject } from './SmallBodyFieldObject';
 import { RogueTrajectory } from './RogueTrajectory';
 import { BlackHoleObject } from './BlackHoleObject';
+import { starRegistry } from '../utils/starRegistry';
 
 interface StarObjectProps {
   starId: string;
@@ -71,6 +72,16 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
     }
     return generateOrbitPath(star);
   }, [star]); // Only regenerate when star orbit params change, not on every frame
+  
+  // Register this star's group ref for world position lookups
+  useEffect(() => {
+    if (groupRef.current) {
+      starRegistry.register(starId, groupRef.current);
+    }
+    return () => {
+      starRegistry.unregister(starId);
+    };
+  }, [starId]);
   
   if (!star) return null;
   

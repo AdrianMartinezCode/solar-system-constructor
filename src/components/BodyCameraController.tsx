@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
-import { calculateOrbitalPosition } from '../utils/physics';
+import { starRegistry } from '../utils/starRegistry';
 import * as THREE from 'three';
 
 /**
@@ -19,7 +19,6 @@ export const BodyCameraController: React.FC = () => {
   const cameraTargetBodyId = useSystemStore((state) => state.cameraTargetBodyId);
   const cameraOffset = useSystemStore((state) => state.cameraOffset);
   const stars = useSystemStore((state) => state.stars);
-  const time = useSystemStore((state) => state.time);
   
   // Transition state
   const transitionRef = useRef({
@@ -40,32 +39,18 @@ export const BodyCameraController: React.FC = () => {
   const prevModeRef = useRef<'overview' | 'body'>(cameraMode);
   const prevBodyIdRef = useRef<string | null>(cameraTargetBodyId);
   
-  // Function to get world position of a star (including all parent transformations)
+  // Function to get world position of a star from the scene graph
+  // Uses the star registry to get accurate positions including all group transformations
   const getStarWorldPosition = (starId: string): THREE.Vector3 => {
-    const worldPos = new THREE.Vector3();
-    const positions: THREE.Vector3[] = [];
-    
-    // Walk up the parent chain and collect positions
-    let currentId: string | null = starId;
-    while (currentId) {
-      const star = stars[currentId];
-      if (!star) break;
-      
-      if (star.orbitalDistance > 0) {
-        // Use the new elliptical orbit calculation
-        const pos = calculateOrbitalPosition(time, star);
-        positions.unshift(new THREE.Vector3(pos.x, pos.y, pos.z));
-      } else {
-        positions.unshift(new THREE.Vector3(0, 0, 0));
-      }
-      
-      currentId = star.parentId;
+    // Try to get the world position from the registry (most accurate)
+    const registryPos = starRegistry.getWorldPosition(starId);
+    if (registryPos) {
+      return registryPos;
     }
     
-    // Sum all positions to get world position
-    positions.forEach(pos => worldPos.add(pos));
-    
-    return worldPos;
+    // Fallback: return zero vector if star is not registered yet
+    console.warn(`Star ${starId} not found in registry, using fallback position`);
+    return new THREE.Vector3(0, 0, 0);
   };
   
   // Detect mode or body changes and start transition
@@ -91,16 +76,29 @@ export const BodyCameraController: React.FC = () => {
         const star = stars[cameraTargetBodyId];
         if (star) {
           const bodyWorldPos = getStarWorldPosition(cameraTargetBodyId);
-          const offsetDistance = star.radius * cameraOffset;
+          // The sphere radius is body radius * offset multiplier
+          const sphereRadius = star.radius * cameraOffset;
           
-          // Position camera offset from body
+          // Calculate direction from body to current camera
+          const directionToCamera = new THREE.Vector3()
+            .subVectors(camera.position, bodyWorldPos)
+            .normalize();
+          
+          // If camera is too close to body center (direction would be zero),
+          // use a default direction
+          if (directionToCamera.length() < 0.001) {
+            directionToCamera.set(1, 0.5, 1).normalize();
+          }
+          
+          // Position camera on the sphere surface, in the direction from body to current camera
+          // This ensures a natural transition from wherever the camera currently is
+          transition.endPosition.copy(bodyWorldPos).addScaledVector(directionToCamera, sphereRadius);
+          
+          // The target is the body center - camera always looks at the body
           transition.endTarget.copy(bodyWorldPos);
-          transition.endPosition.copy(bodyWorldPos);
-          transition.endPosition.x += offsetDistance;
-          transition.endPosition.y += offsetDistance * 0.5;
           
-          // Store the initial offset from body position
-          cameraOffsetRef.current.set(offsetDistance, offsetDistance * 0.5, 0);
+          // Store the offset vector for tracking body movement
+          cameraOffsetRef.current.copy(directionToCamera).multiplyScalar(sphereRadius);
           lastBodyPositionRef.current.copy(bodyWorldPos);
         }
       } else {
@@ -116,10 +114,10 @@ export const BodyCameraController: React.FC = () => {
       prevModeRef.current = cameraMode;
       prevBodyIdRef.current = cameraTargetBodyId;
     }
-  }, [cameraMode, cameraTargetBodyId, camera, stars, time, cameraOffset]);
+  }, [cameraMode, cameraTargetBodyId, camera, stars, cameraOffset]);
   
   // Frame update
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     const transition = transitionRef.current;
     
     // Handle smooth transition
@@ -160,22 +158,24 @@ export const BodyCameraController: React.FC = () => {
     // In body POV mode, continuously update camera to follow the body
     if (cameraMode === 'body' && cameraTargetBodyId && !transition.active) {
       const star = stars[cameraTargetBodyId];
-      if (star) {
+      if (star && controls) {
         const bodyWorldPos = getStarWorldPosition(cameraTargetBodyId);
         
         // Calculate how much the body has moved since last frame
         const bodyDelta = new THREE.Vector3().subVectors(bodyWorldPos, lastBodyPositionRef.current);
         
-        // Only update if the body has actually moved
-        if (controls && bodyDelta.length() > 0.0001) {
-          // Body has moved - update camera position by the same delta
+        // Always keep the OrbitControls target on the body
+        // This allows dragging to rotate camera around the body on the sphere
+        (controls as any).target.copy(bodyWorldPos);
+        
+        // If the body has moved, translate the camera by the same amount
+        // This keeps the camera at the same relative position on the sphere
+        if (bodyDelta.length() > 0.0001) {
           camera.position.add(bodyDelta);
-          
-          // Update controls target
-          (controls as any).target.copy(bodyWorldPos);
-          // Call update to ensure OrbitControls recalculates its internal state
-          (controls as any).update();
         }
+        
+        // Ensure OrbitControls recalculates its internal state
+        (controls as any).update();
         
         // Store current body position for next frame
         lastBodyPositionRef.current.copy(bodyWorldPos);
