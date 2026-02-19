@@ -1,0 +1,37 @@
+---
+globs: docs/prompts/**
+description: Task prompt storage convention: per slug + per task subfolder under docs/prompts/
+---
+
+# `docs/prompts/` structure rule (keep prompts unmixed)
+
+## Goal
+
+Avoid mixing unrelated task prompts in a single flat folder. Every change initiative (slug) gets its own folder, and every task gets its own subfolder so you can attach additional context files later without clutter.
+
+## Canonical layout
+
+- `docs/prompts/<slug>/`
+  - `task_<n>/`
+    - `TASK_<n>_<slug>.md` (the task prompt)
+    - _(optional)_ `NOTES.md`, `CONTEXT.md`, screenshots, scratchpads, etc.
+
+Where:
+- `<slug>` is the same snake_case slug used in `CR_<slug>.md` / `PLAN_<slug>.md`
+- `<n>` is 1-indexed (`1`, `2`, `3`, …)
+
+## Naming rules
+
+- Use `task_<n>` (e.g. `task_1`, `task_2`), not free-form folder names.
+- Keep the prompt filename as `TASK_<n>_<slug>.md` to preserve grep-ability and consistency.
+
+## Do / Don’t
+
+- Do: create `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md`
+- Don’t: create new prompts directly under `docs/prompts/` root.
+
+## Related conventions
+
+- Workflow reference: `docs/README.md`
+- Planning runbook: `docs/PROMPT_MINIMAL_AGENT_RUNBOOK.md`
+

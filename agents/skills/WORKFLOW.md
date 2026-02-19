@@ -12,7 +12,7 @@ This document describes the complete workflow for using the agent skills and MCP
 │  Request        │     │  Gather Ctx  │     │  into Tasks   │     │  Tasks      │
 └─────────────────┘     └──────────────┘     └───────────────┘     └─────────────┘
   docs/requests/          MCP tools           docs/plans/            Code changes
-  CR_<slug>.md                                docs/prompts/          + verification
+  CR_<slug>.md                                docs/prompts/<slug>/   + verification
 ```
 
 ---
@@ -85,7 +85,7 @@ Use the **PO Task Decomposer** skill (`agents/skills/po_task_decomposer.md`):
 3. Split into ordered tasks (each ≤ 5 files, one concern per task).
 4. Output:
    - **Plan file**: `docs/plans/PLAN_<slug>.md`
-   - **Task prompts**: `docs/prompts/TASK_1_<slug>.md`, `TASK_2_<slug>.md`, etc.
+   - **Task prompts**: `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md`
 
 ### Plan file structure
 
@@ -112,7 +112,7 @@ Use the **Prompt Writer** skill (`agents/skills/prompt_writer.md`):
 For each task in the plan:
 1. Read the task entry from the plan file.
 2. Use MCP tools to inspect the specific files the task will touch.
-3. Write a self-contained prompt to `docs/prompts/TASK_<n>_<slug>.md`.
+3. Write a self-contained prompt to `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md`.
 
 ### Task prompt structure
 
@@ -182,9 +182,9 @@ For each task prompt, in order:
 6. Agent triages:        (optional) docs/decisions/TRIAGE_add_orbit_editor.md
 7. PO Decomposer outputs:
    - docs/plans/PLAN_add_orbit_editor.md
-   - docs/prompts/TASK_1_add_orbit_editor.md
-   - docs/prompts/TASK_2_add_orbit_editor.md
-   - docs/prompts/TASK_3_add_orbit_editor.md
+   - docs/prompts/add_orbit_editor/task_1/TASK_1_add_orbit_editor.md
+   - docs/prompts/add_orbit_editor/task_2/TASK_2_add_orbit_editor.md
+   - docs/prompts/add_orbit_editor/task_3/TASK_3_add_orbit_editor.md
 8. Human reviews plan + prompts
 9. Coding agent implements Task 1, verifies with `npm run build`
 10. Coding agent implements Task 2, verifies

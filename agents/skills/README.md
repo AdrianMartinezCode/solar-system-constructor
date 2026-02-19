@@ -9,6 +9,9 @@ Skills are structured playbooks that guide an AI agent through a specific workfl
 | PO Task Decomposer | `po_task_decomposer.md` | Break a change request into ordered, small tasks with acceptance criteria |
 | Change Request Triage | `change_request_triage.md` | Evaluate and classify incoming change requests |
 | Prompt Writer | `prompt_writer.md` | Generate per-task implementation prompts for coding agents |
+| Curator — Entropy Audit | `curator_entropy_audit.md` | Audit repo/doc/agent entropy and convert findings into an ordered plan |
+| Curator — Docs Librarian | `curator_docs_librarian.md` | Maintain doc taxonomy, indexes, templates, and cross-links |
+| Curator — Decision Steward (ADR) | `curator_decision_steward.md` | Capture/track structural decisions as ADRs and keep an ADR index |
 
 ## Skill Template
 

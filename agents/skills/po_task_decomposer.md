@@ -12,7 +12,7 @@ Break a change request document into an ordered list of small, implementable tas
 ## Outputs
 
 - **Plan file**: `docs/plans/PLAN_<slug>.md`
-- **Task prompt files**: `docs/prompts/TASK_<n>_<slug>.md` (one per task)
+- **Task prompt files**: `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md` (one per task)
 
 ## Algorithm / Steps
 
@@ -27,7 +27,7 @@ Break a change request document into an ordered list of small, implementable tas
    - Acceptance criteria (testable bullets)
    - Verification commands
 7. Write the plan file to `docs/plans/PLAN_<slug>.md`.
-8. Write one task prompt per task to `docs/prompts/TASK_<n>_<slug>.md`.
+8. Write one task prompt per task to `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md`.
 
 ## Task Sizing Rules
 

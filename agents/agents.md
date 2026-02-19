@@ -18,6 +18,14 @@ This repo is a **Vite + React + TypeScript** frontend that renders an interactiv
 | Docs | `docs/` | Requests, plans, prompts, decisions |
 | MCP | `mcp/server/` | Local MCP server for repo tooling |
 
+## Multi-Agent Compatibility
+
+This repo supports multiple “roles” (agents with different responsibilities) while keeping the original contract intact.
+
+- **Contract (this file)**: global rules that all agents must follow.
+- **Agent roles**: `agents/roles/` — individual role definitions (personas + responsibilities + outputs).
+- **Skills**: `agents/skills/` — reusable playbooks any role can invoke.
+
 ## Workflow
 
 1. **Read** — Gather repo context using MCP tools (read, list, search, context snapshot).

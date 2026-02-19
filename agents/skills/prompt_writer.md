@@ -11,7 +11,7 @@ Generate a detailed, self-contained implementation prompt for a single task. The
 
 ## Outputs
 
-- **Task prompt file**: `docs/prompts/TASK_<n>_<slug>.md`
+- **Task prompt file**: `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md`
 
 ## Algorithm / Steps
 
@@ -28,7 +28,7 @@ Generate a detailed, self-contained implementation prompt for a single task. The
    - **Acceptance criteria**: bullet list of testable conditions.
    - **Verification**: non-interactive commands to run (e.g., `npm run build`).
    - **Notes**: edge cases, rollback plan, things to watch out for.
-5. Save the prompt to `docs/prompts/TASK_<n>_<slug>.md`.
+5. Save the prompt to `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md`.
 
 ## Task Sizing Rules
 
