@@ -5,7 +5,8 @@ Use this document as a **copy/paste prompt** for an AI coding agent in this repo
 ## Intended model + role
 
 - **Model**: a coding agent that can read/write repo files and run non-interactive verification commands
-- **Role**: `<role_file>` (example: `agents/roles/curator_of_order.md`)
+- **Entry point (recommended)**: `agents/agents.md` (Orchestrator; routes to a role)
+- **Pinned role (optional)**: `<role_file>` (example: `agents/roles/curator_of_order.md`)
 
 ## Context to read first
 
@@ -13,12 +14,17 @@ Read these files first, in this order:
 
 1. `agents/agents.md`
 2. `agents/skills/WORKFLOW.md`
-3. `<role_file>`
-4. `<cr_file>`
+3. (Optional, pinned-role mode) `<role_file>`
+4. (If planning via Product Owner) `<cr_file>`
 
 ## Objective
 
-Given a change request, produce a small-task plan and per-task implementation prompts (CR → PLAN → TASK), then (optionally) implement the tasks **only after explicit human approval**.
+Given an input, follow the repo workflow (CR → PLAN → TASK prompts → optional implementation) and **only implement after explicit human approval**.
+
+Notes:
+
+- In **orchestrator-first** mode, start from `agents/agents.md` and let the orchestrator route to the correct role file under `agents/roles/`.
+- In **pinned-role** mode, set `<role_file>` explicitly (e.g. when you already know you want Product Owner vs Curator vs Developer).
 
 ## Constraints / do-nots
 

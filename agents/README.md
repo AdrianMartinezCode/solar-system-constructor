@@ -4,13 +4,14 @@ This folder contains the repo’s **agent contract**, **agent roles**, and **ski
 
 ## Quick Links
 
-- **Global contract**: `agents/agents.md`
+- **Orchestrator entry point (global contract + routing)**: `agents/agents.md`
 - **Agent roles (personas)**: `agents/roles/`
+- **Role catalog**: `agents/roles/README.md`
 - **Skills (playbooks)**: `agents/skills/`
 
 ## Copy/paste prompt model (for minimal chat instructions)
 
-- Minimal runbook (CR → PLAN → TASK prompts → optional implementation): `docs/PROMPT_MINIMAL_AGENT_RUNBOOK.md`
+- Minimal runbook (CR → PLAN → TASK prompts → optional implementation): `docs/ai_prompts/PROMPT_MINIMAL_AGENT_RUNBOOK.md`
 
 ## How to Add a New Agent Role
 

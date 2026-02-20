@@ -6,6 +6,7 @@ Skills are structured playbooks that guide an AI agent through a specific workfl
 
 | Skill | File | Purpose |
 |-------|------|---------|
+| Dev Task Executor | `dev_task_executor.md` | Execute one approved task prompt as a small diff and verify it |
 | PO Task Decomposer | `po_task_decomposer.md` | Break a change request into ordered, small tasks with acceptance criteria |
 | Change Request Triage | `change_request_triage.md` | Evaluate and classify incoming change requests |
 | Prompt Writer | `prompt_writer.md` | Generate per-task implementation prompts for coding agents |

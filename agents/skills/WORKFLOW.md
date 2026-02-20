@@ -15,7 +15,30 @@ This document describes the complete workflow for using the agent skills and MCP
   CR_<slug>.md                                docs/prompts/<slug>/   + verification
 ```
 
+### Who does what (roles)
+
+- **Orchestrator**: `agents/agents.md` routes the request to the right role.
+- **Product Owner**: generates CR/PLAN/TASK prompts (planning-only).
+- **Task Developer / Task Curator of Order**: execute approved task prompts under `docs/prompts/<slug>/task_<n>/...`.
+- **Developer / Curator of Order**: handle small, direct requests (when decomposition into tasks is not warranted).
+
+### Entry paths (choose one)
+
+This repo supports three practical entry paths:
+
+- **A) Big work / planning-first (Product Owner)**: Create a CR → gather context → (optional) triage → decompose into tasks → write task prompts → human approval → task execution.
+- **B) Small direct change (Developer / Curator of Order)**: Implement/curate directly when the scope is truly small (typically 1–2 focused changes). You may optionally write a CR for traceability, but it is not required.
+- **C) Execute an existing task prompt (Task Developer / Task Curator of Order)**: If the input is already a `docs/prompts/<slug>/task_<n>/...` file, start from that prompt and execute exactly one task at a time.
+
 ---
+
+## Step 0: Route (Orchestrator)
+
+Before starting, use `agents/agents.md` to route to the correct role and entry path (A/B/C). The sections below primarily describe **Path A (planning-first)**, plus a short guide for Paths B and C.
+
+---
+
+## Path A — Planning-first workflow (Product Owner)
 
 ## Step 1: Create a Change Request
 
@@ -142,6 +165,10 @@ Only proceed to implementation after approval.
 
 ## Step 7: Implement Tasks (In Order)
 
+Use the task execution playbook:
+
+- `agents/skills/dev_task_executor.md`
+
 For each task prompt, in order:
 
 1. Read the task prompt file.
@@ -157,6 +184,28 @@ For each task prompt, in order:
 - Keep diffs small and focused.
 - Do not mix refactoring with feature work.
 - If a task reveals unexpected complexity, stop and update the plan.
+
+---
+
+## Path B — Small direct change (Developer / Curator of Order)
+
+Use this path only when decomposition is not warranted (typically 1–2 focused changes).
+
+1. Route to **Developer** (small implementation) or **Curator of Order** (small curation).
+2. Read only the minimal relevant context.
+3. Implement the change as a small, reviewable diff.
+4. Verify (`npm run build` at minimum; add `npm run typecheck` when available).
+5. If scope expands, stop and switch to **Path A** (Product Owner) to decompose into tasks.
+
+---
+
+## Path C — Execute an existing task prompt (Task Developer / Task Curator of Order)
+
+1. Route to **Task Developer** or **Task Curator of Order** based on the prompt’s scope.
+2. Read the task prompt: `docs/prompts/<slug>/task_<n>/TASK_<n>_<slug>.md`.
+3. Follow its “Context to read first”, constraints, and file allowlist.
+4. Implement exactly that one task and verify using the prompt’s commands.
+5. Move to the next task prompt only after acceptance criteria are met.
 
 ---
 
