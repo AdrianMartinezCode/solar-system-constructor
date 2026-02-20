@@ -14,5 +14,5 @@ This folder is the durable memory for how/why we changed the repo or architectur
 
 ## Index
 
-_No ADRs yet._ Add the first ADR as `ADR_0001_<slug>.md` and list it here.
+- `ADR_0001_agents_dot_agents_consolidation.md` — Consolidate agent system into `.agents/` (remove `agents/`) (2026-02-20) — **accepted**
 

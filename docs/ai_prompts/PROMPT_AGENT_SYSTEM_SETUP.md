@@ -19,7 +19,7 @@ Use this document as a **copy/paste prompt** for another coding model.
 
 - `package.json` (scripts)
 - `README.md` and `QUICKSTART.md` (repo entry points)
-- Any existing `agents/`, `docs/`, and `mcp/` folders (if present)
+- Any existing `.agents/`, `docs/`, and `mcp/` folders (if present)
 
 ### Repo context
 
@@ -43,7 +43,7 @@ Add a clean, standard foundation that lets an AI agent:
 
 We want:
 
-- **`/agents/`**: agent contract + “skills” playbooks (markdown)
+- **`/.agents/`**: agent contract + “skills” playbooks (markdown)
 - **`/docs/`**: requests, plans, prompts (markdown)
 - **`/mcp/`**: a minimal MCP server skeleton (TypeScript) exposing safe repo tools
 
@@ -54,7 +54,7 @@ This should be **boring-on-purpose** and easy for other models to follow.
 Add these top-level folders/files:
 
 ```
-/agents/
+/.agents/
   agents.md
   skills/
     README.md
@@ -100,7 +100,7 @@ Notes:
 
 When finished (Milestone A):
 
-- The repo contains the new folders and markdown contracts under `/agents` and `/docs`.
+- The repo contains the new folders and markdown contracts under `/.agents` and `/docs`.
 - The MCP server skeleton exists under `/mcp/server` and can be built/started locally (even if not “published”).
 - The MCP server exposes **read-only** tools:
   - read file(s)
@@ -123,7 +123,7 @@ Optional (Milestone B) DoD:
 
 Deliver value immediately without risky writes:
 
-- Add `/agents/*` and `/docs/*` structure and templates.
+- Add `/.agents/*` and `/docs/*` structure and templates.
 - Add MCP server with **read/list/search/context snapshot** tools only.
 
 ### Milestone B — Implementation agent (optional later)
@@ -146,12 +146,12 @@ Implement tasks in order. Each task should be a small PR-sized change.
 
 **Scope**:
 
-- Add `agents/agents.md`
-- Add `agents/skills/README.md`
+- Add `.agents/agents.md`
+- Add `.agents/skills/README.md`
 - Add 3 skills:
-  - `agents/skills/po_task_decomposer.md`
-  - `agents/skills/change_request_triage.md`
-  - `agents/skills/prompt_writer.md`
+  - `.agents/skills/po_task_decomposer.md`
+  - `.agents/skills/change_request_triage.md`
+  - `.agents/skills/prompt_writer.md`
 
 **Non-goals**:
 
@@ -159,7 +159,7 @@ Implement tasks in order. Each task should be a small PR-sized change.
 
 **Acceptance criteria**:
 
-- `agents/agents.md` contains:
+- `.agents/agents.md` contains:
   - project overview (5–10 lines max)
   - architecture snapshot (stack + key directories)
   - workflow (read → plan → user approval → implement tasks)
@@ -176,8 +176,8 @@ Implement tasks in order. Each task should be a small PR-sized change.
 
 **Files touched** (expected):
 
-- `agents/agents.md`
-- `agents/skills/*`
+- `.agents/agents.md`
+- `.agents/skills/*`
 
 ---
 
@@ -292,7 +292,7 @@ Implement tasks in order. Each task should be a small PR-sized change.
 
 **Scope**:
 
-- Add `agents/skills/WORKFLOW.md` (or append to `agents/agents.md`) describing:
+- Add `.agents/skills/workflow/SKILL.md` (or append to `.agents/agents.md`) describing:
   - how to create `docs/requests/CR_<slug>.md`
   - which MCP tools to run to gather repo context
   - how the PO decomposer should output:
@@ -405,7 +405,7 @@ Avoid pasting large code blocks in the response; keep code changes in actual fil
 
 ## Files to touch
 
-- `agents/` (contract + skills markdown)
+- `.agents/` (contract + skills markdown)
 - `docs/` (requests/plans/prompts/decisions workflow folders)
 - `mcp/` (server skeleton + tools)
 

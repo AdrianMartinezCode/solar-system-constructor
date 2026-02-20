@@ -2,12 +2,12 @@
 
 ## Summary
 
-Add a new **Curator of Order** agent role and the minimum repo scaffolding to keep agents/skills/docs/decisions/MCP tooling organized as the project grows. Keep changes additive and compatible with existing paths and workflows.
+Add a new **Curator of Order** agent role and the minimum repo scaffolding to keep `.agents`/docs/decisions/MCP tooling organized as the project grows. Keep changes additive and compatible with existing paths and workflows.
 
 ## Repo snapshot used
 
-- `agents/agents.md`
-- `agents/skills/README.md`, `agents/skills/WORKFLOW.md`, existing skills
+- `.agents/agents.md`
+- `.agents/skills/README.md`, `.agents/skills/workflow/SKILL.md`, existing skills
 - `docs/requests/README.md`, `docs/requests/CR_TEMPLATE.md`
 - `docs/` tree (feature docs)
 - `mcp/server/src/index.ts`, `mcp/server/src/tools/*`
@@ -32,17 +32,17 @@ Add a new **Curator of Order** agent role and the minimum repo scaffolding to ke
 
 ### Task 1 — Add scalable agent role structure + templates
 
-- **Goal**: Introduce `agents/roles/` with an index + template; add lightweight compatibility note in the existing contract.
+- **Goal**: Introduce `.agents/roles/` with an index + template; add lightweight compatibility note in the existing contract.
 - **Scope / non-goals**: no behavior changes; no breaking path changes.
 - **Dependencies**: none
 - **Files likely touched**:
-  - `agents/agents.md`
-  - `agents/README.md`
-  - `agents/roles/README.md`
-  - `agents/roles/_template.md`
+  - `.agents/agents.md`
+  - `.agents/README.md`
+  - `.agents/roles/README.md`
+  - `.agents/roles/_template.md`
 - **Acceptance criteria**:
   - Roles have a home and an index.
-  - Existing references to `agents/agents.md` remain valid.
+  - Existing references to `.agents/agents.md` remain valid.
 - **Verification commands**:
   - `npm run typecheck`
   - `npm run build`
@@ -53,12 +53,12 @@ Add a new **Curator of Order** agent role and the minimum repo scaffolding to ke
 - **Scope / non-goals**: no doc moves; no app code changes.
 - **Dependencies**: Task 1
 - **Files likely touched**:
-  - `agents/roles/curator_of_order.md`
-  - `agents/skills/README.md`
-  - `agents/skills/_template.md`
-  - `agents/skills/curator_entropy_audit.md`
-  - `agents/skills/curator_docs_librarian.md`
-  - `agents/skills/curator_decision_steward.md`
+  - `.agents/roles/curator_of_order.md`
+  - `.agents/skills/README.md`
+  - `.agents/skills/_template/SKILL.md`
+  - `.agents/skills/curator-entropy-audit/SKILL.md`
+  - `.agents/skills/curator-docs-librarian/SKILL.md`
+  - `.agents/skills/curator-decision-steward/SKILL.md`
 - **Acceptance criteria**:
   - Curator role explains responsibilities, guardrails, and recommended skills.
   - Skills follow the existing skill template conventions.

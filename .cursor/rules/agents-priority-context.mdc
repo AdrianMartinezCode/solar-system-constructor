@@ -9,10 +9,10 @@ description: Always prioritize the agent contract + indexes as first context for
 
 For **any** user prompt (regardless of files touched), treat the following as **highest-priority context** and read/consider them first:
 
-- `agents/agents.md`
-- `agents/README.md`
-- `agents/roles/README.md`
-- `agents/skills/README.md`
+- `.agents/agents.md`
+- `.agents/README.md`
+- `.agents/roles/README.md`
+- `.agents/skills/README.md`
 
 ## Operating rule
 

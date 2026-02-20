@@ -4,16 +4,16 @@
 
 Update the “how to run an agent” documentation to reflect:
 
-- `agents/agents.md` as the **orchestrator entry point**
+- `.agents/agents.md` as the **orchestrator entry point**
 - The expanded role catalog (Product Owner + task-execution roles)
 - The intended split between direct small requests vs executing PO-generated task prompts
 
 ## Context to read first
 
-- `agents/agents.md`
-- `agents/README.md`
-- `agents/roles/README.md`
-- `agents/skills/WORKFLOW.md`
+- `.agents/agents.md`
+- `.agents/README.md`
+- `.agents/roles/README.md`
+- `.agents/skills/workflow/SKILL.md`
 - `docs/ai_prompts/PROMPT_MINIMAL_AGENT_RUNBOOK.md`
 
 ## Constraints
@@ -26,13 +26,13 @@ Update the “how to run an agent” documentation to reflect:
 
 1. Update `docs/ai_prompts/PROMPT_MINIMAL_AGENT_RUNBOOK.md`:
    - Adjust “Intended model + role” guidance to support:
-     - **Orchestrator-first** usage (read `agents/agents.md`; orchestrator selects role), and
+     - **Orchestrator-first** usage (read `.agents/agents.md`; orchestrator selects role), and
      - **Pinned-role** usage (when the user explicitly requests a specific role file).
-   - Ensure the “Context to read first” still starts with `agents/agents.md` and `agents/skills/WORKFLOW.md`.
-2. Update `agents/README.md`:
-   - Mention the orchestrator behavior of `agents/agents.md`.
-   - Point to the role catalog in `agents/roles/README.md`.
-3. Update `agents/skills/WORKFLOW.md`:
+   - Ensure the “Context to read first” still starts with `.agents/agents.md` and `.agents/skills/workflow/SKILL.md`.
+2. Update `.agents/README.md`:
+   - Mention the orchestrator behavior of `.agents/agents.md`.
+   - Point to the role catalog in `.agents/roles/README.md`.
+3. Update `.agents/skills/workflow/SKILL.md`:
    - Align terminology:
      - Product Owner generates artifacts (CR/PLAN/TASK prompts)
      - Task execution roles implement prompts
@@ -41,8 +41,8 @@ Update the “how to run an agent” documentation to reflect:
 ## Files to create/update
 
 - Update: `docs/ai_prompts/PROMPT_MINIMAL_AGENT_RUNBOOK.md`
-- Update: `agents/README.md`
-- Update: `agents/skills/WORKFLOW.md`
+- Update: `.agents/README.md`
+- Update: `.agents/skills/workflow/SKILL.md`
 
 ## Acceptance criteria
 

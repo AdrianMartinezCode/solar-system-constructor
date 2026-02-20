@@ -5,15 +5,15 @@ Use this document as a **copy/paste prompt** for an AI coding agent in this repo
 ## Intended model + role
 
 - **Model**: a coding agent that can read/write repo files and run non-interactive verification commands
-- **Entry point (recommended)**: `agents/agents.md` (Orchestrator; routes to a role)
-- **Pinned role (optional)**: `<role_file>` (example: `agents/roles/curator_of_order.md`)
+- **Entry point (recommended)**: `.agents/agents.md` (Orchestrator; routes to a role)
+- **Pinned role (optional)**: `<role_file>` (example: `.agents/roles/curator_of_order.md`)
 
 ## Context to read first
 
 Read these files first, in this order:
 
-1. `agents/agents.md`
-2. `agents/skills/WORKFLOW.md`
+1. `.agents/agents.md`
+2. `.agents/skills/workflow/SKILL.md`
 3. (Optional, pinned-role mode) `<role_file>`
 4. (If planning via Product Owner) `<cr_file>`
 
@@ -23,17 +23,17 @@ Given an input, follow the repo workflow (CR → PLAN → TASK prompts → optio
 
 Notes:
 
-- In **orchestrator-first** mode, start from `agents/agents.md` and let the orchestrator route to the correct role file under `agents/roles/`.
+- In **orchestrator-first** mode, start from `.agents/agents.md` and let the orchestrator route to the correct role file under `.agents/roles/`.
 - In **pinned-role** mode, set `<role_file>` explicitly (e.g. when you already know you want Product Owner vs Curator vs Developer).
 
 ## Constraints / do-nots
 
-- Follow the global contract: `agents/agents.md`
-- Follow the workflow runbook: `agents/skills/WORKFLOW.md`
+- Follow the global contract: `.agents/agents.md`
+- Follow the workflow runbook: `.agents/skills/workflow/SKILL.md`
 - Use skills as playbooks (do not “wing it”):
-  - `agents/skills/change_request_triage.md` (optional)
-  - `agents/skills/po_task_decomposer.md`
-  - `agents/skills/prompt_writer.md`
+  - `.agents/skills/change-request-triage/SKILL.md` (optional)
+  - `.agents/skills/po-task-decomposer/SKILL.md`
+  - `.agents/skills/prompt-writer/SKILL.md`
 - Keep diffs small and focused; one concern per task.
 - Verification commands must be non-interactive.
 - If required context files are missing/ambiguous, stop and ask for clarification rather than guessing.
@@ -58,7 +58,7 @@ Notes:
 
 If the change request is ambiguous, risky, or cross-cutting:
 
-- Produce `docs/decisions/TRIAGE_<slug>.md` following `agents/skills/change_request_triage.md`
+- Produce `docs/decisions/TRIAGE_<slug>.md` following `.agents/skills/change-request-triage/SKILL.md`
 
 Otherwise, skip triage.
 
@@ -69,7 +69,7 @@ Produce:
 - `docs/plans/PLAN_<slug>.md`
 - `docs/prompts/<slug>/task_1/TASK_1_<slug>.md`, `task_2/TASK_2_<slug>.md`, ...
 
-Follow `agents/skills/po_task_decomposer.md` and `agents/skills/prompt_writer.md` strictly:
+Follow `.agents/skills/po-task-decomposer/SKILL.md` and `.agents/skills/prompt-writer/SKILL.md` strictly:
 
 - Each task must be ordered, small (guideline: ≤ 5 files), and have testable acceptance criteria.
 - Each task prompt must be self-contained and list exact files to touch and verification commands.

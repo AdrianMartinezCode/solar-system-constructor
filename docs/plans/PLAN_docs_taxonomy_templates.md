@@ -7,10 +7,10 @@ Introduce a small, type-based taxonomy for the technical documentation currently
 ## Repo snapshot used
 
 - Contract + workflow:
-  - `agents/agents.md`
-  - `agents/skills/WORKFLOW.md`
-  - `agents/skills/po_task_decomposer.md`
-  - `agents/skills/prompt_writer.md`
+  - `.agents/agents.md`
+  - `.agents/skills/workflow/SKILL.md`
+  - `.agents/skills/po-task-decomposer/SKILL.md`
+  - `.agents/skills/prompt-writer/SKILL.md`
 - Docs map + workflow structure:
   - `docs/README.md`
   - `docs/requests/CR_TEMPLATE.md`

@@ -1,6 +1,6 @@
 # MCP Tools — Notes
 
-This directory contains the MCP tool registrations used by agents/skills.
+This directory contains the MCP tool registrations used by `.agents/skills/*`.
 
 ## Safety Principles
 

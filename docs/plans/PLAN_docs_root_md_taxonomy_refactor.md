@@ -7,12 +7,12 @@ Migrate all technical markdown docs currently in `docs/` root into the taxonomy 
 ## Repo snapshot used
 
 - Contract + workflow:
-  - `agents/agents.md`
-  - `agents/skills/WORKFLOW.md`
-  - `agents/skills/change_request_triage.md`
-  - `agents/skills/po_task_decomposer.md`
-  - `agents/skills/prompt_writer.md`
-  - `agents/roles/curator_of_order.md`
+  - `.agents/agents.md`
+  - `.agents/skills/workflow/SKILL.md`
+  - `.agents/skills/change-request-triage/SKILL.md`
+  - `.agents/skills/po-task-decomposer/SKILL.md`
+  - `.agents/skills/prompt-writer/SKILL.md`
+  - `.agents/roles/curator_of_order.md`
 - Docs map + taxonomy:
   - `docs/README.md`
   - `docs/TAXONOMY.md`

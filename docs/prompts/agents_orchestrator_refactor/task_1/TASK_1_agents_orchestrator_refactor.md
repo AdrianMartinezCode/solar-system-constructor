@@ -1,8 +1,8 @@
-# Task 1 — Make `agents/agents.md` the Orchestrator entry point (routing spec)
+# Task 1 — Make `.agents/agents.md` the Orchestrator entry point (routing spec)
 
 ## Objective
 
-Update `agents/agents.md` to include an **Orchestrator / Role Routing** section that deterministically selects which role to use for a given incoming request:
+Update `.agents/agents.md` to include an **Orchestrator / Role Routing** section that deterministically selects which role to use for a given incoming request:
 
 - Product Owner
 - Developer
@@ -14,11 +14,11 @@ This task defines routing and “role acquisition” behavior as documentation (
 
 ## Context to read first
 
-- `agents/agents.md`
-- `agents/roles/developer.md`
-- `agents/roles/curator_of_order.md`
-- `agents/skills/change_request_triage.md` (size classification conventions)
-- `agents/skills/WORKFLOW.md` (CR → PLAN → TASK workflow)
+- `.agents/agents.md`
+- `.agents/roles/developer.md`
+- `.agents/roles/curator_of_order.md`
+- `.agents/skills/change-request-triage/SKILL.md` (size classification conventions)
+- `.agents/skills/workflow/SKILL.md` (CR → PLAN → TASK workflow)
 
 ## Constraints
 
@@ -29,7 +29,7 @@ This task defines routing and “role acquisition” behavior as documentation (
 
 ## Steps
 
-1. Add a new top-level section (near the top) to `agents/agents.md` titled **Orchestrator / Role Routing**.
+1. Add a new top-level section (near the top) to `.agents/agents.md` titled **Orchestrator / Role Routing**.
 2. In that section, document:
    - A routing table mapping request types to roles.
    - A deterministic rule for **big vs small** requests:
@@ -43,16 +43,16 @@ This task defines routing and “role acquisition” behavior as documentation (
    - Tie-breaker / stop conditions:
      - If unclear, ask 1–3 specific questions and do not proceed.
 3. Add a short “How to acquire a role” subsection:
-   - The orchestrator selects a role and then follows that role’s file in `agents/roles/*`.
+  - The orchestrator selects a role and then follows that role’s file in `.agents/roles/*`.
    - The orchestrator should explicitly state which role it is acting as.
 
 ## Files to create/update
 
-- Update: `agents/agents.md`
+- Update: `.agents/agents.md`
 
 ## Acceptance criteria
 
-- `agents/agents.md` contains an **Orchestrator / Role Routing** section that:
+- `.agents/agents.md` contains an **Orchestrator / Role Routing** section that:
   - Explicitly lists the five roles and the routing rules you provided.
   - Defines “big task” vs “small changes” in a way that can be consistently applied.
   - Defines how to handle PO-generated tasks (Task Developer / Task Curator).
@@ -68,5 +68,5 @@ npm run build
 ## Notes
 
 - Keep this routing spec human-readable and operational: the goal is to avoid role ambiguity and scope creep.
-- Do not add new skills unless routing cannot be expressed clearly in `agents/agents.md`.
+- Do not add new skills unless routing cannot be expressed clearly in `.agents/agents.md`.
 
