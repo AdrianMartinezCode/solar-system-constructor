@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
-import type { GenerationConfig } from '../types/generationConfig';
-import { defaultConfig, getPresetConfig, generateRandomSeed } from '../utils/generatorConfigDefaults';
-import { generateUniverse, getSmallBodyDetailLabel } from '../utils/generatorBridge';
+import type { GenerationConfig } from '../domain/generation';
+import { defaultConfig, getPresetConfig, generateRandomSeed, generateUniverse, getSmallBodyDetailLabel } from '../domain/generation';
 import { cacheGenerationMetadata } from '../utils/stats/generationMetadataCache';
 import './UniverseGeneratorPanel.css';
 

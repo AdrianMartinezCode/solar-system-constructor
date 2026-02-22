@@ -3,7 +3,7 @@
  * Stores the most recent generation config and totals for display in stats
  */
 
-import { GenerationConfig, GeneratedUniverse } from '../../types/generationConfig';
+import type { GenerationConfig, GeneratedUniverse } from '../../domain/generation';
 
 interface GenerationMetadata {
   config: GenerationConfig;

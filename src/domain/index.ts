@@ -50,3 +50,6 @@ export {
   starExists,
   wouldCreateGroupCycle,
 } from './universe/validate';
+
+// Generation types
+export type { GenerationConfig, GeneratedUniverse } from './generation';

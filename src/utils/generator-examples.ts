@@ -2,7 +2,8 @@
  * Example usage and testing utilities for the procedural generator
  */
 
-import { generateSolarSystem, generateMultipleSystems, DEFAULT_CONFIG, GeneratorConfig } from './procedural-generator';
+import { generateSolarSystem, generateMultipleSystems, DEFAULT_CONFIG } from '../domain/generation';
+import type { GeneratorConfig } from '../domain/generation';
 
 // ============================================================================
 // Preset Configurations
@@ -983,8 +984,8 @@ export function printTestResults() {
 // Topology Preset Testing Utilities
 // ============================================================================
 
-import type { TopologyPresetId } from './topology';
-import { getTopologyPresetIds } from './topology';
+import type { TopologyPresetId } from '../domain/generation/topology';
+import { getTopologyPresetIds } from '../domain/generation/topology';
 
 /**
  * Test that topology presets produce deterministic results.

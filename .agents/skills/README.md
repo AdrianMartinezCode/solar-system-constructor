@@ -28,5 +28,6 @@ Rules:
 | `po-task-decomposer` | `.agents/skills/po-task-decomposer/SKILL.md` | Decompose a CR into ordered small tasks with acceptance criteria |
 | `prompt-writer` | `.agents/skills/prompt-writer/SKILL.md` | Write a single self-contained implementation task prompt |
 | `react-architect-skills` | `.agents/skills/react-architect-skills/SKILL.md` | React feature-module architecture guidelines |
+| `skill-creator` | `.agents/skills/skill-creator/SKILL.md` | Guide for creating or updating skills that extend agent capabilities with specialized knowledge, workflows, or tool integrations |
 | `workflow` | `.agents/skills/workflow/SKILL.md` | End-to-end runbook for CR → PLAN → TASK prompts → execution |
 
