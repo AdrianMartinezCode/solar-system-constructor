@@ -16,7 +16,6 @@ This repo is a **Vite + React + TypeScript** frontend that renders an interactiv
 | Config | `vite.config.ts`, `tsconfig.json` | Build & type config |
 | Agents | `.agents/` | Agent contract + skill playbooks |
 | Docs | `docs/` | Requests, plans, prompts, decisions |
-| MCP | `mcp/server/` | Local MCP server for repo tooling |
 
 ## Orchestrator / Role Routing
 
@@ -34,7 +33,7 @@ This repo is a **Vite + React + TypeScript** frontend that renders an interactiv
 
 1. **If the input references a task prompt**, route to a **Task** role:
    - If the task prompt’s “Files to create/update” includes `src/` (or other implementation code), route to **Task Developer**.
-   - If the task prompt primarily targets `docs/`, `.agents/`, `mcp/` organization/index/taxonomy/decisions, route to **Task Curator of Order**.
+   - If the task prompt primarily targets `docs/`, `.agents/` organization/index/taxonomy/decisions, route to **Task Curator of Order**.
 2. **Else, decide if the request is “big” or “small”**:
    - Use triage sizing conventions: **small** (1–2 tasks), **medium** (3–5), **large** (6+).
    - Route **medium/large** (“big”) to **Product Owner** to produce CR/PLAN/TASK prompts first.
