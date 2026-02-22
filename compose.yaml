@@ -2,8 +2,9 @@
 # Docker Compose — local development
 # =============================================================================
 # Usage:
-#   docker compose up --build        # build & start the API
+#   docker compose up --build        # build & start API + Postgres
 #   docker compose down              # stop & remove containers
+#   docker compose down -v           # stop, remove containers, AND delete DB data
 #   docker compose logs -f api       # follow API logs
 # =============================================================================
 
@@ -20,41 +21,33 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=development
-      # DB_PROVIDER=noop
-      # DATABASE_URL=
-    # env_file:
-    #   - ./apps/api/.env
+      - DB_PROVIDER=postgres
+      - DATABASE_URL=postgresql://solar:solar@db:5432/solar_system
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
-  # Database (TBD — uncomment and configure when a DB technology is chosen)
+  # PostgreSQL Database
   # ---------------------------------------------------------------------------
-  # Examples:
-  #
-  # --- PostgreSQL ---
-  # db:
-  #   image: postgres:16-alpine
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: solar
-  #     POSTGRES_PASSWORD: solar
-  #     POSTGRES_DB: solar_system
-  #   volumes:
-  #     - db_data:/var/lib/postgresql/data
-  #
-  # --- SQLite (via volume mount — no separate container needed) ---
-  # (Just mount a volume into the api service and set DATABASE_URL to a file path)
-  #
-  # --- MongoDB ---
-  # db:
-  #   image: mongo:7
-  #   ports:
-  #     - "27017:27017"
-  #   environment:
-  #     MONGO_INITDB_DATABASE: solar_system
-  #   volumes:
-  #     - db_data:/data/db
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: solar
+      POSTGRES_PASSWORD: solar
+      POSTGRES_DB: solar_system
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./apps/api/infra/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U solar -d solar_system"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
 
-# volumes:
-#   db_data:
+volumes:
+  db_data:

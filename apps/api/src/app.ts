@@ -1,7 +1,9 @@
 import express from 'express';
 import { healthRouter } from './routes/health.js';
+import { createUniverseRouter } from './routes/universes.js';
+import type { UniverseRepository } from './app/ports/universeRepository.js';
 
-export function createApp() {
+export function createApp(universeRepo: UniverseRepository) {
   const app = express();
 
   // ---------------------------------------------------------------------------
@@ -13,6 +15,7 @@ export function createApp() {
   // Routes
   // ---------------------------------------------------------------------------
   app.use(healthRouter);
+  app.use(createUniverseRouter(universeRepo));
 
   // ---------------------------------------------------------------------------
   // Global error handler (placeholder — extend as the API grows)
