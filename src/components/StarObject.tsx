@@ -1,6 +1,7 @@
 import React, { useRef, useMemo, useEffect } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { calculateOrbitalPosition, calculateRoguePlanetPosition, generateOrbitPath, computeRogueTrajectoryPoints } from '../utils/physics';
 import { OrbitRing } from './OrbitRing';
 import * as THREE from 'three';
@@ -23,10 +24,12 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
   
   const star = useSystemStore((state) => state.stars[starId]);
   const time = useSystemStore((state) => state.time);
-  const selectedStarId = useSystemStore((state) => state.selectedStarId);
-  const selectStar = useSystemStore((state) => state.selectStar);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const smallBodyFields = useSystemStore((state) => state.smallBodyFields);
+
+  // Selection from uiStore (canonical source)
+  const selectedStarId = useUiStore((state) => state.selectedStarId);
+  const selectStar = useUiStore((state) => state.selectStar);
   
   const isSelected = selectedStarId === starId;
   

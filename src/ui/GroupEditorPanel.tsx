@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { GroupChild } from '../types';
 import './GroupEditorPanel.css';
 
@@ -8,14 +9,14 @@ export const GroupEditorPanel: React.FC = () => {
   const groups = useSystemStore((state) => state.groups);
   const rootIds = useSystemStore((state) => state.rootIds);
   const stars = useSystemStore((state) => state.stars);
-  const isolatedGroupId = useSystemStore((state) => state.isolatedGroupId);
+  const isolatedGroupId = useUiStore((state) => state.isolatedGroupId);
   const updateGroup = useSystemStore((state) => state.updateGroup);
   const removeGroup = useSystemStore((state) => state.removeGroup);
   const addGroup = useSystemStore((state) => state.addGroup);
   const addToGroup = useSystemStore((state) => state.addToGroup);
   const removeFromGroup = useSystemStore((state) => state.removeFromGroup);
   const moveToGroup = useSystemStore((state) => state.moveToGroup);
-  const toggleIsolatedGroup = useSystemStore((state) => state.toggleIsolatedGroup);
+  const toggleIsolatedGroup = useUiStore((state) => state.toggleIsolatedGroup);
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [newGroupForm, setNewGroupForm] = useState({

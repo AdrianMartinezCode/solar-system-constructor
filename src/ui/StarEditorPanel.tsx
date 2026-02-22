@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { ProtoplanetaryDiskEditor } from './ProtoplanetaryDiskEditor';
 import './StarEditorPanel.css';
 
@@ -15,10 +16,10 @@ export const StarEditorPanel: React.FC = () => {
   const detachStar = useSystemStore((state) => state.detachStar);
   const updateRing = useSystemStore((state) => state.updateRing);
   const removeRing = useSystemStore((state) => state.removeRing);
-  const cameraMode = useSystemStore((state) => state.cameraMode);
-  const cameraTargetBodyId = useSystemStore((state) => state.cameraTargetBodyId);
-  const setCameraMode = useSystemStore((state) => state.setCameraMode);
-  const resetCamera = useSystemStore((state) => state.resetCamera);
+  const cameraMode = useUiStore((state) => state.cameraMode);
+  const cameraTargetBodyId = useUiStore((state) => state.cameraTargetBodyId);
+  const setCameraMode = useUiStore((state) => state.setCameraMode);
+  const resetCamera = useUiStore((state) => state.resetCamera);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const addProtoplanetaryDisk = useSystemStore((state) => state.addProtoplanetaryDisk);
   const updateProtoplanetaryDisk = useSystemStore((state) => state.updateProtoplanetaryDisk);

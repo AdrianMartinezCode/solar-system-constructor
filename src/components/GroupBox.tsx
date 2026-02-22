@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { Group } from '../types';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
@@ -18,7 +19,7 @@ export const GroupBox: React.FC<GroupBoxProps> = ({ groupId, position = [0, 0, 0
   const group = useSystemStore((state) => state.groups[groupId]);
   const selectedGroupId = useSystemStore((state) => state.selectedGroupId);
   const selectGroup = useSystemStore((state) => state.selectGroup);
-  const nestingLevel = useSystemStore((state) => state.nestingLevel);
+  const nestingLevel = useUiStore((state) => state.nestingLevel);
   
   const isSelected = selectedGroupId === groupId;
   

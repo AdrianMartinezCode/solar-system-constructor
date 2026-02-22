@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { starRegistry } from '../utils/starRegistry';
 import * as THREE from 'three';
 
@@ -14,10 +15,11 @@ import * as THREE from 'three';
 export const BodyCameraController: React.FC = () => {
   const { camera, controls } = useThree();
   
-  // Store state
-  const cameraMode = useSystemStore((state) => state.cameraMode);
-  const cameraTargetBodyId = useSystemStore((state) => state.cameraTargetBodyId);
-  const cameraOffset = useSystemStore((state) => state.cameraOffset);
+  // Camera state from uiStore (canonical source)
+  const cameraMode = useUiStore((state) => state.cameraMode);
+  const cameraTargetBodyId = useUiStore((state) => state.cameraTargetBodyId);
+  const cameraOffset = useUiStore((state) => state.cameraOffset);
+  // Domain data still from systemStore
   const stars = useSystemStore((state) => state.stars);
   
   // Transition state

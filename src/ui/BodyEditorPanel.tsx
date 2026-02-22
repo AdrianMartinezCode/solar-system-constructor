@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { useWindowStore } from '../state/windowStore';
 import { OrbitEditor } from './body-editor/OrbitEditor';
 import { PlanetaryRingsEditor } from './body-editor/PlanetaryRingsEditor';
@@ -42,12 +43,13 @@ const getBodyTypeIcon = (bodyType?: string, isRogue?: boolean): string => {
 };
 
 export const BodyEditorPanel: React.FC = () => {
-  const selectedStarId = useSystemStore((state) => state.selectedStarId);
-  const selectedGroupId = useSystemStore((state) => state.selectedGroupId);
-  const selectedNebulaId = useSystemStore((state) => state.selectedNebulaId);
-  const selectedProtoplanetaryDiskId = useSystemStore((state) => state.selectedProtoplanetaryDiskId);
-  const selectedSmallBodyFieldId = useSystemStore((state) => state.selectedSmallBodyFieldId);
-  const selectedBeltId = useSystemStore((state) => state.selectedBeltId);
+  // Selection from uiStore (canonical source)
+  const selectedStarId = useUiStore((state) => state.selectedStarId);
+  const selectedGroupId = useUiStore((state) => state.selectedGroupId);
+  const selectedNebulaId = useUiStore((state) => state.selectedNebulaId);
+  const selectedProtoplanetaryDiskId = useUiStore((state) => state.selectedProtoplanetaryDiskId);
+  const selectedSmallBodyFieldId = useUiStore((state) => state.selectedSmallBodyFieldId);
+  const selectedBeltId = useUiStore((state) => state.selectedBeltId);
   
   const stars = useSystemStore((state) => state.stars);
   const updateStar = useSystemStore((state) => state.updateStar);
@@ -57,10 +59,11 @@ export const BodyEditorPanel: React.FC = () => {
   const detachStar = useSystemStore((state) => state.detachStar);
   const updateRing = useSystemStore((state) => state.updateRing);
   const removeRing = useSystemStore((state) => state.removeRing);
-  const cameraMode = useSystemStore((state) => state.cameraMode);
-  const cameraTargetBodyId = useSystemStore((state) => state.cameraTargetBodyId);
-  const setCameraMode = useSystemStore((state) => state.setCameraMode);
-  const resetCamera = useSystemStore((state) => state.resetCamera);
+  // Camera state from uiStore (canonical source)
+  const cameraMode = useUiStore((state) => state.cameraMode);
+  const cameraTargetBodyId = useUiStore((state) => state.cameraTargetBodyId);
+  const setCameraMode = useUiStore((state) => state.setCameraMode);
+  const resetCamera = useUiStore((state) => state.resetCamera);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const addProtoplanetaryDisk = useSystemStore((state) => state.addProtoplanetaryDisk);
   const updateProtoplanetaryDisk = useSystemStore((state) => state.updateProtoplanetaryDisk);

@@ -89,8 +89,8 @@ export const UniverseGeneratorPanel: React.FC = () => {
         })));
       }
       
-      // Update Zustand store using the imperative API
-      useSystemStore.setState({
+      // Replace universe via explicit store action (no imperative setState)
+      useSystemStore.getState().replaceUniverseSnapshot({
         stars: result.stars,
         rootIds: result.rootIds,
         groups: result.groups,
@@ -99,18 +99,9 @@ export const UniverseGeneratorPanel: React.FC = () => {
         smallBodyFields: result.smallBodyFields || {},
         protoplanetaryDisks: result.protoplanetaryDisks || {},
         nebulae: result.nebulae || {},
-        selectedStarId: null,
-        selectedGroupId: null,
-        selectedBeltId: null,
-        selectedSmallBodyFieldId: null,
-        selectedProtoplanetaryDiskId: null,
-        selectedNebulaId: null,
       });
       
       console.log('[UniverseGeneratorPanel] Store updated. Current smallBodyFields:', Object.keys(useSystemStore.getState().smallBodyFields).length);
-      
-      // Save to localStorage
-      useSystemStore.getState().save();
       
       // Cache generation metadata for stats panel
       cacheGenerationMetadata(config, result);
@@ -169,15 +160,16 @@ export const UniverseGeneratorPanel: React.FC = () => {
   // Clear universe
   const handleClear = () => {
     if (confirm('Clear all stars and groups?')) {
-      useSystemStore.setState({
+      useSystemStore.getState().replaceUniverseSnapshot({
         stars: {},
         rootIds: [],
         groups: {},
         rootGroupIds: [],
-        selectedStarId: null,
-        selectedGroupId: null,
+        belts: {},
+        smallBodyFields: {},
+        protoplanetaryDisks: {},
+        nebulae: {},
       });
-      useSystemStore.getState().save();
       setStats(null);
     }
   };

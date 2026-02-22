@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { usePerformanceTelemetry } from '../hooks/usePerformanceTelemetry';
 import {
   getGlobalPerformanceBuffer,
@@ -38,7 +39,7 @@ export const StatsPanel: React.FC = () => {
   const nebulae = useSystemStore((state) => state.nebulae);
   const timeScale = useSystemStore((state) => state.timeScale);
   const time = useSystemStore((state) => state.time);
-  const isolatedGroupId = useSystemStore((state) => state.isolatedGroupId);
+  const isolatedGroupId = useUiStore((state) => state.isolatedGroupId);
   const selectedStarId = useSystemStore((state) => state.selectedStarId);
 
   const { webglStats } = usePerformanceTelemetry();

@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { useWindowStore } from '../state/windowStore';
 import './AppHeader.css';
 
 export const AppHeader: React.FC = () => {
   const timeScale = useSystemStore((state) => state.timeScale);
   const setTimeScale = useSystemStore((state) => state.setTimeScale);
-  const cameraMode = useSystemStore((state) => state.cameraMode);
-  const cameraTargetBodyId = useSystemStore((state) => state.cameraTargetBodyId);
+  const cameraMode = useUiStore((state) => state.cameraMode);
+  const cameraTargetBodyId = useUiStore((state) => state.cameraTargetBodyId);
   const stars = useSystemStore((state) => state.stars);
-  const resetCamera = useSystemStore((state) => state.resetCamera);
+  const resetCamera = useUiStore((state) => state.resetCamera);
   const openWindow = useWindowStore((state) => state.openWindow);
   const [showSpeedDropdown, setShowSpeedDropdown] = useState(false);
 

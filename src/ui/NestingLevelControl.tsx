@@ -1,10 +1,11 @@
 import React from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import './NestingLevelControl.css';
 
 export const NestingLevelControl: React.FC = () => {
-  const nestingLevel = useSystemStore((state) => state.nestingLevel);
-  const setNestingLevel = useSystemStore((state) => state.setNestingLevel);
+  const nestingLevel = useUiStore((state) => state.nestingLevel);
+  const setNestingLevel = useUiStore((state) => state.setNestingLevel);
   const groups = useSystemStore((state) => state.groups);
   
   const hasGroups = Object.keys(groups).length > 0;

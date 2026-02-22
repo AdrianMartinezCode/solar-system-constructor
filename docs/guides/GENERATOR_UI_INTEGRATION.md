@@ -60,15 +60,24 @@ interface SystemStore {
   groups: Record<string, Group>;
   rootGroupIds: string[];
   
-  // Required for generator
-  setState: (partial: Partial<SystemStore>) => void;
-  save: () => void;
+  // Required for generator — explicit API (replaces imperative setState)
+  replaceUniverseSnapshot: (snapshot: {
+    stars: Record<string, Star>;
+    rootIds: string[];
+    groups: Record<string, Group>;
+    rootGroupIds: string[];
+    belts: Record<string, AsteroidBelt>;
+    smallBodyFields?: Record<string, SmallBodyField>;
+    protoplanetaryDisks?: Record<string, ProtoplanetaryDisk>;
+    nebulae?: Record<string, NebulaRegion>;
+  }) => void;
 }
 ```
 
-The generator panel will call:
-- `useSystemStore.setState()` to update the universe
-- `useSystemStore.getState().save()` to persist to localStorage
+The generator panel calls:
+- `useSystemStore.getState().replaceUniverseSnapshot(snapshot)` to replace the universe and persist it
+- **No direct `useSystemStore.setState(...)` calls** — all state changes go through explicit actions
+- **No direct `useSystemStore.getState().save()` calls** — persistence is handled by `replaceUniverseSnapshot` internally
 
 ---
 
@@ -125,10 +134,10 @@ GeneratedUniverse {
   rootGroupIds: string[],
 }
 
-↓ (pushed to store)
+↓ (pushed to store via explicit action)
 
 // 4. Store update triggers re-render
-useSystemStore.setState({ ...universe })
+useSystemStore.getState().replaceUniverseSnapshot(universe)
 ```
 
 ---
@@ -452,9 +461,8 @@ See `UniverseGeneratorExample.tsx` for implementation with toggle button.
 1. Reads current `GenerationConfig` from UI state
 2. Maps to internal `GeneratorConfig`
 3. Calls `generateUniverse()` from `generatorBridge.ts`
-4. Pushes result to Zustand store
-5. Saves to localStorage
-6. Updates stats display
+4. Calls `replaceUniverseSnapshot()` on store (replaces universe + persists via repository adapter)
+5. Updates stats display
 
 ### Reset to Defaults
 - Resets all UI controls to `defaultConfig` values

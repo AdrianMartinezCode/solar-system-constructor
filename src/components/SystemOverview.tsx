@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { useWindowStore } from '../state/windowStore';
 import { Star, Group, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../types';
 import './SystemOverview.css';
@@ -45,14 +46,14 @@ export const SystemOverview: React.FC = () => {
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const smallBodyFields = useSystemStore((state) => state.smallBodyFields);
   const nebulae = useSystemStore((state) => state.nebulae);
-  const isolatedGroupId = useSystemStore((state) => state.isolatedGroupId);
+  const isolatedGroupId = useUiStore((state) => state.isolatedGroupId);
   const selectStar = useSystemStore((state) => state.selectStar);
   const selectGroup = useSystemStore((state) => state.selectGroup);
   const selectProtoplanetaryDisk = useSystemStore((state) => state.selectProtoplanetaryDisk);
   const selectSmallBodyField = useSystemStore((state) => state.selectSmallBodyField);
   const selectNebula = useSystemStore((state) => state.selectNebula);
-  const setCameraMode = useSystemStore((state) => state.setCameraMode);
-  const toggleIsolatedGroup = useSystemStore((state) => state.toggleIsolatedGroup);
+  const setCameraMode = useUiStore((state) => state.setCameraMode);
+  const toggleIsolatedGroup = useUiStore((state) => state.toggleIsolatedGroup);
   const openWindow = useWindowStore((state) => state.openWindow);
   
   const [searchQuery, setSearchQuery] = useState('');

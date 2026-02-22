@@ -2,6 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { useSystemStore } from '../state/systemStore';
+import { useUiStore } from '../state/uiStore';
 import { StarObject } from './StarObject';
 import { GroupBox } from './GroupBox';
 import { AsteroidBeltObject } from './AsteroidBeltObject';
@@ -42,8 +43,8 @@ export const Scene: React.FC = () => {
   const smallBodyFields = useSystemStore((state) => state.smallBodyFields);
   const protoplanetaryDisks = useSystemStore((state) => state.protoplanetaryDisks);
   const nebulae = useSystemStore((state) => state.nebulae);
-  const nestingLevel = useSystemStore((state) => state.nestingLevel);
-  const isolatedGroupId = useSystemStore((state) => state.isolatedGroupId);
+  const nestingLevel = useUiStore((state) => state.nestingLevel);
+  const isolatedGroupId = useUiStore((state) => state.isolatedGroupId);
   const time = useSystemStore((state) => state.time);
   const controlsRef = useRef<OrbitControlsImpl>(null);
   
