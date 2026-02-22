@@ -21,14 +21,35 @@ An interactive 3D web application for building nested solar systems with infinit
 - **📊 System Overview**: Search, filter, and browse 1000+ objects efficiently
 - **Persistence**: Automatic save/load using localStorage
 
+## Monorepo Structure
+
+```
+solar-system-constructor/
+├── apps/
+│   ├── web/            # Vite + React frontend (3D solar system constructor)
+│   └── api/            # Node.js + Express backend API
+├── packages/           # Shared libraries (future)
+├── compose.yaml        # Docker Compose for local backend dev
+├── tsconfig.base.json  # Shared TypeScript base config
+├── package.json        # Root workspace orchestrator
+└── docs/               # Planning, design, and guides
+```
+
 ## Tech Stack
 
+### Frontend (`apps/web`)
 - **Vite** - Fast build tool
 - **React** - UI framework
 - **TypeScript** - Type safety
 - **react-three-fiber** - 3D rendering
 - **drei** - R3F helpers
 - **Zustand** - State management
+
+### Backend (`apps/api`)
+- **Node.js** - Runtime
+- **Express** - HTTP framework
+- **TypeScript** - Type safety
+- **Docker** - Containerized local development
 
 ## Getting Started
 
@@ -38,10 +59,38 @@ An interactive 3D web application for building nested solar systems with infinit
 npm install
 ```
 
-### Development
+### Local Development
 
 ```bash
+# Run frontend (default)
 npm run dev
+
+# Run frontend explicitly
+npm run dev:web
+
+# Run backend API
+npm run dev:api
+
+# Run backend via Docker
+docker compose up --build
+```
+
+### Build
+
+```bash
+# Build everything
+npm run build
+
+# Build individually
+npm run build:web
+npm run build:api
+```
+
+### Type checking
+
+```bash
+npm run typecheck:web
+npm run typecheck:api
 ```
 
 ### Procedural Generator
@@ -59,26 +108,7 @@ const system = generateSolarSystem({
 });
 ```
 
-See [`docs/PROCEDURAL_GENERATOR.md`](docs/PROCEDURAL_GENERATOR.md) for complete documentation.
-See [`docs/GENERATOR_QUICKREF.md`](docs/GENERATOR_QUICKREF.md) for quick reference.
-
-### Development
-
-```bash
-npm run dev
-```
-
-### Build
-
-```bash
-npm run build
-```
-
-### Preview
-
-```bash
-npm run preview
-```
+See [`docs/design/PROCEDURAL_GENERATOR.md`](docs/design/PROCEDURAL_GENERATOR.md) for complete documentation.
 
 ## Usage
 

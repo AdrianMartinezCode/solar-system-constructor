@@ -1,5 +1,6 @@
 ---
-globs: docs/prompts/**
+globs:
+  - "docs/prompts/**"
 description: Task prompt storage convention: per slug + per task subfolder under docs/prompts/
 ---
 

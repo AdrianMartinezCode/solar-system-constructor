@@ -12,7 +12,7 @@
 
 ## Installation
 
-You'll need Node.js and npm installed. If not installed yet:
+You'll need Node.js (v21+) and npm installed. If not installed yet:
 
 ```bash
 # On Ubuntu/Debian
@@ -21,46 +21,81 @@ sudo apt install npm
 # Or download from https://nodejs.org/
 ```
 
+For Docker-based backend development, you'll also need [Docker](https://docs.docker.com/get-docker/).
+
 ## Setup and Run
 
 ```bash
 # Navigate to project directory
 cd /home/adr/front-portfolio-interactive/solar-system-constructor
 
-# Install dependencies
+# Install all dependencies (frontend + backend)
 npm install
-
-# Start development server
-npm run dev
 ```
 
-The app will open at `http://localhost:5173`
+### Frontend (3D app)
+
+```bash
+# Start the frontend dev server
+npm run dev:web
+# or simply:
+npm run dev
+
+# → http://localhost:5173
+```
+
+### Backend API
+
+```bash
+# Start the backend dev server (hot-reload)
+npm run dev:api
+
+# → http://localhost:3001
+# Health check: curl http://localhost:3001/health
+```
+
+### Backend via Docker
+
+```bash
+# Build and start the API container
+docker compose up --build
+
+# → http://localhost:3001
+```
+
+See [`docs/guides/LOCAL_DEV_DOCKER.md`](docs/guides/LOCAL_DEV_DOCKER.md) for Docker details.
+See [`docs/guides/LOCAL_DEV_BACKEND.md`](docs/guides/LOCAL_DEV_BACKEND.md) for backend details.
 
 ## Project Structure
 
 ```
 solar-system-constructor/
-├── src/
-│   ├── components/          # R3F 3D components
-│   │   ├── Scene.tsx        # Main 3D canvas
-│   │   ├── StarObject.tsx   # Recursive star rendering
-│   │   └── OrbitRing.tsx    # Orbital path visualization
-│   ├── ui/                  # React UI panels
-│   │   ├── StarListPanel.tsx
-│   │   ├── StarEditorPanel.tsx
-│   │   └── HierarchyTree.tsx
-│   ├── state/
-│   │   └── systemStore.ts   # Zustand store
-│   ├── utils/
-│   │   ├── physics.ts       # Orbital calculations
-│   │   ├── persistence.ts   # localStorage
-│   │   └── exampleData.ts   # Initial system
-│   ├── types.ts             # TypeScript interfaces
-│   ├── App.tsx              # Main layout
-│   └── main.tsx             # Entry point
-├── package.json
-├── tsconfig.json
-└── vite.config.ts
+├── apps/
+│   ├── web/                     # Frontend (Vite + React + R3F)
+│   │   ├── src/
+│   │   │   ├── components/      # R3F 3D components
+│   │   │   ├── ui/              # React UI panels
+│   │   │   ├── domain/          # Domain logic (generation, universe)
+│   │   │   ├── state/           # Zustand stores
+│   │   │   ├── utils/           # Helper functions
+│   │   │   └── main.tsx         # Entry point
+│   │   ├── vite.config.ts
+│   │   └── package.json
+│   └── api/                     # Backend (Node + Express)
+│       ├── src/
+│       │   ├── routes/          # Express route handlers
+│       │   ├── config/          # Env parsing, app config
+│       │   ├── infra/           # DB provider, external services
+│       │   ├── domain/          # Business logic (placeholder)
+│       │   ├── app.ts           # Express app setup
+│       │   └── server.ts        # Entry point
+│       ├── Dockerfile
+│       └── package.json
+├── packages/                    # Shared libraries (future)
+├── compose.yaml                 # Docker Compose for local dev
+├── tsconfig.base.json           # Shared TS base config
+├── package.json                 # Root workspace orchestrator
+└── docs/                        # Planning, design, and guides
 ```
 
 ## Features Implemented

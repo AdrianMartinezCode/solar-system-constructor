@@ -1,0 +1,9 @@
+node_modules
+apps/web
+packages
+docs
+.agents
+.cursor
+.git
+*.md
+dist

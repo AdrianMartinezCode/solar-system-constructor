@@ -2,18 +2,24 @@
 
 ## Project Overview
 
-This repo is a **Vite + React + TypeScript** frontend that renders an interactive, procedurally-generated solar system. It uses React Three Fiber / Three.js for 3D rendering, Zustand for state management, and a domain-driven folder layout (`src/domain`, `src/ui`, `src/infra`). The build toolchain is npm + Vite + TypeScript. There is currently no test runner or linter configured.
+This repo is a **monorepo** containing a **Vite + React + TypeScript** frontend (`apps/web`) and a **Node.js + Express + TypeScript** backend API (`apps/api`). The frontend renders an interactive, procedurally-generated solar system using React Three Fiber / Three.js, Zustand for state management, and a domain-driven folder layout. The backend provides an Express API with Docker-based local development. The build toolchain is npm workspaces + Vite (web) + tsc (api). There is currently no test runner or linter configured.
 
 ## Architecture Snapshot
 
 | Layer | Path | Purpose |
 |-------|------|---------|
-| Domain | `src/domain/` | Models, ports, protocols, services |
-| UI | `src/ui/`, `src/components/` | React components, panels, windows |
-| State | `src/state/` | Zustand stores |
-| Infra | `src/infra/` | Infrastructure adapters |
-| Utils | `src/utils/` | Pure helper functions |
-| Config | `vite.config.ts`, `tsconfig.json` | Build & type config |
+| Frontend | `apps/web/` | Vite + React 3D app |
+| Backend | `apps/api/` | Node + Express API |
+| FE Domain | `apps/web/src/domain/` | Models, ports, protocols, services |
+| FE UI | `apps/web/src/ui/`, `apps/web/src/components/` | React components, panels, windows |
+| FE State | `apps/web/src/state/` | Zustand stores |
+| FE Infra | `apps/web/src/infra/` | Frontend infrastructure adapters |
+| API Routes | `apps/api/src/routes/` | Express route handlers |
+| API Infra | `apps/api/src/infra/` | Backend infrastructure (DB, etc.) |
+| API Config | `apps/api/src/config/` | Environment parsing |
+| Shared | `packages/` | Shared libraries (future) |
+| Docker | `compose.yaml`, `apps/api/Dockerfile` | Local containerized dev |
+| Config | `tsconfig.base.json`, `package.json` | Root workspace + shared TS config |
 | Agents | `.agents/` | Agent contract + skill playbooks |
 | Docs | `docs/` | Requests, plans, prompts, decisions |
 

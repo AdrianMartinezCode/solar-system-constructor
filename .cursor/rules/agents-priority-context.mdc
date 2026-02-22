@@ -1,5 +1,6 @@
 ---
-globs: "**/*"
+globs:
+  - "**/*"
 description: Always prioritize the agent contract + indexes as first context for any prompt
 ---
 
