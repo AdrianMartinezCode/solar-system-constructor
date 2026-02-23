@@ -53,5 +53,6 @@ These skills are loaded dynamically when the task/request matches their trigger 
 | `react-components` | `.agents/skills/react-components/SKILL.md` | Task involves converting designs (Stitch) into modular React components, design-to-code workflows, or building UI components from design specs |
 | `skill-creator` | `.agents/skills/skill-creator/SKILL.md` | Task involves creating new skills or updating existing skill definitions under `.agents/skills/` |
 | `vite` | `.agents/skills/vite/SKILL.md` | Task involves Vite configuration (`vite.config.ts`), Vite plugins, Vite build optimization, SSR with Vite, library mode, or Rolldown/Vite 8 migration |
+| `websocket-engineer` | `.agents/skills/websocket-engineer/SKILL.md` | Task involves WebSocket or Socket.IO implementation, real-time bidirectional communication, pub/sub messaging, server push, live updates, presence tracking, or chat systems |
 | `workflow` | `.agents/skills/workflow/SKILL.md` | Task needs a refresher on the full CR → PLAN → TASK → execution pipeline, or the pipeline itself is being modified |
 
