@@ -45,9 +45,23 @@ If the request is big or needs decomposition, route to **Product Owner**. If the
 - Prefer local, minimal changes that preserve existing behavior unless the prompt says otherwise.
 - Verify with `npm run build` (and `npm run typecheck` if present) before considering the work complete.
 
-## Recommended Skills
+## Core Skills
+
+_Always loaded for this role:_
 
 - `.agents/skills/dev-task-executor/SKILL.md` (execution discipline)
-- `.agents/skills/change-request-triage/SKILL.md` (when deciding if work is “big” vs “small”)
-- `.agents/skills/po-task-decomposer/SKILL.md` + `.agents/skills/prompt-writer/SKILL.md` (when asked to generate plans/prompts)
+- `.agents/skills/change-request-triage/SKILL.md` (deciding if work is "big" vs "small")
+
+## Conditional Skills
+
+This role also loads **conditional skills** based on the task's domain.
+Before starting, scan the request for domain signals and match against the trigger conditions in `.agents/skills/README.md`.
+See the **Skill Loading Protocol** in `.agents/agents.md` for the full mechanism.
+
+Common conditional loads for a Developer:
+
+- `architecture-patterns` — when the change involves backend architecture, DDD, ports/adapters, or domain modeling.
+- `react-architect-skills` — when the change involves React component structure, feature modules, or frontend architecture.
+- `mcp-builder` — when the change involves creating or modifying MCP servers/tools.
+- `po-task-decomposer` + `prompt-writer` — when asked to generate plans/prompts (escalation to PO-style output).
 

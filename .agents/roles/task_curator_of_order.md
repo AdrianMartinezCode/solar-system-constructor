@@ -43,9 +43,23 @@ Execute a single approved curation task prompt under `docs/prompts/<slug>/task_<
 - Preserve compatibility with existing paths unless the prompt explicitly scopes a move/rename.
 - If the task reveals missing structure, stop and propose a follow-up task prompt instead of expanding scope.
 
-## Recommended Skills
+## Core Skills
+
+_Always loaded for this role:_
 
 - `.agents/skills/dev-task-executor/SKILL.md` (execution discipline)
-- `.agents/skills/curator-docs-librarian/SKILL.md` (when task is docs/taxonomy/index oriented)
-- `.agents/skills/curator-decision-steward/SKILL.md` (when task impacts structural conventions)
+- `.agents/skills/curator-docs-librarian/SKILL.md` (docs/taxonomy/index work)
+- `.agents/skills/curator-decision-steward/SKILL.md` (structural conventions)
+
+## Conditional Skills
+
+This role also loads **conditional skills** based on the task prompt's domain.
+Before starting, scan the task prompt for domain signals and match against the trigger conditions in `.agents/skills/README.md`.
+See the **Skill Loading Protocol** in `.agents/agents.md` for the full mechanism.
+
+Common conditional loads for a Task Curator of Order:
+
+- `skill-creator` — when the task prompt involves creating or updating agent skills.
+- `architecture-patterns` — when the task prompt involves documenting or reorganizing architectural conventions.
+- `workflow` — when the task prompt involves restructuring the CR→PLAN→TASK pipeline.
 

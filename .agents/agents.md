@@ -60,13 +60,36 @@ Once a role is selected:
 - Read and follow the selected role file in `.agents/roles/`.
 - Use skills in `.agents/skills/` as playbooks (don’t “wing it”).
 
+## Skill Loading Protocol
+
+Skills are **not** limited to a role's core skills list. Any role may dynamically load additional skills when the task context warrants it.
+
+### How it works
+
+1. **Core skills**: Each role file lists core skills that are always loaded for that role. These cover the role's primary function.
+2. **Conditional skills**: The skills catalog (`.agents/skills/README.md`) lists all available skills with **trigger conditions**. Before starting work, scan the task/request for trigger matches and load relevant conditional skills alongside the core ones.
+3. **Loading order**: Core skills first, then conditional skills matched by the task.
+
+### Trigger matching rules
+
+- Read the task/request description and identify its **domain signals** (e.g., mentions of architecture, React components, MCP tools, new skills, domain modeling).
+- Match against the trigger conditions listed in the skills catalog (`.agents/skills/README.md`).
+- Load matched skills alongside core skills.
+- If unsure whether a skill applies, **load it** — context is cheaper than missed guidance.
+
+### Example
+
+A Product Owner planning a feature that adds a new Express route with hexagonal architecture:
+- **Core skills** (always): `change-request-triage`, `po-task-decomposer`, `prompt-writer`
+- **Conditional skills** (matched): `architecture-patterns` (backend architecture signal), `workflow` (full pipeline reference)
+
 ## Multi-Agent Compatibility
 
-This repo supports multiple “roles” (agents with different responsibilities) while keeping the original contract intact.
+This repo supports multiple "roles" (agents with different responsibilities) while keeping the original contract intact.
 
 - **Contract (this file)**: global rules that all agents must follow.
 - **Agent roles**: `.agents/roles/` — individual role definitions (personas + responsibilities + outputs).
-- **Skills**: `.agents/skills/` — reusable playbooks any role can invoke.
+- **Skills**: `.agents/skills/` — reusable playbooks any role can invoke (core + conditional).
 
 ### Available roles (catalog)
 

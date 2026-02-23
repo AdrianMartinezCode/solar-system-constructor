@@ -32,6 +32,18 @@ _1–2 sentences: what this role exists to do._
 - Verify with `npm run build` (and `npm run typecheck` if separate).
 - Record structural decisions in `docs/decisions/`.
 
+## Core Skills
+
+_Skills always loaded for this role:_
+
+- _`.agents/skills/<skill>/SKILL.md`_
+
+## Conditional Skills
+
+This role also loads **conditional skills** based on task context.
+Scan the task/request for domain signals and match against the trigger conditions in `.agents/skills/README.md`.
+See the **Skill Loading Protocol** in `.agents/agents.md` for the full mechanism.
+
 ## Default Workflow (PO Lifecycle)
 
 1. Create/refresh a change request in `docs/requests/`.

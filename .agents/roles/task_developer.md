@@ -39,7 +39,20 @@ Implement a single approved task prompt under `docs/prompts/<slug>/task_<n>/TASK
 - If the task balloons, stop and propose splitting into a new task prompt.
 - Prefer minimal changes that satisfy acceptance criteria.
 
-## Recommended Skills
+## Core Skills
+
+_Always loaded for this role:_
 
 - `.agents/skills/dev-task-executor/SKILL.md`
 
+## Conditional Skills
+
+This role also loads **conditional skills** based on the task prompt's domain.
+Before starting, scan the task prompt for domain signals and match against the trigger conditions in `.agents/skills/README.md`.
+See the **Skill Loading Protocol** in `.agents/agents.md` for the full mechanism.
+
+Common conditional loads for a Task Developer:
+
+- `architecture-patterns` — when the task prompt involves backend architecture, DDD, ports/adapters, or domain modeling.
+- `react-architect-skills` — when the task prompt involves React component structure, feature modules, or frontend architecture.
+- `mcp-builder` — when the task prompt involves creating or modifying MCP servers/tools.

@@ -73,16 +73,27 @@ Depending on the request:
   - Avoid touching `src/` unless the change request scope requires it.
 - **Verification**: `npm run build` must pass after each task; use `npm run typecheck` if present.
 
-## Recommended Skills
+## Core Skills
 
-The Curator role is expected to use existing skills plus curator-specific ones:
+_Always loaded for this role:_
 
-- Existing:
-  - `.agents/skills/change-request-triage/SKILL.md`
-  - `.agents/skills/po-task-decomposer/SKILL.md`
-  - `.agents/skills/prompt-writer/SKILL.md`
-- Curator-specific:
-  - `.agents/skills/curator-entropy-audit/SKILL.md`
-  - `.agents/skills/curator-docs-librarian/SKILL.md`
-  - `.agents/skills/curator-decision-steward/SKILL.md`
+- `.agents/skills/change-request-triage/SKILL.md`
+- `.agents/skills/po-task-decomposer/SKILL.md`
+- `.agents/skills/prompt-writer/SKILL.md`
+- `.agents/skills/curator-entropy-audit/SKILL.md`
+- `.agents/skills/curator-docs-librarian/SKILL.md`
+- `.agents/skills/curator-decision-steward/SKILL.md`
+
+## Conditional Skills
+
+This role also loads **conditional skills** based on the task's domain.
+Before starting, scan the request for domain signals and match against the trigger conditions in `.agents/skills/README.md`.
+See the **Skill Loading Protocol** in `.agents/agents.md` for the full mechanism.
+
+Common conditional loads for a Curator of Order:
+
+- `architecture-patterns` — when the curation work touches architectural conventions or domain layer organization.
+- `react-architect-skills` — when the curation work touches React module structure or frontend naming conventions.
+- `skill-creator` — when creating or updating agent skills under `.agents/skills/`.
+- `workflow` — when auditing or restructuring the CR→PLAN→TASK pipeline itself.
 
