@@ -1,0 +1,128 @@
+/* ─── Mode Selection Screen ─── */
+
+.mode-selection-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20000;
+  animation: modeScreenFadeIn 0.4s ease-out;
+}
+
+@keyframes modeScreenFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── Header area ─── */
+
+.mode-selection-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.mode-selection-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #e8e8e8;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.mode-selection-subtitle {
+  font-size: 15px;
+  color: #888;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ─── Cards container ─── */
+
+.mode-selection-cards {
+  display: flex;
+  gap: 24px;
+}
+
+/* ─── Individual card ─── */
+
+.mode-card {
+  width: 280px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 36px 28px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  user-select: none;
+}
+
+.mode-card:hover {
+  border-color: #4a9eff;
+  background: #222;
+  box-shadow: 0 8px 32px rgba(74, 158, 255, 0.15);
+  transform: translateY(-4px);
+}
+
+.mode-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(74, 158, 255, 0.2);
+}
+
+/* ─── Card icon ─── */
+
+.mode-card-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+/* ─── Card title ─── */
+
+.mode-card-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e8e8e8;
+  margin: 0;
+}
+
+/* ─── Card description ─── */
+
+.mode-card-description {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ─── Responsive: stack on narrow screens ─── */
+
+@media (max-width: 640px) {
+  .mode-selection-cards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mode-card {
+    width: 90vw;
+    max-width: 320px;
+  }
+
+  .mode-selection-title {
+    font-size: 24px;
+  }
+
+  .mode-selection-header {
+    margin-bottom: 32px;
+  }
+}
