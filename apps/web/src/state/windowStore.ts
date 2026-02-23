@@ -231,27 +231,30 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
 
   dockWindow: (id, position) => {
     set((state) => {
-      const window = state.windows[id];
-      if (!window) return state;
+      const win = state.windows[id];
+      if (!win) return state;
 
-      let newPosition = { ...window.position };
-      let newSize = { ...window.size };
+      const viewW = globalThis.innerWidth;
+      const viewH = globalThis.innerHeight;
+
+      let newPosition = { ...win.position };
+      let newSize = { ...win.size };
 
       if (position === 'left') {
         newPosition = { x: 0, y: 60 };
-        newSize = { width: window.size.width, height: window.innerHeight - 60 - 40 };
+        newSize = { width: win.size.width, height: viewH - 60 - 40 };
       } else if (position === 'right') {
-        newPosition = { x: window.innerWidth - window.size.width, y: 60 };
-        newSize = { width: window.size.width, height: window.innerHeight - 60 - 40 };
+        newPosition = { x: viewW - win.size.width, y: 60 };
+        newSize = { width: win.size.width, height: viewH - 60 - 40 };
       } else if (position === 'top') {
         newPosition = { x: 0, y: 60 };
-        newSize = { width: window.innerWidth, height: 200 };
+        newSize = { width: viewW, height: 200 };
       }
 
       return {
         windows: {
           ...state.windows,
-          [id]: { ...window, docked: position, position: newPosition, size: newSize },
+          [id]: { ...win, docked: position, position: newPosition, size: newSize },
         },
       };
     });

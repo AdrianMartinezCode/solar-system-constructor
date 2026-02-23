@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import type { CommandGateway } from '../app/ports/commandGateway.js';
+import { ALLOWED_ORIGINS } from '../config/cors.js';
 
 export function createCommandsRouter(gateway: CommandGateway): Router {
   const router = Router();
@@ -48,6 +49,13 @@ export function createCommandsRouter(gateway: CommandGateway): Router {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+
+    // Explicit CORS headers for SSE — the `cors` middleware may not cover
+    // EventSource requests because some browsers omit the Origin header.
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
 
     // Disable response buffering (important for SSE through proxies)
     res.flushHeaders();

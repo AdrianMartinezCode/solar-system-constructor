@@ -108,16 +108,24 @@ export const Taskbar: React.FC = () => {
             >
               <span className="taskbar-window-icon">{getWindowIcon(window.type)}</span>
               <span className="taskbar-window-label">{getShortLabel(window)}</span>
-              <button
+              <span
+                role="button"
+                tabIndex={0}
                 className="taskbar-window-close"
                 onClick={(e) => {
                   e.stopPropagation();
                   closeWindow(windowId);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    closeWindow(windowId);
+                  }
+                }}
                 title="Close"
               >
                 ✕
-              </button>
+              </span>
             </button>
           );
         })}

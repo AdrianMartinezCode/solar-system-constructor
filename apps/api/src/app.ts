@@ -5,11 +5,7 @@ import { createUniverseRouter } from './routes/universes.js';
 import { createCommandsRouter } from './routes/commands.js';
 import type { UniverseRepository } from './app/ports/universeRepository.js';
 import type { CommandGateway } from './app/ports/commandGateway.js';
-
-// ---------------------------------------------------------------------------
-// CORS — allowed origins (extend as needed for staging / production)
-// ---------------------------------------------------------------------------
-const ALLOWED_ORIGINS = ['http://localhost:5173'];
+import { ALLOWED_ORIGINS } from './config/cors.js';
 
 export function createApp(universeRepo: UniverseRepository, commandGateway: CommandGateway) {
   const app = express();
