@@ -5,6 +5,8 @@
  * Implementations (adapters) live in `src/infra/persistence/`.
  */
 
+import type { UniverseState } from '@solar/domain';
+
 // ---------------------------------------------------------------------------
 // Data types
 // ---------------------------------------------------------------------------
@@ -17,11 +19,8 @@ export interface PersistedUniverse {
   /** Human-readable universe name. */
   name: string;
 
-  /**
-   * The universe state blob (JSONB-compatible).
-   * Intentionally generic until a shared domain package provides the real type.
-   */
-  state: Record<string, unknown>;
+  /** The universe state (typed via @solar/domain shared package). */
+  state: UniverseState;
 
   /** Timestamp of creation. */
   createdAt: Date;
@@ -33,13 +32,13 @@ export interface PersistedUniverse {
 /** Input for creating a new universe. */
 export interface CreateUniverseInput {
   name: string;
-  state: Record<string, unknown>;
+  state: UniverseState;
 }
 
 /** Input for partially updating an existing universe. */
 export interface UpdateUniverseInput {
   name?: string;
-  state?: Record<string, unknown>;
+  state?: UniverseState;
 }
 
 // ---------------------------------------------------------------------------

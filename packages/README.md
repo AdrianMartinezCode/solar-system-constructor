@@ -2,11 +2,11 @@
 
 This folder contains **shared libraries** consumed by the apps in `apps/`.
 
-## Planned packages
+## Packages
 
 | Package | Path | Description |
 |---------|------|-------------|
-| **shared** _(future)_ | `packages/shared/` | Shared TypeScript types/contracts between web and api |
+| **@solar/domain** | `packages/domain/` | Shared universe domain types, state, commands, reducer, and validation logic |
 
 ## Conventions
 

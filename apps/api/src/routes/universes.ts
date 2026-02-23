@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import type { UniverseState } from '@solar/domain';
 import type { UniverseRepository } from '../app/ports/universeRepository.js';
 
 export function createUniverseRouter(repo: UniverseRepository): Router {
@@ -27,7 +28,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
         return;
       }
 
-      const created = await repo.create({ name: name.trim(), state });
+      const created = await repo.create({ name: name.trim(), state: state as UniverseState });
       res.status(201).json(created);
     } catch (err) {
       next(err);
@@ -70,7 +71,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
       const { name, state } = req.body ?? {};
 
       // Build the update input — only include fields that were provided
-      const input: { name?: string; state?: Record<string, unknown> } = {};
+      const input: { name?: string; state?: UniverseState } = {};
 
       if (name !== undefined) {
         if (typeof name !== 'string' || name.trim().length === 0) {
@@ -85,7 +86,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
           res.status(400).json({ error: '"state" must be a JSON object when provided' });
           return;
         }
-        input.state = state;
+        input.state = state as UniverseState;
       }
 
       const updated = await repo.update(req.params.id, input);

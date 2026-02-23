@@ -1,12 +1,32 @@
 /**
- * Domain public API — barrel export.
+ * @solar/domain — shared universe domain package.
  *
- * All domain consumers should import from this module.
+ * Entity types, universe state, commands, reducer, and validation logic
+ * shared between the web and API applications.
  */
 
+// Entity types
+export type {
+  Star,
+  PlanetaryRing,
+  CometMeta,
+  LagrangePointMeta,
+  BlackHoleProperties,
+  RoguePlanetMeta,
+  AsteroidBelt,
+  SmallBodyBelt,
+  Position,
+  Group,
+  GroupChild,
+  NestingLevel,
+  ProtoplanetaryDisk,
+  SmallBodyField,
+  NebulaRegion,
+} from './types';
+
 // State
-export type { UniverseState } from '@solar/domain';
-export { emptyUniverseState } from '@solar/domain';
+export type { UniverseState } from './universe/state';
+export { emptyUniverseState } from './universe/state';
 
 // Commands & events
 export type {
@@ -37,11 +57,11 @@ export type {
   RemoveRingCommand,
   ReplaceSnapshotCommand,
   DomainEvent,
-} from '@solar/domain';
+} from './universe/commands';
 
 // Reducer
-export type { CommandResult } from '@solar/domain';
-export { applyUniverseCommand } from '@solar/domain';
+export type { CommandResult } from './universe/applyCommand';
+export { applyUniverseCommand } from './universe/applyCommand';
 
 // Validation helpers
 export {
@@ -49,7 +69,4 @@ export {
   collectDescendants,
   starExists,
   wouldCreateGroupCycle,
-} from '@solar/domain';
-
-// Generation types
-export type { GenerationConfig, GeneratedUniverse } from './generation';
+} from './universe/validate';

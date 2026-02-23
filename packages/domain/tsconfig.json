@@ -5,10 +5,8 @@
     "rootDir": "src",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "composite": true
   },
-  "include": ["src"],
-  "references": [
-    { "path": "../../packages/domain" }
-  ]
+  "include": ["src"]
 }

@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@solar/domain": "*",
     "express": "^4.21.0",
     "pg": "^8.18.0"
   },

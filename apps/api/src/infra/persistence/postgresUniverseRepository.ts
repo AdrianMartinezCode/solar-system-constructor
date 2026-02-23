@@ -6,6 +6,7 @@
  */
 
 import type pg from 'pg';
+import type { UniverseState } from '@solar/domain';
 import type {
   UniverseRepository,
   PersistedUniverse,
@@ -20,7 +21,7 @@ import type {
 interface UniverseRow {
   id: string;
   name: string;
-  state: Record<string, unknown>;
+  state: UniverseState;
   created_at: string | Date;
   updated_at: string | Date;
 }

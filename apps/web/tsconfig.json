@@ -8,5 +8,8 @@
     "jsx": "react-jsx"
   },
   "include": ["src", "prng.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "../../packages/domain" }
+  ]
 }
