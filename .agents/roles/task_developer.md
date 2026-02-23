@@ -47,12 +47,4 @@ _Always loaded for this role:_
 
 ## Conditional Skills
 
-This role also loads **conditional skills** based on the task prompt's domain.
-Before starting, scan the task prompt for domain signals and match against the trigger conditions in `.agents/skills/README.md`.
-See the **Skill Loading Protocol** in `.agents/agents.md` for the full mechanism.
-
-Common conditional loads for a Task Developer:
-
-- `architecture-patterns` — when the task prompt involves backend architecture, DDD, ports/adapters, or domain modeling.
-- `react-architect-skills` — when the task prompt involves React component structure, feature modules, or frontend architecture.
-- `mcp-builder` — when the task prompt involves creating or modifying MCP servers/tools.
+Before starting, **always read `.agents/skills/README.md`** (the skills catalog). Scan the task prompt for domain signals, match against the trigger conditions listed there, and load every matching skill alongside the core skills above. The catalog is the single source of truth for available conditional skills — do not rely on a hardcoded list here.

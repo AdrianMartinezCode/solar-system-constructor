@@ -55,13 +55,4 @@ _Always loaded for this role:_
 
 ## Conditional Skills
 
-This role also loads **conditional skills** based on the task's domain.
-Before starting, scan the change request for domain signals and match against the trigger conditions in `.agents/skills/README.md`.
-See the **Skill Loading Protocol** in `.agents/agents.md` for the full mechanism.
-
-Common conditional loads for a Product Owner:
-
-- `architecture-patterns` — when the CR involves backend architecture, DDD, or hexagonal/clean patterns.
-- `react-architect-skills` — when the CR involves React component structure or frontend feature modules.
-- `mcp-builder` — when the CR involves creating or modifying MCP servers/tools.
-- `workflow` — when the full CR→PLAN→TASK pipeline needs a refresher.
+Before starting, **always read `.agents/skills/README.md`** (the skills catalog). Scan the change request for domain signals, match against the trigger conditions listed there, and load every matching skill alongside the core skills above. The catalog is the single source of truth for available conditional skills — do not rely on a hardcoded list here.

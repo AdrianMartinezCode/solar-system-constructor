@@ -10,7 +10,7 @@ import { useWindowStore } from './state/windowStore';
 import { useAppModeStore } from './state/appModeStore';
 import { useOnlineSessionStore } from './state/onlineSessionStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { mockUniverseApiClient } from './infra/api/mockUniverseApiClient';
+import { universeApiClient } from './infra/api/universeApiClientProvider';
 import { emptyUniverseState } from './domain/universe/state';
 import type { ApiUniverse } from './app/ports/universeApiClient';
 import './App.css';
@@ -72,7 +72,7 @@ function OnlineBrowser() {
   const fetchUniverses = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await mockUniverseApiClient.list();
+      const list = await universeApiClient.list();
       setUniverses(list);
     } catch (err) {
       console.error('Failed to fetch universes:', err);
@@ -87,7 +87,7 @@ function OnlineBrowser() {
 
   const handleLoad = useCallback(async (id: string) => {
     try {
-      const universe = await mockUniverseApiClient.getById(id);
+      const universe = await universeApiClient.getById(id);
       if (!universe) {
         console.error('Universe not found:', id);
         return;
@@ -114,7 +114,7 @@ function OnlineBrowser() {
 
   const handleDelete = useCallback(async (id: string) => {
     try {
-      await mockUniverseApiClient.delete(id);
+      await universeApiClient.delete(id);
       await fetchUniverses();
     } catch (err) {
       console.error('Failed to delete universe:', err);
@@ -127,7 +127,7 @@ function OnlineBrowser() {
 
     try {
       const empty = emptyUniverseState();
-      const created = await mockUniverseApiClient.create({
+      const created = await universeApiClient.create({
         name,
         state: empty as unknown as Record<string, unknown>,
       });

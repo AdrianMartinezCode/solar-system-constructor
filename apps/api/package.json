@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@solar/domain": "*",
+    "cors": "^2.8.6",
     "express": "^4.21.0",
     "pg": "^8.18.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.5",
     "@types/pg": "^8.16.0",

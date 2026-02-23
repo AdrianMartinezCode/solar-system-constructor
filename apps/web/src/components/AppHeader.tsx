@@ -4,7 +4,7 @@ import { useUiStore } from '../state/uiStore';
 import { useWindowStore } from '../state/windowStore';
 import { useAppModeStore } from '../state/appModeStore';
 import { useOnlineSessionStore } from '../state/onlineSessionStore';
-import { mockUniverseApiClient } from '../infra/api/mockUniverseApiClient';
+import { universeApiClient } from '../infra/api/universeApiClientProvider';
 import './AppHeader.css';
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
@@ -66,7 +66,7 @@ export const AppHeader: React.FC = () => {
 
     try {
       const state = useSystemStore.getState();
-      await mockUniverseApiClient.update(currentUniverseId, {
+      await universeApiClient.update(currentUniverseId, {
         state: {
           stars: state.stars,
           rootIds: state.rootIds,

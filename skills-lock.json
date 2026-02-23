@@ -1,15 +1,40 @@
 {
   "version": 1,
   "skills": {
+    "backend-dev-guidelines": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "369f7ebb0d0a6895c3c1508c9ac0757383269c87389a38d3610cd6b5fb71ab9b"
+    },
+    "docker-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "3af17640f2b6b301afc9331cf8843ec723ff12d7b13c050a605e0723d0a585ca"
+    },
     "mcp-builder": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "fc68038c900eb801f73ff96130c9f9dba533cc94212ed8435833242f196dedcf"
     },
+    "nodejs-backend-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "4c6bf8fbd9a13d61e326ddeb210af5854fea3b253922a7981bd7718f3b765c08"
+    },
+    "react:components": {
+      "source": "google-labs-code/stitch-skills",
+      "sourceType": "github",
+      "computedHash": "7c1dc22f37f2b1bebd7f37c75c2f0251a7c76feca5325955c0e6a68b68216bcf"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "a096b9af85c9d954374ebe3f7a23b5b7737ed3f35fe2a8f5893742c4e00dba1c"
+    },
+    "vite": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "0293c251e4d6ff4818e8d2faed2a92f98d8d73c2f4819bd754faf93ca134d6fe"
     }
   }
 }

@@ -45,8 +45,13 @@ These skills are loaded dynamically when the task/request matches their trigger 
 | Skill (slug) | Path | Trigger conditions |
 |---|---|---|
 | `architecture-patterns` | `.agents/skills/architecture-patterns/SKILL.md` | Task involves backend architecture, clean/hexagonal architecture, DDD, domain modeling, ports/adapters, or entity/aggregate design |
-| `react-architect-skills` | `.agents/skills/react-architect-skills/SKILL.md` | Task involves React component structure, feature-module layout, frontend naming conventions, or UI layer separation |
+| `backend-dev-guidelines` | `.agents/skills/backend-dev-guidelines/SKILL.md` | Task involves backend development with Node.js + Express + TypeScript, layered architecture, controllers, services, repositories, Prisma, Zod validation, or backend error handling/observability |
+| `docker-expert` | `.agents/skills/docker-expert/SKILL.md` | Task involves Docker, Dockerfiles, container builds, Docker Compose, image optimization, container security, or multi-stage build patterns |
 | `mcp-builder` | `.agents/skills/mcp-builder/SKILL.md` | Task involves creating, modifying, or documenting MCP servers/tools |
+| `nodejs-backend-patterns` | `.agents/skills/nodejs-backend-patterns/SKILL.md` | Task involves creating Node.js servers, REST APIs, GraphQL backends, microservices, middleware patterns, authentication/authorization, or database integration |
+| `react-architect-skills` | `.agents/skills/react-architect-skills/SKILL.md` | Task involves React component structure, feature-module layout, frontend naming conventions, or UI layer separation |
+| `react-components` | `.agents/skills/react-components/SKILL.md` | Task involves converting designs (Stitch) into modular React components, design-to-code workflows, or building UI components from design specs |
 | `skill-creator` | `.agents/skills/skill-creator/SKILL.md` | Task involves creating new skills or updating existing skill definitions under `.agents/skills/` |
+| `vite` | `.agents/skills/vite/SKILL.md` | Task involves Vite configuration (`vite.config.ts`), Vite plugins, Vite build optimization, SSR with Vite, library mode, or Rolldown/Vite 8 migration |
 | `workflow` | `.agents/skills/workflow/SKILL.md` | Task needs a refresher on the full CR → PLAN → TASK → execution pipeline, or the pipeline itself is being modified |
 
