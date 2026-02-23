@@ -10,6 +10,8 @@ import { useWindowStore } from './state/windowStore';
 import { useAppModeStore } from './state/appModeStore';
 import { useOnlineSessionStore } from './state/onlineSessionStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useRemoteCommandStream } from './hooks/useRemoteCommandStream';
+import { RemoteCommandToast } from './components/RemoteCommandToast';
 import { universeApiClient } from './infra/api/universeApiClientProvider';
 import { emptyUniverseState } from './domain/universe/state';
 import type { ApiUniverse } from './app/ports/universeApiClient';
@@ -26,6 +28,11 @@ function AppContent() {
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts();
+
+  // Connect to the SSE command stream when in online mode (editing a universe)
+  const mode = useAppModeStore((state) => state.mode);
+  const currentUniverseId = useOnlineSessionStore((state) => state.currentUniverseId);
+  useRemoteCommandStream(mode === 'online' ? currentUniverseId : null);
 
   useEffect(() => {
     // Load system on mount
@@ -51,6 +58,7 @@ function AppContent() {
       </div>
 
       <WindowManager />
+      <RemoteCommandToast />
       <Taskbar />
     </div>
   );

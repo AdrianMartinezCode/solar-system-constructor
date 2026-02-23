@@ -12,6 +12,7 @@ import type { UniverseCommand } from '@solar/domain';
 import type {
   CommandStream,
   CommandStreamListener,
+  CommandStreamOptions,
   DisconnectFn,
 } from '../../app/ports/commandStream';
 
@@ -39,8 +40,16 @@ export function createSseCommandStream(): CommandStream {
   const baseUrl = resolveBaseUrl();
 
   return {
-    connect(universeId: string, onCommand: CommandStreamListener): DisconnectFn {
+    connect(
+      universeId: string,
+      onCommand: CommandStreamListener,
+      options?: CommandStreamOptions,
+    ): DisconnectFn {
       const url = `${baseUrl}/universes/${encodeURIComponent(universeId)}/events`;
+
+      // Report "connecting" immediately, before the EventSource opens.
+      options?.onStatusChange?.('connecting');
+
       const source = new EventSource(url);
 
       source.addEventListener('command', (e: MessageEvent) => {
@@ -54,11 +63,13 @@ export function createSseCommandStream(): CommandStream {
 
       source.addEventListener('open', () => {
         console.log(`[SSE] connected to universe ${universeId}`);
+        options?.onStatusChange?.('connected');
       });
 
       source.addEventListener('error', () => {
         // EventSource will automatically reconnect; just log for debugging.
         console.warn(`[SSE] connection error for universe ${universeId} — will retry`);
+        options?.onStatusChange?.('error');
       });
 
       return () => {

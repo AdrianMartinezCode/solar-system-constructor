@@ -5,6 +5,7 @@ import { useWindowStore } from '../state/windowStore';
 import { useAppModeStore } from '../state/appModeStore';
 import { useOnlineSessionStore } from '../state/onlineSessionStore';
 import { universeApiClient } from '../infra/api/universeApiClientProvider';
+import { ConnectionStatusIndicator } from './ConnectionStatusIndicator';
 import './AppHeader.css';
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
@@ -122,6 +123,9 @@ export const AppHeader: React.FC = () => {
             {currentUniverseName}
           </span>
         )}
+
+        {/* Online-mode: SSE connection status indicator */}
+        {isOnline && <ConnectionStatusIndicator />}
 
         <div className="speed-control-compact" onClick={handleSpeedClick}>
           <span className="speed-icon">⏱️</span>

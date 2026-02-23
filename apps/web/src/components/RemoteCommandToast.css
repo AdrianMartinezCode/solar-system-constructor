@@ -1,0 +1,80 @@
+/* RemoteCommandToast — bottom-right toast notifications */
+
+.remote-toast-container {
+  position: fixed;
+  bottom: 80px; /* above the taskbar */
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999; /* above scene, below modal windows */
+  pointer-events: none;
+}
+
+/* Individual toast */
+.remote-toast-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  animation: toastSlideIn 0.25s ease-out;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+/* Highlighted toast (replaceSnapshot) */
+.remote-toast-highlighted {
+  border-color: #4a9eff;
+  box-shadow: 0 4px 16px rgba(74, 158, 255, 0.2);
+}
+
+.remote-toast-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.remote-toast-message {
+  font-size: 12px;
+  color: #e8e8e8;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.remote-toast-close {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.remote-toast-close:hover {
+  background: rgba(255, 85, 85, 0.15);
+  color: #ff5555;
+}
+
+/* Slide-in animation */
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
