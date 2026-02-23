@@ -2,14 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import { healthRouter } from './routes/health.js';
 import { createUniverseRouter } from './routes/universes.js';
+import { createCommandsRouter } from './routes/commands.js';
 import type { UniverseRepository } from './app/ports/universeRepository.js';
+import type { CommandGateway } from './app/ports/commandGateway.js';
 
 // ---------------------------------------------------------------------------
 // CORS — allowed origins (extend as needed for staging / production)
 // ---------------------------------------------------------------------------
 const ALLOWED_ORIGINS = ['http://localhost:5173'];
 
-export function createApp(universeRepo: UniverseRepository) {
+export function createApp(universeRepo: UniverseRepository, commandGateway: CommandGateway) {
   const app = express();
 
   // ---------------------------------------------------------------------------
@@ -23,6 +25,7 @@ export function createApp(universeRepo: UniverseRepository) {
   // ---------------------------------------------------------------------------
   app.use(healthRouter);
   app.use(createUniverseRouter(universeRepo));
+  app.use(createCommandsRouter(commandGateway));
 
   // ---------------------------------------------------------------------------
   // Global error handler (placeholder — extend as the API grows)

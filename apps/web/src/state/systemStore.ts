@@ -162,6 +162,9 @@ interface SystemStore {
     nebulae?: Record<string, NebulaRegion>;
   }) => void;
 
+  // Remote command application (no save — commands come from the backend)
+  applyRemoteCommand: (command: UniverseCommand) => void;
+
   // Persistence
   save: () => void;
   load: () => void;
@@ -576,6 +579,13 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
     // Clear selection in the canonical uiStore
     useUiStore.getState().clearSelection();
     get().save();
+  },
+
+  applyRemoteCommand: (command) => {
+    // Apply the command to the universe state via the domain reducer.
+    // Intentionally does NOT call save() — remote commands come from the
+    // backend and should not be re-persisted to localStorage.
+    dispatchDomainCommand(get, set, command);
   },
 
   save: () => {

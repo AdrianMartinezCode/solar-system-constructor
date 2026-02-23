@@ -4,6 +4,7 @@ import type { PostgresDbProvider } from './infra/db/index.js';
 import { createApp } from './app.js';
 import { createInMemoryUniverseRepository } from './infra/persistence/inMemoryUniverseRepository.js';
 import { createPostgresUniverseRepository } from './infra/persistence/postgresUniverseRepository.js';
+import { createInMemoryCommandGateway } from './infra/realtime/inMemoryCommandGateway.js';
 import type { UniverseRepository } from './app/ports/universeRepository.js';
 
 async function main() {
@@ -27,7 +28,13 @@ async function main() {
     console.log('[api] universe repository: in-memory (ephemeral)');
   }
 
-  const app = createApp(universeRepo);
+  // ---------------------------------------------------------------------------
+  // Build the command gateway (real-time command broadcasting)
+  // ---------------------------------------------------------------------------
+  const commandGateway = createInMemoryCommandGateway();
+  console.log('[api] command gateway: in-memory');
+
+  const app = createApp(universeRepo, commandGateway);
   const server = app.listen(env.PORT, () => {
     console.log(`[api] listening on http://localhost:${env.PORT}  (db: ${db.name})`);
   });
