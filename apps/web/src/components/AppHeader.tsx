@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useSystemStore } from '../state/systemStore';
 import { useUiStore } from '../state/uiStore';
 import { useWindowStore } from '../state/windowStore';
+import { useAppModeStore } from '../state/appModeStore';
+import { useOnlineSessionStore } from '../state/onlineSessionStore';
+import { mockUniverseApiClient } from '../infra/api/mockUniverseApiClient';
 import './AppHeader.css';
+
+type SaveStatus = 'idle' | 'saving' | 'saved';
 
 export const AppHeader: React.FC = () => {
   const timeScale = useSystemStore((state) => state.timeScale);
@@ -13,6 +18,16 @@ export const AppHeader: React.FC = () => {
   const resetCamera = useUiStore((state) => state.resetCamera);
   const openWindow = useWindowStore((state) => state.openWindow);
   const [showSpeedDropdown, setShowSpeedDropdown] = useState(false);
+
+  // Online-mode state
+  const mode = useAppModeStore((state) => state.mode);
+  const currentUniverseId = useOnlineSessionStore((state) => state.currentUniverseId);
+  const currentUniverseName = useOnlineSessionStore((state) => state.currentUniverseName);
+  const exitEditor = useOnlineSessionStore((state) => state.exitEditor);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isOnline = mode === 'online';
 
   const targetStar = cameraTargetBodyId ? stars[cameraTargetBodyId] : null;
 
@@ -38,9 +53,76 @@ export const AppHeader: React.FC = () => {
     setShowSpeedDropdown(!showSpeedDropdown);
   };
 
+  const handleSave = useCallback(async () => {
+    if (!currentUniverseId || saveStatus === 'saving') return;
+
+    // Clear any pending "saved" timer
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    setSaveStatus('saving');
+
+    try {
+      const state = useSystemStore.getState();
+      await mockUniverseApiClient.update(currentUniverseId, {
+        state: {
+          stars: state.stars,
+          rootIds: state.rootIds,
+          groups: state.groups,
+          rootGroupIds: state.rootGroupIds,
+          belts: state.belts,
+          smallBodyFields: state.smallBodyFields,
+          protoplanetaryDisks: state.protoplanetaryDisks,
+          nebulae: state.nebulae,
+        } as unknown as Record<string, unknown>,
+      });
+
+      setSaveStatus('saved');
+      saveTimerRef.current = setTimeout(() => {
+        setSaveStatus('idle');
+        saveTimerRef.current = null;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to save universe:', err);
+      setSaveStatus('idle');
+    }
+  }, [currentUniverseId, saveStatus]);
+
+  const handleBackToUniverses = useCallback(() => {
+    exitEditor();
+  }, [exitEditor]);
+
+  const getSaveButtonLabel = (): string => {
+    switch (saveStatus) {
+      case 'saving': return '⏳ Saving…';
+      case 'saved': return '✅ Saved';
+      default: return '💾 Save';
+    }
+  };
+
   return (
     <div className="app-header-new">
       <div className="header-left">
+        {/* Online-mode: Back to Universes button */}
+        {isOnline && (
+          <button
+            className="header-btn header-btn-back"
+            onClick={handleBackToUniverses}
+            title="Back to Universe Browser"
+          >
+            📋 Universes
+          </button>
+        )}
+
+        {/* Online-mode: Universe name label */}
+        {isOnline && currentUniverseName && (
+          <span className="header-universe-name" title={currentUniverseName}>
+            {currentUniverseName}
+          </span>
+        )}
+
         <div className="speed-control-compact" onClick={handleSpeedClick}>
           <span className="speed-icon">⏱️</span>
           <span className="speed-value">{timeScale.toFixed(2)}x</span>
@@ -105,6 +187,18 @@ export const AppHeader: React.FC = () => {
         >
           🌌 Generate
         </button>
+
+        {/* Online-mode: Save button */}
+        {isOnline && (
+          <button
+            className={`header-btn header-btn-save ${saveStatus === 'saved' ? 'saved' : ''}`}
+            onClick={handleSave}
+            disabled={saveStatus === 'saving'}
+            title="Save universe to server"
+          >
+            {getSaveButtonLabel()}
+          </button>
+        )}
       </div>
 
       {/* Camera Mode Indicator */}
@@ -124,4 +218,3 @@ export const AppHeader: React.FC = () => {
     </div>
   );
 };
-

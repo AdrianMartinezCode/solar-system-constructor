@@ -1,13 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Scene } from './components/Scene';
 import { AppHeader } from './components/AppHeader';
 import { WindowManager } from './components/WindowManager';
 import { Taskbar } from './components/Taskbar';
 import { ModeSelectionScreen } from './components/ModeSelectionScreen';
+import { UniverseBrowser } from './components/UniverseBrowser';
 import { useSystemStore } from './state/systemStore';
 import { useWindowStore } from './state/windowStore';
 import { useAppModeStore } from './state/appModeStore';
+import { useOnlineSessionStore } from './state/onlineSessionStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { mockUniverseApiClient } from './infra/api/mockUniverseApiClient';
+import { emptyUniverseState } from './domain/universe/state';
+import type { ApiUniverse } from './app/ports/universeApiClient';
 import './App.css';
 
 /**
@@ -51,12 +56,127 @@ function AppContent() {
   );
 }
 
+/**
+ * Online-mode universe browser — fetches universes from the mock API
+ * and wires load/delete/create actions.
+ */
+function OnlineBrowser() {
+  const [universes, setUniverses] = useState<ApiUniverse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const clearMode = useAppModeStore((state) => state.clearMode);
+  const enterEditor = useOnlineSessionStore((state) => state.enterEditor);
+  const resetSession = useOnlineSessionStore((state) => state.resetSession);
+  const replaceUniverseSnapshot = useSystemStore((state) => state.replaceUniverseSnapshot);
+
+  const fetchUniverses = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await mockUniverseApiClient.list();
+      setUniverses(list);
+    } catch (err) {
+      console.error('Failed to fetch universes:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUniverses();
+  }, [fetchUniverses]);
+
+  const handleLoad = useCallback(async (id: string) => {
+    try {
+      const universe = await mockUniverseApiClient.getById(id);
+      if (!universe) {
+        console.error('Universe not found:', id);
+        return;
+      }
+
+      // Cast the generic state blob to the expected snapshot shape
+      const state = universe.state as unknown as ReturnType<typeof emptyUniverseState>;
+      replaceUniverseSnapshot({
+        stars: state.stars ?? {},
+        rootIds: state.rootIds ?? [],
+        groups: state.groups ?? {},
+        rootGroupIds: state.rootGroupIds ?? [],
+        belts: state.belts ?? {},
+        smallBodyFields: state.smallBodyFields ?? {},
+        protoplanetaryDisks: state.protoplanetaryDisks ?? {},
+        nebulae: state.nebulae ?? {},
+      });
+
+      enterEditor(universe.id, universe.name);
+    } catch (err) {
+      console.error('Failed to load universe:', err);
+    }
+  }, [replaceUniverseSnapshot, enterEditor]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await mockUniverseApiClient.delete(id);
+      await fetchUniverses();
+    } catch (err) {
+      console.error('Failed to delete universe:', err);
+    }
+  }, [fetchUniverses]);
+
+  const handleCreate = useCallback(async () => {
+    const name = window.prompt('Universe name:', 'New Universe');
+    if (!name) return;
+
+    try {
+      const empty = emptyUniverseState();
+      const created = await mockUniverseApiClient.create({
+        name,
+        state: empty as unknown as Record<string, unknown>,
+      });
+
+      replaceUniverseSnapshot({
+        stars: empty.stars,
+        rootIds: empty.rootIds,
+        groups: empty.groups,
+        rootGroupIds: empty.rootGroupIds,
+        belts: empty.belts,
+        smallBodyFields: empty.smallBodyFields,
+        protoplanetaryDisks: empty.protoplanetaryDisks,
+        nebulae: empty.nebulae,
+      });
+
+      enterEditor(created.id, created.name);
+    } catch (err) {
+      console.error('Failed to create universe:', err);
+    }
+  }, [replaceUniverseSnapshot, enterEditor]);
+
+  const handleBack = useCallback(() => {
+    resetSession();
+    clearMode();
+  }, [resetSession, clearMode]);
+
+  return (
+    <UniverseBrowser
+      universes={universes}
+      loading={loading}
+      onLoad={handleLoad}
+      onDelete={handleDelete}
+      onCreate={handleCreate}
+      onBack={handleBack}
+    />
+  );
+}
+
 function App() {
   const mode = useAppModeStore((state) => state.mode);
   const setMode = useAppModeStore((state) => state.setMode);
+  const phase = useOnlineSessionStore((state) => state.phase);
 
   if (mode === null) {
     return <ModeSelectionScreen onSelect={setMode} />;
+  }
+
+  if (mode === 'online' && phase === 'browsing') {
+    return <OnlineBrowser />;
   }
 
   return <AppContent />;

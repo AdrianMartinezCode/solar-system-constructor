@@ -1,0 +1,323 @@
+/* ─── Universe Browser ─── */
+
+.universe-browser {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 20000;
+  animation: browserFadeIn 0.4s ease-out;
+  overflow-y: auto;
+  padding: 48px 24px;
+}
+
+@keyframes browserFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── Header area ─── */
+
+.universe-browser-header {
+  text-align: center;
+  margin-bottom: 36px;
+  width: 100%;
+  max-width: 720px;
+}
+
+.universe-browser-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #e8e8e8;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.universe-browser-subtitle {
+  font-size: 15px;
+  color: #888;
+  margin: 0 0 24px 0;
+  font-weight: 400;
+}
+
+/* ─── Actions bar ─── */
+
+.universe-browser-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
+  margin-bottom: 24px;
+}
+
+.universe-browser-btn {
+  padding: 10px 20px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: #e8e8e8;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.universe-browser-btn:hover {
+  background: #333;
+  border-color: #4a9eff;
+}
+
+.universe-browser-btn.primary {
+  background: #1a3a5c;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
+.universe-browser-btn.primary:hover {
+  background: #4a9eff;
+  box-shadow: 0 4px 16px rgba(74, 158, 255, 0.3);
+}
+
+.universe-browser-btn.back {
+  background: transparent;
+  border-color: #555;
+  color: #aaa;
+}
+
+.universe-browser-btn.back:hover {
+  border-color: #888;
+  color: #e8e8e8;
+}
+
+/* ─── Loading state ─── */
+
+.universe-browser-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 60px;
+  color: #888;
+  font-size: 15px;
+}
+
+.universe-browser-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #333;
+  border-top-color: #4a9eff;
+  border-radius: 50%;
+  animation: browserSpin 0.8s linear infinite;
+}
+
+@keyframes browserSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Empty state ─── */
+
+.universe-browser-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 60px;
+  text-align: center;
+}
+
+.universe-browser-empty-icon {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.universe-browser-empty-text {
+  font-size: 16px;
+  color: #888;
+  margin: 0;
+}
+
+.universe-browser-empty-hint {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+/* ─── Universe list ─── */
+
+.universe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 720px;
+}
+
+/* ─── Universe card ─── */
+
+.universe-card {
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.2s ease;
+}
+
+.universe-card:hover {
+  border-color: #555;
+  background: #1e1e1e;
+}
+
+.universe-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.universe-card-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #e8e8e8;
+  margin: 0 0 6px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.universe-card-dates {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #777;
+}
+
+.universe-card-date-label {
+  color: #555;
+}
+
+/* ─── Card action buttons ─── */
+
+.universe-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.universe-card-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.universe-card-btn.load {
+  background: #1a3a5c;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
+.universe-card-btn.load:hover {
+  background: #4a9eff;
+  box-shadow: 0 2px 12px rgba(74, 158, 255, 0.3);
+}
+
+.universe-card-btn.delete {
+  background: transparent;
+  border-color: #555;
+  color: #aaa;
+}
+
+.universe-card-btn.delete:hover {
+  border-color: #ff5555;
+  color: #ff5555;
+  background: rgba(255, 85, 85, 0.1);
+}
+
+/* ─── Delete confirmation ─── */
+
+.universe-card-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.universe-card-confirm-text {
+  font-size: 12px;
+  color: #ff9955;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.universe-card-btn.confirm-yes {
+  background: rgba(255, 85, 85, 0.15);
+  border-color: #ff5555;
+  color: #ff5555;
+}
+
+.universe-card-btn.confirm-yes:hover {
+  background: #ff5555;
+  color: #fff;
+}
+
+.universe-card-btn.confirm-no {
+  background: transparent;
+  border-color: #555;
+  color: #aaa;
+}
+
+.universe-card-btn.confirm-no:hover {
+  border-color: #888;
+  color: #e8e8e8;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 640px) {
+  .universe-browser {
+    padding: 24px 16px;
+  }
+
+  .universe-browser-title {
+    font-size: 24px;
+  }
+
+  .universe-browser-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .universe-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .universe-card-actions {
+    justify-content: flex-end;
+  }
+
+  .universe-card-dates {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
