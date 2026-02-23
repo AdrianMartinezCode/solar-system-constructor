@@ -16,7 +16,7 @@ export function createApp(universeRepo: UniverseRepository) {
   // Middleware
   // ---------------------------------------------------------------------------
   app.use(cors({ origin: ALLOWED_ORIGINS }));
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
 
   // ---------------------------------------------------------------------------
   // Routes
