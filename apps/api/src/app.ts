@@ -6,9 +6,15 @@ import { createCommandsRouter } from './routes/commands.js';
 import type { UniverseRepository } from './app/ports/universeRepository.js';
 import type { CommandGateway } from './app/ports/commandGateway.js';
 import { ALLOWED_ORIGINS } from './config/cors.js';
+import { createCommandService } from './app/services/commandService.js';
+import { createMcpServer } from './mcp/server.js';
+import { createMcpTransportHandler } from './mcp/transport.js';
 
 export function createApp(universeRepo: UniverseRepository, commandGateway: CommandGateway) {
   const app = express();
+
+  const commandService = createCommandService({ universeRepo, commandGateway });
+  const mcpServer = createMcpServer({ universeRepo, commandService });
 
   // ---------------------------------------------------------------------------
   // Middleware
@@ -21,7 +27,8 @@ export function createApp(universeRepo: UniverseRepository, commandGateway: Comm
   // ---------------------------------------------------------------------------
   app.use(healthRouter);
   app.use(createUniverseRouter(universeRepo));
-  app.use(createCommandsRouter(commandGateway));
+  app.use(createCommandsRouter(commandService, commandGateway));
+  app.use('/mcp', createMcpTransportHandler(mcpServer));
 
   // ---------------------------------------------------------------------------
   // Global error handler (placeholder — extend as the API grows)

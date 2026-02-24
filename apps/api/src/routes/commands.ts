@@ -7,36 +7,41 @@
 
 import { Router } from 'express';
 import type { CommandGateway } from '../app/ports/commandGateway.js';
+import type { CommandService } from '../app/services/commandService.js';
+import { UniverseNotFoundError } from '../app/services/commandService.js';
 import { ALLOWED_ORIGINS } from '../config/cors.js';
 
-export function createCommandsRouter(gateway: CommandGateway): Router {
+export function createCommandsRouter(commandService: CommandService, gateway: CommandGateway): Router {
   const router = Router();
 
   // ---------------------------------------------------------------------------
   // POST /universes/:id/commands — ingest a command
   // ---------------------------------------------------------------------------
-  router.post('/universes/:id/commands', (req, res, next) => {
-    try {
-      const command = req.body;
+  router.post('/universes/:id/commands', async (req, res, next) => {
+    const command = req.body;
 
-      // Minimal validation: body must be an object with a non-empty `type` string.
-      if (
-        command === null ||
-        command === undefined ||
-        typeof command !== 'object' ||
-        Array.isArray(command) ||
-        typeof command.type !== 'string' ||
-        command.type.trim().length === 0
-      ) {
-        res.status(400).json({
-          error: 'Request body must be a JSON object with a non-empty "type" string property',
-        });
+    if (
+      command === null ||
+      command === undefined ||
+      typeof command !== 'object' ||
+      Array.isArray(command) ||
+      typeof command.type !== 'string' ||
+      command.type.trim().length === 0
+    ) {
+      res.status(400).json({
+        error: 'Request body must be a JSON object with a non-empty "type" string property',
+      });
+      return;
+    }
+
+    try {
+      const result = await commandService.processCommand(req.params.id, command);
+      res.status(200).json({ nextState: result.nextState, events: result.events });
+    } catch (err) {
+      if (err instanceof UniverseNotFoundError) {
+        res.status(404).json({ error: 'Universe not found' });
         return;
       }
-
-      gateway.broadcast(req.params.id, command);
-      res.status(202).json({ ok: true });
-    } catch (err) {
       next(err);
     }
   });
