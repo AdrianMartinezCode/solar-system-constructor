@@ -1,0 +1,83 @@
+# openspec configuration — Solar System Constructor
+# This file is read by all sub-agents to understand project context and phase-specific rules.
+
+project:
+  name: solar-system-constructor
+  description: >
+    Monorepo containing a Vite + React + TypeScript frontend (apps/web) rendering an interactive,
+    procedurally-generated solar system using React Three Fiber, and a Node.js + Express + TypeScript
+    backend API (apps/api). Build toolchain is npm workspaces + Vite (web) + tsc (api).
+  stack:
+    - "TypeScript"
+    - "React 18"
+    - "React Three Fiber / Three.js"
+    - "Zustand"
+    - "Vite"
+    - "Node.js"
+    - "Express"
+    - "npm workspaces"
+    - "Docker Compose"
+  layout:
+    frontend: "apps/web/"
+    backend: "apps/api/"
+    shared_packages: "packages/"
+    agents: ".agents/"
+    docs: "docs/"
+    openspec: "openspec/"
+  build_command: "npm run build"
+  typecheck_command: "npm run typecheck"
+
+conventions:
+  naming:
+    roles: "snake_case.md in .agents/roles/"
+    skills: "kebab-case/SKILL.md in .agents/skills/"
+    changes: "kebab-case folder names in openspec/changes/"
+    specs: "kebab-case domain folders in openspec/specs/"
+  code_style:
+    frontend: "Domain-driven folder layout, Zustand stores, React Three Fiber components"
+    backend: "Layered architecture (routes → controllers → services → repositories)"
+  branching: "feature branches off main"
+
+artifact_store:
+  mode: openspec
+
+rules:
+  proposal:
+    - "Must include rollback plan"
+    - "Must include success criteria"
+    - "Must reference concrete file paths in Affected Areas"
+    - "Scope section must list both in-scope and out-of-scope items"
+  specs:
+    - "Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)"
+    - "Every requirement must have at least one Given/When/Then scenario"
+    - "Scenarios must be testable"
+    - "No implementation details — describe WHAT, not HOW"
+    - "Delta specs use ADDED/MODIFIED/REMOVED sections"
+  design:
+    - "Every decision must have rationale and alternatives considered"
+    - "Use concrete file paths"
+    - "Follow existing project patterns unless the change explicitly addresses them"
+    - "Include ASCII or mermaid diagrams for data flow"
+  tasks:
+    - "Phase organization: Foundation → Core → Integration → Testing → Cleanup"
+    - "Each task must be specific, actionable, verifiable, and small"
+    - "Tasks ordered by dependency — Phase N does not depend on Phase N+1"
+    - "Each task references concrete file paths"
+    - "Keep tasks completable in one session"
+  apply:
+    - "Read specs before implementing (acceptance criteria)"
+    - "Follow design decisions"
+    - "Match existing code patterns"
+    - "Mark tasks complete in tasks.md as you go"
+    - "Report deviations from design — never silently change approach"
+  verify:
+    - "Check completeness (all tasks done)"
+    - "Check correctness (implementation matches specs)"
+    - "Check coherence (design decisions followed)"
+    - "Categorize issues: CRITICAL (must fix), WARNING (should fix), SUGGESTION (nice to have)"
+    - "Do NOT fix issues — only report them"
+  archive:
+    - "Never archive changes with CRITICAL verification issues"
+    - "Merge delta specs BEFORE archiving"
+    - "Use ISO date prefix YYYY-MM-DD for archive folders"
+    - "Archive is audit trail — never delete or modify archived changes"

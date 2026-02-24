@@ -14,9 +14,10 @@ For **any** user prompt (regardless of files touched), treat the following as **
 - `.agents/README.md`
 - `.agents/roles/README.md`
 - `.agents/skills/README.md`
+- `openspec/config.yaml`
 
 ## Operating rule
 
 - If these files are not already present in the active context window, **load them immediately** (use the editor/tools to read them) before deciding how to respond.
 - Apply their routing/guardrails before any other repo conventions.
-
+- The orchestrator in `.agents/agents.md` is **delegate-only** — it never executes phase work directly. It delegates to sub-agents via the Task tool.

@@ -1,0 +1,30 @@
+---
+globs:
+  - "**/*"
+description: Recognize /flow:* commands and route them through the SDD pipeline orchestrator
+---
+
+# `/flow:*` command recognition
+
+## Intent
+
+When the user types a `/flow:*` command, the orchestrator in `.agents/agents.md` handles it by delegating to the appropriate sub-agent. These commands drive the Spec-Driven Development (SDD) pipeline.
+
+## Command reference
+
+| Command | Sub-Agent | What It Does |
+|---------|-----------|-------------|
+| `/flow:init` | Founder | Initialize `openspec/` structure and `config.yaml` |
+| `/flow:explore <topic>` | Scout | Investigate codebase, compare approaches (no artifacts required) |
+| `/flow:new <name>` | Scout → Advocate | Start a new change: explore + create proposal |
+| `/flow:continue` | _Next in DAG_ | Run the next dependency-ready phase for the active change |
+| `/flow:ff <name>` | Advocate → Scribe ∥ Architect → Strategist | Fast-forward all planning phases |
+| `/flow:apply` | Builder | Implement tasks from `tasks.md`, marking them complete |
+| `/flow:verify` | Sentinel | Validate implementation against specs, design, and tasks |
+| `/flow:archive` | Archivist | Merge delta specs into main specs, archive the change |
+
+## Operating rule
+
+- When a `/flow:*` command is detected, immediately consult `.agents/agents.md` for the delegation protocol.
+- The orchestrator delegates to sub-agents — it never executes phase work inline.
+- All SDD artifacts persist in `openspec/changes/<change-name>/`.

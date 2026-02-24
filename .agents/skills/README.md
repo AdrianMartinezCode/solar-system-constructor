@@ -1,6 +1,6 @@
 # Agent Skills (`.agents/skills/`)
 
-Skills are structured playbooks that guide an AI agent through a specific workflow.
+Skills are structured playbooks that guide an AI sub-agent through a specific workflow.
 
 ## Canonical structure
 
@@ -24,19 +24,32 @@ See `.agents/agents.md` → "Skill Loading Protocol" for the full mechanism.
 
 ## Existing skills (catalog)
 
-### Core skills
+### Core skills — SDD Pipeline
 
-These skills are loaded by specific roles as part of their core function. They may also be loaded conditionally by other roles.
+These skills power the SDD pipeline phases. Each is the primary skill for its corresponding sub-agent role.
+
+| Skill (slug) | Path | Owner Role | Notes |
+|---|---|---|---|
+| `openspec-init` | `.agents/skills/openspec-init/SKILL.md` | Founder | Bootstrap openspec/ structure and config.yaml |
+| `codebase-explorer` | `.agents/skills/codebase-explorer/SKILL.md` | Scout | Investigate codebase, compare approaches, produce exploration.md |
+| `proposal-writer` | `.agents/skills/proposal-writer/SKILL.md` | Advocate | Create structured change proposals (proposal.md) |
+| `spec-writer` | `.agents/skills/spec-writer/SKILL.md` | Scribe | Write delta specs with RFC 2119 + Given/When/Then |
+| `design-writer` | `.agents/skills/design-writer/SKILL.md` | Architect | Create technical design documents (design.md) |
+| `task-planner` | `.agents/skills/task-planner/SKILL.md` | Strategist | Break down into phased tasks (tasks.md) |
+| `dev-task-executor` | `.agents/skills/dev-task-executor/SKILL.md` | Builder | Execute tasks as small diffs and verify |
+| `implementation-verifier` | `.agents/skills/implementation-verifier/SKILL.md` | Sentinel | Validate implementation against specs/design/tasks; produce verify-report.md |
+| `change-archiver` | `.agents/skills/change-archiver/SKILL.md` | Archivist | Merge delta specs into main specs and archive completed changes |
+
+### Core skills — Curation and Support
+
+These skills support cross-cutting concerns and are loaded by specific roles.
 
 | Skill (slug) | Path | Notes |
 |---|---|---|
-| `change-request-triage` | `.agents/skills/change-request-triage/SKILL.md` | Classify CRs (size/type/risk) and surface blockers/questions |
-| `curator-decision-steward` | `.agents/skills/curator-decision-steward/SKILL.md` | Capture structural decisions as ADRs and keep the decisions index healthy |
-| `curator-docs-librarian` | `.agents/skills/curator-docs-librarian/SKILL.md` | Maintain doc taxonomy, indexes, templates, and cross-links |
-| `curator-entropy-audit` | `.agents/skills/curator-entropy-audit/SKILL.md` | Lightweight repo entropy audit → ordered plan of fixes |
-| `dev-task-executor` | `.agents/skills/dev-task-executor/SKILL.md` | Execute one approved task prompt as a small diff and verify |
-| `po-task-decomposer` | `.agents/skills/po-task-decomposer/SKILL.md` | Decompose a CR into ordered small tasks with acceptance criteria |
-| `prompt-writer` | `.agents/skills/prompt-writer/SKILL.md` | Write a single self-contained implementation task prompt |
+| `change-request-triage` | `.agents/skills/change-request-triage/SKILL.md` | Classify scope (size/type/risk) and surface blockers — used by Advocate and Builder |
+| `curator-decision-steward` | `.agents/skills/curator-decision-steward/SKILL.md` | Capture structural decisions as ADRs — used by Curator |
+| `curator-docs-librarian` | `.agents/skills/curator-docs-librarian/SKILL.md` | Maintain doc taxonomy, indexes, templates — used by Curator |
+| `curator-entropy-audit` | `.agents/skills/curator-entropy-audit/SKILL.md` | Lightweight repo entropy audit — used by Curator |
 
 ### Conditional skills
 
@@ -54,5 +67,3 @@ These skills are loaded dynamically when the task/request matches their trigger 
 | `skill-creator` | `.agents/skills/skill-creator/SKILL.md` | Task involves creating new skills or updating existing skill definitions under `.agents/skills/` |
 | `vite` | `.agents/skills/vite/SKILL.md` | Task involves Vite configuration (`vite.config.ts`), Vite plugins, Vite build optimization, SSR with Vite, library mode, or Rolldown/Vite 8 migration |
 | `websocket-engineer` | `.agents/skills/websocket-engineer/SKILL.md` | Task involves WebSocket or Socket.IO implementation, real-time bidirectional communication, pub/sub messaging, server push, live updates, presence tracking, or chat systems |
-| `workflow` | `.agents/skills/workflow/SKILL.md` | Task needs a refresher on the full CR → PLAN → TASK → execution pipeline, or the pipeline itself is being modified |
-
