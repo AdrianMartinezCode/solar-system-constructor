@@ -15,11 +15,8 @@ This taxonomy applies to **technical documentation** that lives under the type-b
 ## Scope / non-scope
 
 - **In scope**: technical docs under the taxonomy folders above.
-- **Not in scope**: workflow artifacts:
-  - `docs/requests/` (change requests)
-  - `docs/plans/` (plans)
-  - `docs/prompts/` (per-task implementation prompts)
-  - `docs/decisions/` (ADRs, triage notes)
+- **Not in scope**: workflow artifacts (now managed via the SDD pipeline in `openspec/`).
+  - `docs/decisions/` (ADRs, triage notes) remain here for historical reference.
 
 ## Categories (type-based)
 
@@ -41,12 +38,10 @@ These categories are based on **document type**, not topic. Topic cross-linking 
 
 If a doc feels “hybrid”, pick the best-fit category and add cross-links to the other relevant docs.
 
-## Prompts terminology (important)
+## Prompts terminology
 
-There are two “prompt” concepts in this repo:
-
-- **`docs/prompts/`**: workflow output. Per-task implementation prompts produced by the CR → PLAN → TASK workflow.
 - **`docs/ai_prompts/`**: technical documentation. Reusable copy/paste prompts intended to be run in external AI tools.
+- Workflow task prompts (formerly `docs/prompts/`) are now archived in `openspec/changes/archive/`.
 
 ## Mapping (current locations)
 
