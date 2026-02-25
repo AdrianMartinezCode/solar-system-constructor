@@ -16,6 +16,12 @@ export interface AppEnv {
 
   /** Runtime environment hint. */
   NODE_ENV: 'development' | 'production' | 'test';
+
+  /** Pino log level. Defaults to 'info'. */
+  LOG_LEVEL: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+
+  /** Optional path to a log file. When set, logs are written to both stdout and this file. */
+  LOG_FILE: string | undefined;
 }
 
 export function loadEnv(): AppEnv {
@@ -24,5 +30,7 @@ export function loadEnv(): AppEnv {
     DB_PROVIDER: process.env['DB_PROVIDER'] ?? 'noop',
     DATABASE_URL: process.env['DATABASE_URL'],
     NODE_ENV: (process.env['NODE_ENV'] as AppEnv['NODE_ENV']) ?? 'development',
+    LOG_LEVEL: (process.env['LOG_LEVEL'] as AppEnv['LOG_LEVEL']) ?? 'info',
+    LOG_FILE: process.env['LOG_FILE'],
   };
 }

@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import type { UniverseState } from '@solar/domain';
 import type { UniverseRepository } from '../app/ports/universeRepository.js';
+import { logger } from '../config/logger.js';
 
 export function createUniverseRouter(repo: UniverseRepository): Router {
   const router = Router();
@@ -28,6 +29,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
         return;
       }
 
+      logger.debug({ name: name.trim() }, 'creating universe');
       const created = await repo.create({ name: name.trim(), state: state as UniverseState });
       res.status(201).json(created);
     } catch (err) {
@@ -40,6 +42,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
   // ---------------------------------------------------------------------------
   router.get('/universes', async (_req, res, next) => {
     try {
+      logger.debug('listing universes');
       const universes = await repo.list();
       res.json(universes);
     } catch (err) {
@@ -52,6 +55,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
   // ---------------------------------------------------------------------------
   router.get('/universes/:id', async (req, res, next) => {
     try {
+      logger.debug({ id: req.params.id }, 'fetching universe');
       const universe = await repo.getById(req.params.id);
       if (!universe) {
         res.status(404).json({ error: 'Universe not found' });
@@ -89,6 +93,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
         input.state = state as UniverseState;
       }
 
+      logger.debug({ id: req.params.id }, 'updating universe');
       const updated = await repo.update(req.params.id, input);
       if (!updated) {
         res.status(404).json({ error: 'Universe not found' });
@@ -105,6 +110,7 @@ export function createUniverseRouter(repo: UniverseRepository): Router {
   // ---------------------------------------------------------------------------
   router.delete('/universes/:id', async (req, res, next) => {
     try {
+      logger.debug({ id: req.params.id }, 'deleting universe');
       const deleted = await repo.delete(req.params.id);
       if (!deleted) {
         res.status(404).json({ error: 'Universe not found' });

@@ -6,6 +6,9 @@ import type { CommandService } from '../app/services/commandService.js';
 import { UniverseNotFoundError } from '../app/services/commandService.js';
 import { mcpTools, docsContent } from '../content/index.js';
 import type { McpToolDefinition } from '../content/index.js';
+import { logger } from '../config/logger.js';
+
+const log = logger.child({ component: 'mcp-server' });
 
 // ---------------------------------------------------------------------------
 // Content helpers
@@ -105,8 +108,10 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
       annotations: getStateDef.annotations,
     },
     async ({ universeId }) => {
+      log.debug({ tool: 'get_universe_state', universeId }, 'MCP tool invoked');
       const universe = await deps.universeRepo.getById(universeId);
       if (!universe) {
+        log.debug({ tool: 'get_universe_state', universeId }, 'universe not found');
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Universe not found', universeId }) }],
           isError: true,
@@ -132,8 +137,10 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
       annotations: listCmdDef.annotations,
     },
     async ({ universeId, category }) => {
+      log.debug({ tool: 'list_universe_commands', universeId, category }, 'MCP tool invoked');
       const universe = await deps.universeRepo.getById(universeId);
       if (!universe) {
+        log.debug({ tool: 'list_universe_commands', universeId }, 'universe not found');
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Universe not found', universeId }) }],
           isError: true,
@@ -182,6 +189,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
       annotations: sendCmdDef.annotations,
     },
     async ({ universeId, command }) => {
+      log.debug({ tool: 'send_universe_command', universeId, commandType: (command as Record<string, unknown>).type }, 'MCP tool invoked');
       try {
         const result = await deps.commandService.processCommand(
           universeId,
@@ -192,11 +200,13 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
         };
       } catch (err) {
         if (err instanceof UniverseNotFoundError) {
+          log.debug({ tool: 'send_universe_command', universeId }, 'universe not found');
           return {
             content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Universe not found', universeId }) }],
             isError: true,
           };
         }
+        log.error({ tool: 'send_universe_command', universeId, err }, 'command processing failed');
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Command processing failed', message: String(err) }) }],
           isError: true,

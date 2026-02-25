@@ -6,6 +6,7 @@ import { createInMemoryUniverseRepository } from './infra/persistence/inMemoryUn
 import { createPostgresUniverseRepository } from './infra/persistence/postgresUniverseRepository.js';
 import { createInMemoryCommandGateway } from './infra/realtime/inMemoryCommandGateway.js';
 import type { UniverseRepository } from './app/ports/universeRepository.js';
+import { logger } from './config/logger.js';
 
 async function main() {
   const env = loadEnv();
@@ -22,28 +23,28 @@ async function main() {
   if (db.name === 'postgres') {
     const pool = (db as PostgresDbProvider).getPool();
     universeRepo = createPostgresUniverseRepository(pool);
-    console.log('[api] universe repository: postgres');
+    logger.info({ provider: 'postgres' }, 'universe repository initialized');
   } else {
     universeRepo = createInMemoryUniverseRepository();
-    console.log('[api] universe repository: in-memory (ephemeral)');
+    logger.info({ provider: 'in-memory' }, 'universe repository initialized (ephemeral)');
   }
 
   // ---------------------------------------------------------------------------
   // Build the command gateway (real-time command broadcasting)
   // ---------------------------------------------------------------------------
   const commandGateway = createInMemoryCommandGateway();
-  console.log('[api] command gateway: in-memory');
+  logger.info({ provider: 'in-memory' }, 'command gateway initialized');
 
   const app = createApp(universeRepo, commandGateway);
   const server = app.listen(env.PORT, () => {
-    console.log(`[api] listening on http://localhost:${env.PORT}  (db: ${db.name})`);
+    logger.info({ port: env.PORT, db: db.name }, 'server listening');
   });
 
   // ---------------------------------------------------------------------------
   // Graceful shutdown
   // ---------------------------------------------------------------------------
   const shutdown = async (signal: string) => {
-    console.log(`[api] ${signal} received — shutting down`);
+    logger.info({ signal }, 'shutdown signal received');
     server.close();
     await db.disconnect();
     process.exit(0);
@@ -54,6 +55,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('[api] fatal startup error:', err);
+  logger.fatal({ err }, 'fatal startup error');
   process.exit(1);
 });

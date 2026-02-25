@@ -10,6 +10,7 @@ import type { CommandGateway } from '../app/ports/commandGateway.js';
 import type { CommandService } from '../app/services/commandService.js';
 import { UniverseNotFoundError } from '../app/services/commandService.js';
 import { ALLOWED_ORIGINS } from '../config/cors.js';
+import { logger } from '../config/logger.js';
 
 export function createCommandsRouter(commandService: CommandService, gateway: CommandGateway): Router {
   const router = Router();
@@ -35,6 +36,7 @@ export function createCommandsRouter(commandService: CommandService, gateway: Co
     }
 
     try {
+      logger.debug({ universeId: req.params.id, type: command.type }, 'processing command');
       const result = await commandService.processCommand(req.params.id, command);
       res.status(200).json({ nextState: result.nextState, events: result.events });
     } catch (err) {
@@ -68,6 +70,8 @@ export function createCommandsRouter(commandService: CommandService, gateway: Co
     // Initial comment to confirm connection
     res.write(':connected\n\n');
 
+    logger.debug({ universeId: req.params.id }, 'SSE client connected');
+
     // Subscribe to the command gateway for this universe
     const unsubscribe = gateway.subscribe(req.params.id, (command) => {
       res.write(`event: command\ndata: ${JSON.stringify(command)}\n\n`);
@@ -75,6 +79,7 @@ export function createCommandsRouter(commandService: CommandService, gateway: Co
 
     // Cleanup on client disconnect
     req.on('close', () => {
+      logger.debug({ universeId: req.params.id }, 'SSE client disconnected');
       unsubscribe();
       res.end();
     });

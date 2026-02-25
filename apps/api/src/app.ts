@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import pinoHttp from 'pino-http';
 import { healthRouter } from './routes/health.js';
 import { createUniverseRouter } from './routes/universes.js';
 import { createCommandsRouter } from './routes/commands.js';
@@ -9,6 +10,7 @@ import { ALLOWED_ORIGINS } from './config/cors.js';
 import { createCommandService } from './app/services/commandService.js';
 import { createMcpServer } from './mcp/server.js';
 import { createMcpTransportHandler } from './mcp/transport.js';
+import { logger } from './config/logger.js';
 
 export function createApp(universeRepo: UniverseRepository, commandGateway: CommandGateway) {
   const app = express();
@@ -20,6 +22,7 @@ export function createApp(universeRepo: UniverseRepository, commandGateway: Comm
   // ---------------------------------------------------------------------------
   app.use(cors({ origin: ALLOWED_ORIGINS }));
   app.use(express.json({ limit: '10mb' }));
+  app.use(pinoHttp({ logger }));
 
   // ---------------------------------------------------------------------------
   // Routes
@@ -39,7 +42,7 @@ export function createApp(universeRepo: UniverseRepository, commandGateway: Comm
       res: express.Response,
       _next: express.NextFunction,
     ) => {
-      console.error('[api] unhandled error:', err.message);
+      logger.error({ err }, 'unhandled error');
       res.status(500).json({ error: 'Internal server error' });
     },
   );

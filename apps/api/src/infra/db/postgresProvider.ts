@@ -8,8 +8,11 @@
 
 import pg from 'pg';
 import type { DbProvider } from './types.js';
+import { logger } from '../../config/logger.js';
 
 const { Pool } = pg;
+
+const log = logger.child({ component: 'database' });
 
 export interface PostgresDbProvider extends DbProvider {
   /** Access the underlying pg.Pool for repository adapters. */
@@ -26,7 +29,7 @@ export function createPostgresProvider(databaseUrl: string): PostgresDbProvider 
       const client = await pool.connect();
       try {
         await client.query('SELECT 1');
-        console.log('[db] postgres provider connected');
+        log.info('postgres provider connected');
       } finally {
         client.release();
       }
@@ -34,7 +37,7 @@ export function createPostgresProvider(databaseUrl: string): PostgresDbProvider 
 
     async disconnect() {
       await pool.end();
-      console.log('[db] postgres provider disconnected');
+      log.info('postgres provider disconnected');
     },
 
     async ping() {

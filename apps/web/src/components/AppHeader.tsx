@@ -27,6 +27,8 @@ export const AppHeader: React.FC = () => {
   const exitEditor = useOnlineSessionStore((state) => state.exitEditor);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const isOnline = mode === 'online';
 
@@ -95,6 +97,19 @@ export const AppHeader: React.FC = () => {
     exitEditor();
   }, [exitEditor]);
 
+  const handleCopyId = useCallback(async () => {
+    if (!currentUniverseId) return;
+    try {
+      await navigator.clipboard.writeText(currentUniverseId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 1500);
+    }
+  }, [currentUniverseId]);
+
   const getSaveButtonLabel = (): string => {
     switch (saveStatus) {
       case 'saving': return '⏳ Saving…';
@@ -115,13 +130,6 @@ export const AppHeader: React.FC = () => {
           >
             📋 Universes
           </button>
-        )}
-
-        {/* Online-mode: Universe name label */}
-        {isOnline && currentUniverseName && (
-          <span className="header-universe-name" title={currentUniverseName}>
-            {currentUniverseName}
-          </span>
         )}
 
         {/* Online-mode: SSE connection status indicator */}
@@ -180,7 +188,21 @@ export const AppHeader: React.FC = () => {
       </div>
 
       <div className="header-center">
-        <h1 className="app-title">Nested Solar System Constructor</h1>
+        <h1 className="app-title" title={isOnline && currentUniverseName ? currentUniverseName : undefined}>
+          {isOnline && currentUniverseName ? currentUniverseName : 'Nested Solar System Constructor'}
+        </h1>
+        {isOnline && currentUniverseId && (
+          <div className="universe-id-display">
+            <span className="universe-id-text">{currentUniverseId.slice(0, 8)}</span>
+            <button
+              className={`copy-id-btn${copied ? ' copied' : ''}${copyFailed ? ' failed' : ''}`}
+              onClick={handleCopyId}
+              title="Copy universe ID to clipboard"
+            >
+              {copied ? 'Copied!' : copyFailed ? 'Failed!' : 'Copy ID'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="header-right">

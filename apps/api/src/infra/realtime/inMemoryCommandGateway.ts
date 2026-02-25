@@ -13,6 +13,9 @@ import type {
   CommandListener,
   UnsubscribeFn,
 } from '../../app/ports/commandGateway.js';
+import { logger } from '../../config/logger.js';
+
+const log = logger.child({ component: 'command-gateway' });
 
 export function createInMemoryCommandGateway(): CommandGateway {
   const emitter = new EventEmitter();
@@ -22,12 +25,15 @@ export function createInMemoryCommandGateway(): CommandGateway {
 
   return {
     broadcast(universeId: string, command: UniverseCommand): void {
+      log.debug({ universeId, commandType: command.type }, 'broadcasting command');
       emitter.emit(universeId, command);
     },
 
     subscribe(universeId: string, listener: CommandListener): UnsubscribeFn {
+      log.debug({ universeId }, 'client subscribed');
       emitter.on(universeId, listener);
       return () => {
+        log.debug({ universeId }, 'client unsubscribed');
         emitter.off(universeId, listener);
       };
     },

@@ -1,4 +1,7 @@
 import type { DbProvider } from './types.js';
+import { logger } from '../../config/logger.js';
+
+const log = logger.child({ component: 'database' });
 
 /**
  * No-op database provider.
@@ -12,11 +15,11 @@ export function createNoopProvider(): DbProvider {
     name: 'noop',
 
     async connect() {
-      console.log('[db] noop provider connected (no real database)');
+      log.info('noop provider connected (no real database)');
     },
 
     async disconnect() {
-      console.log('[db] noop provider disconnected');
+      log.info('noop provider disconnected');
     },
 
     async ping() {

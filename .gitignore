@@ -8,6 +8,10 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Log files
+*.log
+logs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

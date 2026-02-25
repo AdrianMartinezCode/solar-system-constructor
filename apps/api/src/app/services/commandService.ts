@@ -2,6 +2,9 @@ import { applyUniverseCommand } from '@solar/domain';
 import type { UniverseCommand, CommandResult } from '@solar/domain';
 import type { UniverseRepository } from '../ports/universeRepository.js';
 import type { CommandGateway } from '../ports/commandGateway.js';
+import { logger } from '../../config/logger.js';
+
+const log = logger.child({ component: 'command-service' });
 
 export class UniverseNotFoundError extends Error {
   constructor(public readonly universeId: string) {
@@ -30,8 +33,11 @@ export function createCommandService(deps: CommandServiceDeps): CommandService {
         !('type' in cmd) ||
         typeof (cmd as { type: unknown }).type !== 'string'
       ) {
+        log.warn({ universeId }, 'invalid command: missing or non-string "type" field');
         throw new Error('Command must be an object with a string "type" field');
       }
+
+      log.debug({ universeId, commandType: (cmd as { type: string }).type }, 'processing command');
 
       const universe = await deps.universeRepo.getById(universeId);
       if (!universe) {
