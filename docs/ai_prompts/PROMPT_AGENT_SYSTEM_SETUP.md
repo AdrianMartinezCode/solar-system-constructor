@@ -18,7 +18,7 @@ Use this document as a **copy/paste prompt** for another coding model.
 ## Context to read first
 
 - `package.json` (scripts)
-- `README.md` and `QUICKSTART.md` (repo entry points)
+- `README.md` and `docs/guides/QUICKSTART.md` (repo entry points)
 - Any existing `.agents/`, `docs/`, and `mcp/` folders (if present)
 
 ### Repo context

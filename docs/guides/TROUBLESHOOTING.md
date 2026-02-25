@@ -3,7 +3,7 @@
 ## If you haven't installed dependencies yet:
 
 ```bash
-cd /home/adr/front-portfolio-interactive/solar-system-constructor
+cd solar-system-constructor
 npm install
 npm run dev
 ```

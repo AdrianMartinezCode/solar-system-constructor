@@ -22,6 +22,9 @@ See `openspec/config.yaml` for pipeline configuration.
 
 ## Entry Points (Highest-Signal)
 
+- Quick start: `docs/guides/QUICKSTART.md`
+- Troubleshooting: `docs/guides/TROUBLESHOOTING.md`
+- MCP integration: `docs/guides/mcp-server-usage.md`
 - UI / windowing: `docs/implementation/WINDOWED_UI_IMPLEMENTATION.md`, `docs/design/UI_REDESIGN_WINDOWED.md`
 - Generator: `docs/design/PROCEDURAL_GENERATOR.md`, `docs/guides/GENERATOR_QUICKREF.md`
 - Orbits: `docs/implementation/ELLIPTICAL_ORBITS.md`

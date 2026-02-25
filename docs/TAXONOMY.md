@@ -81,6 +81,9 @@ This checklist is meant to make the migration mechanical: it enumerates **every*
 | `docs/KEYBOARD_SHORTCUTS.md` | `docs/guides/KEYBOARD_SHORTCUTS.md` | guides |  |
 | `docs/PRNG_README.md` | `docs/guides/PRNG_README.md` | guides |  |
 | `docs/STATS_USAGE_GUIDE.md` | `docs/guides/STATS_USAGE_GUIDE.md` | guides |  |
+| `docs/mcp-server-usage.md` | `docs/guides/mcp-server-usage.md` | guides | Moved from `docs/` root |
+| `QUICKSTART.md` (repo root) | `docs/guides/QUICKSTART.md` | guides | Moved from repo root; Spanish content removed |
+| `TROUBLESHOOTING.md` (repo root) | `docs/guides/TROUBLESHOOTING.md` | guides | Moved from repo root |
 | `docs/BELT_PARTICLE_FIELD_REFACTORING.md` | `docs/summaries/BELT_PARTICLE_FIELD_REFACTORING.md` | summaries |  |
 | `docs/BODY_EDITOR_REFACTOR_SUMMARY.md` | `docs/summaries/BODY_EDITOR_REFACTOR_SUMMARY.md` | summaries |  |
 | `docs/COMETS_DOCUMENTATION_UPDATES.md` | `docs/summaries/COMETS_DOCUMENTATION_UPDATES.md` | summaries |  |
@@ -124,8 +127,11 @@ This checklist is meant to make the migration mechanical: it enumerates **every*
 - `docs/guides/GENERATOR_QUICKREF.md`
 - `docs/guides/GENERATOR_UI_INTEGRATION.md`
 - `docs/guides/KEYBOARD_SHORTCUTS.md`
+- `docs/guides/mcp-server-usage.md`
 - `docs/guides/PRNG_README.md`
+- `docs/guides/QUICKSTART.md`
 - `docs/guides/STATS_USAGE_GUIDE.md`
+- `docs/guides/TROUBLESHOOTING.md`
 
 ### `docs/summaries/`
 

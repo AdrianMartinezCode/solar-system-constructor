@@ -1,15 +1,5 @@
 # Quick Start Guide
 
-## Roadmap / Future Ideas
-
-- Otros algoritmos de generación
-- Todos los clusters deben estar entorno a un núcleo
-- n-body fisics
-- más tipos de astros
-- ✅ ~~elliptical orbit + translated orbit + rotated in xyz~~ **IMPLEMENTED!**
-- el fondo por defecto de estrellas es muy poco amplio y parece una esfera cuando alejas la cámara
-- crear más default presets
-
 ## Installation
 
 You'll need Node.js (v21+) and npm installed. If not installed yet:
@@ -27,7 +17,7 @@ For Docker-based backend development, you'll also need [Docker](https://docs.doc
 
 ```bash
 # Navigate to project directory
-cd /home/adr/front-portfolio-interactive/solar-system-constructor
+cd solar-system-constructor
 
 # Install all dependencies (frontend + backend)
 npm install
@@ -63,8 +53,8 @@ docker compose up --build
 # → http://localhost:3001
 ```
 
-See [`docs/guides/LOCAL_DEV_DOCKER.md`](docs/guides/LOCAL_DEV_DOCKER.md) for Docker details.
-See [`docs/guides/LOCAL_DEV_BACKEND.md`](docs/guides/LOCAL_DEV_BACKEND.md) for backend details.
+See [`LOCAL_DEV_DOCKER.md`](LOCAL_DEV_DOCKER.md) for Docker details.
+See [`LOCAL_DEV_BACKEND.md`](LOCAL_DEV_BACKEND.md) for backend details.
 
 ## Project Structure
 
