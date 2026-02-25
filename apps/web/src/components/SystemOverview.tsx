@@ -567,21 +567,21 @@ export const SystemOverview: React.FC = () => {
                 {/* Disk details */}
                 {obj.type === 'disk' && (
                   <div className="result-details">
-                    Center: {stars[obj.data.centralStarId]?.name || 'Unknown'} | {obj.data.particleCount?.toLocaleString()} particles | {obj.data.innerRadius.toFixed(1)}-{obj.data.outerRadius.toFixed(1)} AU
+                    Center: {stars[obj.data.centralStarId]?.name || 'Unknown'} | {obj.data.particleCount?.toLocaleString()} particles | {obj.data.innerRadius?.toFixed(1) ?? '?'}-{obj.data.outerRadius?.toFixed(1) ?? '?'} AU
                   </div>
                 )}
                 
                 {/* Small body field details */}
                 {obj.type === 'smallBodyField' && (
                   <div className="result-details">
-                    Host: {stars[obj.data.hostStarId]?.name || 'Unknown'} | {obj.data.beltType === 'kuiper' ? 'Kuiper' : 'Main'} Belt | {obj.data.innerRadius.toFixed(1)}-{obj.data.outerRadius.toFixed(1)} AU | {obj.data.particleCount?.toLocaleString()} particles
+                    Host: {stars[obj.data.hostStarId]?.name || 'Unknown'} | {obj.data.beltType === 'kuiper' ? 'Kuiper' : 'Main'} Belt | {obj.data.innerRadius?.toFixed(1) ?? '?'}-{obj.data.outerRadius?.toFixed(1) ?? '?'} AU | {obj.data.particleCount?.toLocaleString()} particles
                   </div>
                 )}
                 
                 {/* Nebula details */}
                 {obj.type === 'nebula' && (
                   <div className="result-details">
-                    Radius: {obj.data.radius.toFixed(1)} | Density: {obj.data.density.toFixed(2)} | Brightness: {obj.data.brightness.toFixed(2)}
+                    Radius: {obj.data.radius?.toFixed(1) ?? '?'} | Density: {obj.data.density?.toFixed(2) ?? '?'} | Brightness: {obj.data.brightness?.toFixed(2) ?? '?'}
                   </div>
                 )}
                 
@@ -602,13 +602,13 @@ export const SystemOverview: React.FC = () => {
                 {/* Black hole details */}
                 {obj.type === 'blackHole' && 'blackHole' in obj.data && obj.data.blackHole && (
                   <div className="result-details">
-                    Shadow: {obj.data.blackHole.shadowRadius.toFixed(2)} | {obj.data.blackHole.hasAccretionDisk ? 'Accretion Disk' : 'No Disk'} | {obj.data.blackHole.hasRelativisticJet ? 'Jets' : 'No Jets'}
+                    Shadow: {obj.data.blackHole.shadowRadius?.toFixed(2) ?? '?'} | {obj.data.blackHole.hasAccretionDisk ? 'Accretion Disk' : 'No Disk'} | {obj.data.blackHole.hasRelativisticJet ? 'Jets' : 'No Jets'}
                   </div>
                 )}
                 
                 {/* Mass (for star-based objects, excluding non-physical types) */}
                 {obj.type !== 'group' && obj.type !== 'disk' && obj.type !== 'smallBodyField' && obj.type !== 'nebula' && 'mass' in obj.data && obj.data.mass && (
-                  <div className="result-details">Mass: {obj.data.mass.toFixed(2)}</div>
+                  <div className="result-details">Mass: {obj.data.mass?.toFixed(2) ?? '?'}</div>
                 )}
               </div>
               <div className="result-actions">

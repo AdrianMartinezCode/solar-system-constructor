@@ -4,7 +4,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
-export function createMcpTransportHandler(server: McpServer): Router {
+export function createMcpTransportHandler(createServer: () => McpServer): Router {
   const router = Router();
   const sessions = new Map<string, StreamableHTTPServerTransport>();
 
@@ -33,6 +33,7 @@ export function createMcpTransportHandler(server: McpServer): Router {
         if (id) sessions.delete(id);
       };
 
+      const server = createServer();
       await server.connect(transport);
       await transport.handleRequest(req, res, req.body);
       return;

@@ -14,7 +14,6 @@ export function createApp(universeRepo: UniverseRepository, commandGateway: Comm
   const app = express();
 
   const commandService = createCommandService({ universeRepo, commandGateway });
-  const mcpServer = createMcpServer({ universeRepo, commandService });
 
   // ---------------------------------------------------------------------------
   // Middleware
@@ -28,7 +27,7 @@ export function createApp(universeRepo: UniverseRepository, commandGateway: Comm
   app.use(healthRouter);
   app.use(createUniverseRouter(universeRepo));
   app.use(createCommandsRouter(commandService, commandGateway));
-  app.use('/mcp', createMcpTransportHandler(mcpServer));
+  app.use('/mcp', createMcpTransportHandler(() => createMcpServer({ universeRepo, commandService })));
 
   // ---------------------------------------------------------------------------
   // Global error handler (placeholder — extend as the API grows)
