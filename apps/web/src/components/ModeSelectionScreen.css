@@ -68,16 +68,21 @@
   user-select: none;
 }
 
-.mode-card:hover {
+.mode-card:hover:not(:disabled) {
   border-color: #4a9eff;
   background: #222;
   box-shadow: 0 8px 32px rgba(74, 158, 255, 0.15);
   transform: translateY(-4px);
 }
 
-.mode-card:active {
+.mode-card:active:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(74, 158, 255, 0.2);
+}
+
+.mode-card-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ─── Card icon ─── */
@@ -105,6 +110,160 @@
   margin: 0;
 }
 
+/* ─── Server configuration section ─── */
+
+.server-config-section {
+  margin-bottom: 24px;
+  max-width: 584px;
+  width: 100%;
+}
+
+.server-config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.server-config-label {
+  color: #888;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.server-config-input {
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  color: #e8e8e8;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: monospace;
+  min-width: 260px;
+  flex: 1;
+  transition: border-color 0.2s;
+}
+
+.server-config-input:focus {
+  border-color: #4a9eff;
+  outline: none;
+}
+
+/* ─── Health semaphore ─── */
+
+.health-semaphore {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.health-dot-idle {
+  display: none;
+}
+
+.health-dot-healthy {
+  background: #44cc77;
+  box-shadow: 0 0 4px rgba(68, 204, 119, 0.5);
+}
+
+.health-dot-checking {
+  background: #ffaa00;
+  box-shadow: 0 0 4px rgba(255, 170, 0, 0.5);
+  animation: healthPulse 1.2s ease-in-out infinite;
+}
+
+.health-dot-error {
+  background: #ff5555;
+  box-shadow: 0 0 4px rgba(255, 85, 85, 0.5);
+}
+
+.health-label {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.health-label-healthy {
+  color: #44cc77;
+}
+
+.health-label-checking {
+  color: #ffaa00;
+}
+
+.health-label-error {
+  color: #ff5555;
+}
+
+.health-label-idle {
+  display: none;
+}
+
+.health-error-btn {
+  color: #ff5555;
+  background: transparent;
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  transition: border-color 0.2s;
+}
+
+.health-error-btn:hover {
+  border-color: #ff5555;
+}
+
+/* ─── Error detail overlay ─── */
+
+.health-error-detail {
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #ff5555;
+}
+
+.health-error-detail p {
+  margin: 0;
+}
+
+.health-error-detail button {
+  color: #888;
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  margin-top: 8px;
+  padding: 2px 8px;
+  transition: border-color 0.2s;
+}
+
+.health-error-detail button:hover {
+  border-color: #888;
+}
+
+/* ─── Health pulse animation ─── */
+
+@keyframes healthPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
 /* ─── Responsive: stack on narrow screens ─── */
 
 @media (max-width: 640px) {
@@ -124,5 +283,19 @@
 
   .mode-selection-header {
     margin-bottom: 32px;
+  }
+
+  .server-config-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .server-config-input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .health-semaphore {
+    justify-content: center;
   }
 }

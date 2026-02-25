@@ -4,8 +4,8 @@
  * Uses the native browser EventSource API to receive real-time
  * UniverseCommands from the backend SSE endpoint.
  *
- * The base URL is read from the Vite environment variable VITE_API_BASE_URL
- * (same convention as httpUniverseApiClient).
+ * The base URL is resolved per-connection via the centralized apiBaseUrlProvider,
+ * which reads from the hostConfigStore (user-editable at runtime).
  */
 
 import type { UniverseCommand } from '@solar/domain';
@@ -15,36 +15,20 @@ import type {
   CommandStreamOptions,
   DisconnectFn,
 } from '../../app/ports/commandStream';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Read the API base URL from Vite env and strip any trailing slash. */
-function resolveBaseUrl(): string {
-  const raw = import.meta.env.VITE_API_BASE_URL;
-  if (!raw) {
-    throw new Error(
-      'VITE_API_BASE_URL is not defined. ' +
-        'Create an apps/web/.env file with VITE_API_BASE_URL=http://localhost:3001',
-    );
-  }
-  return raw.replace(/\/+$/, '');
-}
+import { getApiBaseUrl } from '../api/apiBaseUrlProvider';
 
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
 export function createSseCommandStream(): CommandStream {
-  const baseUrl = resolveBaseUrl();
-
   return {
     connect(
       universeId: string,
       onCommand: CommandStreamListener,
       options?: CommandStreamOptions,
     ): DisconnectFn {
+      const baseUrl = getApiBaseUrl();
       const url = `${baseUrl}/universes/${encodeURIComponent(universeId)}/events`;
 
       // Report "connecting" immediately, before the EventSource opens.

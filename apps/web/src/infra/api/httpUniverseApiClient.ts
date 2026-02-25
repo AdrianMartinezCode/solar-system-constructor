@@ -2,7 +2,8 @@
  * HTTP adapter for the UniverseApiClient port.
  *
  * Calls the real backend API using native `fetch`.
- * The base URL is read from the Vite environment variable VITE_API_BASE_URL.
+ * The base URL is resolved per-request via the centralized apiBaseUrlProvider,
+ * which reads from the hostConfigStore (user-editable at runtime).
  */
 
 import type {
@@ -11,22 +12,7 @@ import type {
   CreateUniverseInput,
   UpdateUniverseInput,
 } from '../../app/ports/universeApiClient';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Read the API base URL from Vite env and strip any trailing slash. */
-function resolveBaseUrl(): string {
-  const raw = import.meta.env.VITE_API_BASE_URL;
-  if (!raw) {
-    throw new Error(
-      'VITE_API_BASE_URL is not defined. ' +
-        'Create an apps/web/.env file with VITE_API_BASE_URL=http://localhost:3001',
-    );
-  }
-  return raw.replace(/\/+$/, '');
-}
+import { getApiBaseUrl } from './apiBaseUrlProvider';
 
 /** Throw a descriptive error for non-OK responses (excluding 404 which callers handle). */
 async function throwOnError(res: Response, context: string): Promise<never> {
@@ -45,16 +31,16 @@ async function throwOnError(res: Response, context: string): Promise<never> {
 // ---------------------------------------------------------------------------
 
 export function createHttpUniverseApiClient(): UniverseApiClient {
-  const baseUrl = resolveBaseUrl();
-
   return {
     async list(): Promise<ApiUniverse[]> {
+      const baseUrl = getApiBaseUrl();
       const res = await fetch(`${baseUrl}/universes`);
       if (!res.ok) await throwOnError(res, 'list');
       return res.json();
     },
 
     async getById(id: string): Promise<ApiUniverse | null> {
+      const baseUrl = getApiBaseUrl();
       const res = await fetch(`${baseUrl}/universes/${encodeURIComponent(id)}`);
       if (res.status === 404) return null;
       if (!res.ok) await throwOnError(res, `getById(${id})`);
@@ -62,6 +48,7 @@ export function createHttpUniverseApiClient(): UniverseApiClient {
     },
 
     async create(input: CreateUniverseInput): Promise<ApiUniverse> {
+      const baseUrl = getApiBaseUrl();
       const res = await fetch(`${baseUrl}/universes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,6 +59,7 @@ export function createHttpUniverseApiClient(): UniverseApiClient {
     },
 
     async update(id: string, input: UpdateUniverseInput): Promise<ApiUniverse | null> {
+      const baseUrl = getApiBaseUrl();
       const res = await fetch(`${baseUrl}/universes/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -83,6 +71,7 @@ export function createHttpUniverseApiClient(): UniverseApiClient {
     },
 
     async delete(id: string): Promise<boolean> {
+      const baseUrl = getApiBaseUrl();
       const res = await fetch(`${baseUrl}/universes/${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
