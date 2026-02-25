@@ -4,7 +4,7 @@
  * These are pure functions — no side effects, no randomness, no browser globals.
  */
 
-import type { Star, Group } from '../types';
+import type { Star, Group } from '../types.js';
 
 /**
  * Check whether making `childId` a descendant of `parentId` would create a cycle.

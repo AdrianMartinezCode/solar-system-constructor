@@ -22,11 +22,11 @@ export type {
   ProtoplanetaryDisk,
   SmallBodyField,
   NebulaRegion,
-} from './types';
+} from './types.js';
 
 // State
-export type { UniverseState } from './universe/state';
-export { emptyUniverseState } from './universe/state';
+export type { UniverseState } from './universe/state.js';
+export { emptyUniverseState } from './universe/state.js';
 
 // Commands & events
 export type {
@@ -57,11 +57,11 @@ export type {
   RemoveRingCommand,
   ReplaceSnapshotCommand,
   DomainEvent,
-} from './universe/commands';
+} from './universe/commands.js';
 
 // Reducer
-export type { CommandResult } from './universe/applyCommand';
-export { applyUniverseCommand } from './universe/applyCommand';
+export type { CommandResult } from './universe/applyCommand.js';
+export { applyUniverseCommand } from './universe/applyCommand.js';
 
 // Validation helpers
 export {
@@ -69,4 +69,4 @@ export {
   collectDescendants,
   starExists,
   wouldCreateGroupCycle,
-} from './universe/validate';
+} from './universe/validate.js';

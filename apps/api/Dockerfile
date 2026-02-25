@@ -24,9 +24,8 @@ FROM node:21-alpine
 
 WORKDIR /app
 
-# All @solar/domain imports in the API are "import type" — fully erased at
-# compile time.  The runtime JS bundle does not reference the package, so we
-# strip it from package.json before installing production dependencies.
+# Install production dependencies (strip local workspace dep for npm install,
+# then copy the built package manually so Node can resolve it at runtime).
 COPY apps/api/package.json ./
 RUN node -e "\
   const fs = require('fs');\
@@ -34,6 +33,17 @@ RUN node -e "\
   delete p.dependencies['@solar/domain'];\
   fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');"
 RUN npm install --omit=dev
+
+# Copy the built @solar/domain package so runtime imports resolve correctly.
+# Patch its exports map: the source "import" points at ./src/index.ts (for tsx
+# dev), but the runtime image only has compiled JS in dist/.
+COPY --from=builder /repo/packages/domain/package.json node_modules/@solar/domain/package.json
+RUN node -e "\
+  const fs = require('fs');\
+  const p = JSON.parse(fs.readFileSync('node_modules/@solar/domain/package.json','utf8'));\
+  p.exports['.']['import'] = './dist/index.js';\
+  fs.writeFileSync('node_modules/@solar/domain/package.json', JSON.stringify(p, null, 2) + '\n');"
+COPY --from=builder /repo/packages/domain/dist/ node_modules/@solar/domain/dist/
 
 COPY --from=builder /repo/apps/api/dist dist/
 

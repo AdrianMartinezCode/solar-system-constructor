@@ -9,10 +9,10 @@
  * - Events are optional metadata for logging/debugging; always JSON-serializable.
  */
 
-import type { Star, Group, GroupChild, PlanetaryRing, SmallBodyField, ProtoplanetaryDisk, NebulaRegion, AsteroidBelt } from '../types';
-import type { UniverseState } from './state';
-import type { UniverseCommand, DomainEvent } from './commands';
-import { wouldCreateStarCycle, collectDescendants, wouldCreateGroupCycle } from './validate';
+import type { Star, Group, GroupChild, PlanetaryRing, SmallBodyField, ProtoplanetaryDisk, NebulaRegion, AsteroidBelt } from '../types.js';
+import type { UniverseState } from './state.js';
+import type { UniverseCommand, DomainEvent } from './commands.js';
+import { wouldCreateStarCycle, collectDescendants, wouldCreateGroupCycle } from './validate.js';
 
 export interface CommandResult {
   nextState: UniverseState;

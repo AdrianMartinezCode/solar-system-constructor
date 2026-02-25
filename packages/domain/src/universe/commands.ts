@@ -8,7 +8,7 @@
  * Later tasks will extend this with group, field, disk, and nebula commands.
  */
 
-import type { Star, SmallBodyField, ProtoplanetaryDisk, NebulaRegion, PlanetaryRing, Group, GroupChild, AsteroidBelt } from '../types';
+import type { Star, SmallBodyField, ProtoplanetaryDisk, NebulaRegion, PlanetaryRing, Group, GroupChild, AsteroidBelt } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Simulation

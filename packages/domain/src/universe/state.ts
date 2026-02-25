@@ -15,7 +15,7 @@ import type {
   SmallBodyField,
   ProtoplanetaryDisk,
   NebulaRegion,
-} from '../types';
+} from '../types.js';
 
 export interface UniverseState {
   /** All bodies (stars, planets, moons, asteroids, comets, black holes, etc.) keyed by ID */
