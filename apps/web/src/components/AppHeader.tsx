@@ -193,7 +193,7 @@ export const AppHeader: React.FC = () => {
         </h1>
         {isOnline && currentUniverseId && (
           <div className="universe-id-display">
-            <span className="universe-id-text">{currentUniverseId.slice(0, 8)}</span>
+            <span className="universe-id-text">{currentUniverseId}</span>
             <button
               className={`copy-id-btn${copied ? ' copied' : ''}${copyFailed ? ' failed' : ''}`}
               onClick={handleCopyId}
