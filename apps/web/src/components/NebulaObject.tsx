@@ -126,7 +126,7 @@ export const NebulaObject: React.FC<NebulaObjectProps> = ({ nebula }) => {
   }, [nebula.radius]);
   
   // Slow rotation animation (optional)
-  useFrame((_state, delta) => {
+  useFrame((_state: unknown, delta: number) => {
     if (pointsRef.current) {
       // Very slow rotation for subtle movement
       pointsRef.current.rotation.y += delta * 0.01;

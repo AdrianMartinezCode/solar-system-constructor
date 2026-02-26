@@ -13,7 +13,7 @@ interface GroupBoxProps {
   expanded?: boolean; // Whether to show contents or just a box
 }
 
-export const GroupBox: React.FC<GroupBoxProps> = ({ groupId, position = [0, 0, 0], expanded: _expanded = false }) => {
+export const GroupBox: React.FC<GroupBoxProps> = ({ groupId, position = [0, 0, 0] }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   
   const group = useSystemStore((state) => state.groups[groupId]);
