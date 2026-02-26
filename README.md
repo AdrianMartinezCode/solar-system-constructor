@@ -54,7 +54,7 @@ The frontend uses a **hexagonal architecture** (ports and adapters) with a share
 ### Backend only using docker
 
 ```
-docker compose up --build         # starts PostgreSQL
+docker compose up --build
 ```
 
 
