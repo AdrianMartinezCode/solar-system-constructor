@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
 import { useUiStore } from '../state/uiStore';
-import { Group } from '../types';
+import type { GroupChild } from '../types';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 import { StarObject } from './StarObject';
@@ -13,7 +13,7 @@ interface GroupBoxProps {
   expanded?: boolean; // Whether to show contents or just a box
 }
 
-export const GroupBox: React.FC<GroupBoxProps> = ({ groupId, position = [0, 0, 0], expanded = false }) => {
+export const GroupBox: React.FC<GroupBoxProps> = ({ groupId, position = [0, 0, 0], expanded: _expanded = false }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   
   const group = useSystemStore((state) => state.groups[groupId]);
@@ -100,7 +100,7 @@ export const GroupBox: React.FC<GroupBoxProps> = ({ groupId, position = [0, 0, 0
       </Text>
       
       {/* Render children when expanded */}
-      {shouldShowContents && group.children.map((child, index) => {
+      {shouldShowContents && group.children.map((child: GroupChild, index: number) => {
         if (child.type === 'system') {
           // Position systems in a grid inside the group box
           const gridSize = Math.ceil(Math.sqrt(group.children.length));

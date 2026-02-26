@@ -49,7 +49,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ starId, level }) => {
       
       {isExpanded && hasChildren && (
         <div className="tree-children">
-          {star.children.map((childId) => (
+          {star.children.map((childId: string) => (
             <TreeNode key={childId} starId={childId} level={level + 1} />
           ))}
         </div>

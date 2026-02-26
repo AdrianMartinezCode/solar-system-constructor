@@ -9,7 +9,6 @@
   },
   "include": ["src", "prng.ts"],
   "references": [
-    { "path": "./tsconfig.node.json" },
-    { "path": "../../packages/domain" }
+    { "path": "./tsconfig.node.json" }
   ]
 }

@@ -3,7 +3,7 @@
  * Pure functions for computing population stats, distributions, and metrics
  */
 
-import { Star, Group, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../../types';
+import { Star, Group, GroupChild, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../../types';
 
 export interface PopulationCounts {
   total: number;
@@ -394,7 +394,7 @@ export function computeRoguePlanetStats(
  */
 export function computeGroupMetrics(
   groups: Record<string, Group>,
-  stars: Record<string, Star>
+  _stars: Record<string, Star>
 ): {
   totalGroups: number;
   avgSystemsPerGroup: number;
@@ -417,7 +417,7 @@ export function computeGroupMetrics(
   let largestSize = 0;
 
   groupArray.forEach(group => {
-    const systemCount = group.children.filter(c => c.type === 'system').length;
+    const systemCount = group.children.filter((c: GroupChild) => c.type === 'system').length;
     totalSystems += systemCount;
     largestSize = Math.max(largestSize, group.children.length);
   });
@@ -428,7 +428,7 @@ export function computeGroupMetrics(
     if (!group) return currentDepth;
     
     let maxChildDepth = currentDepth;
-    group.children.forEach(child => {
+    group.children.forEach((child: GroupChild) => {
       if (child.type === 'group') {
         const childDepth = computeDepth(child.id, currentDepth + 1);
         maxChildDepth = Math.max(maxChildDepth, childDepth);

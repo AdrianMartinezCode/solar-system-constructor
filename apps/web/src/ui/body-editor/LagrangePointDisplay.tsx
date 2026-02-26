@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Star, LagrangePointMeta } from '../../types';
+import type { Star } from '../../types';
 
 interface LagrangePointDisplayProps {
   body: Star;

@@ -54,7 +54,7 @@ export const ProtoplanetaryDiskSection: React.FC<ProtoplanetaryDiskSectionProps>
           <ProtoplanetaryDiskEditor
             disk={disk}
             onUpdate={(field, value) => {
-              onUpdateDisk(disk.id, field, value);
+              onUpdateDisk(disk.id, String(field), value);
             }}
             compact={true}
           />

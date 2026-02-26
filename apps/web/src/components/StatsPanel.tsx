@@ -108,7 +108,7 @@ export const StatsPanel: React.FC = () => {
         const ids = [rootId];
         const star = stars[rootId];
         if (star?.children) {
-          star.children.forEach(childId => {
+          star.children.forEach((childId: string) => {
             ids.push(...collectSystemStars(childId));
           });
         }
@@ -116,7 +116,7 @@ export const StatsPanel: React.FC = () => {
       };
 
       const starIds = new Set<string>();
-      group.children.forEach(child => {
+      group.children.forEach((child: { id: string; type: string }) => {
         if (child.type === 'system') {
           collectSystemStars(child.id).forEach(id => starIds.add(id));
         }
@@ -140,7 +140,7 @@ export const StatsPanel: React.FC = () => {
         const ids = [id];
         const star = stars[id];
         if (star?.children) {
-          star.children.forEach(childId => {
+          star.children.forEach((childId: string) => {
             ids.push(...collectSystemStars(childId));
           });
         }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSystemStore } from '../state/systemStore';
 import { useUiStore } from '../state/uiStore';
-import { GroupChild } from '../types';
+import type { GroupChild } from '../types';
 import './GroupEditorPanel.css';
 
 export const GroupEditorPanel: React.FC = () => {
@@ -80,8 +80,8 @@ export const GroupEditorPanel: React.FC = () => {
   
   // Get available systems (root systems not in any group)
   const availableSystems = rootIds.filter(id => {
-    return !Object.values(groups).some(g => 
-      g.children.some(c => c.type === 'system' && c.id === id)
+    return !Object.values(groups).some(g =>
+      g.children.some((c: GroupChild) => c.type === 'system' && c.id === id)
     );
   });
   
@@ -195,7 +195,7 @@ export const GroupEditorPanel: React.FC = () => {
             <label>Parent Group</label>
             <select
               value={selectedGroup.parentGroupId || ''}
-              onChange={(e) => handleMoveChild(selectedGroupId, 'group', e.target.value || null)}
+              onChange={(e) => handleMoveChild(selectedGroupId!, 'group', e.target.value || null)}
             >
               <option value="">None (Top-level group)</option>
               {availableGroups.map((group) => (
@@ -209,7 +209,7 @@ export const GroupEditorPanel: React.FC = () => {
           <div className="children-section">
             <label>Group Contents ({selectedGroup.children.length} items)</label>
             <div className="children-list">
-              {selectedGroup.children.map((child) => {
+              {selectedGroup.children.map((child: GroupChild) => {
                 const name = child.type === 'system' 
                   ? stars[child.id]?.name || 'Unknown System'
                   : groups[child.id]?.name || 'Unknown Group';

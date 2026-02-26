@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useWindowStore, WindowState, DockPosition } from '../state/windowStore';
+import { useWindowStore, WindowState } from '../state/windowStore';
 import './Window.css';
 
 interface WindowProps {
@@ -112,7 +112,7 @@ export const Window: React.FC<WindowProps> = ({ window, children }) => {
     
     if (x < dockZoneSize) {
       document.body.classList.add('dock-left-active');
-    } else if (x > window.innerWidth - dockZoneSize) {
+    } else if (x > globalThis.innerWidth - dockZoneSize) {
       document.body.classList.add('dock-right-active');
     } else if (y < dockZoneSize + 60) {
       document.body.classList.add('dock-top-active');

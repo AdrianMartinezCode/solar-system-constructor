@@ -9,6 +9,7 @@ const windowTypeLabels: Record<WindowType, string> = {
   generator: '🌌 Generator',
   planetEditor: '🌍 Editor',
   groupEditor: '📁 Groups',
+  nebulaEditor: '🌫️ Nebula',
   stats: '📊 Stats',
   starList: '⭐ Stars',
 };

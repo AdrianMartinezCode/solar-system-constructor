@@ -62,7 +62,7 @@ function determineLodLevel(
     return 'veryFar';
   }
   if (instanceCount > LOD_CONFIG.instanceThresholds.forceFar) {
-    return Math.max(cameraDistance > LOD_CONFIG.distances.medium ? 'far' : 'medium', 'medium') as 'medium' | 'far' | 'veryFar';
+    return cameraDistance > LOD_CONFIG.distances.medium ? 'far' : 'medium';
   }
   if (instanceCount > LOD_CONFIG.instanceThresholds.forceMediam) {
     if (cameraDistance > LOD_CONFIG.distances.far) return 'far';
@@ -121,7 +121,7 @@ export const AsteroidBeltObject: React.FC<AsteroidBeltObjectProps> = ({ beltId }
   // Get all asteroids belonging to this belt
   const allAsteroids = useMemo(() => {
     if (!belt) return [];
-    return belt.asteroidIds.map(id => stars[id]).filter(Boolean);
+    return belt.asteroidIds.map((id: string) => stars[id]).filter(Boolean);
   }, [belt, stars]);
   
   // Calculate belt center for LOD distance calculations
@@ -154,7 +154,7 @@ export const AsteroidBeltObject: React.FC<AsteroidBeltObjectProps> = ({ beltId }
     if (allAsteroids.length === 0) return new Float32Array(0);
     
     const colors = new Float32Array(allAsteroids.length * 3);
-    allAsteroids.forEach((asteroid, i) => {
+    allAsteroids.forEach((asteroid: Star, i: number) => {
       const color = new THREE.Color(asteroid.color);
       colors[i * 3] = color.r;
       colors[i * 3 + 1] = color.g;
@@ -170,7 +170,7 @@ export const AsteroidBeltObject: React.FC<AsteroidBeltObjectProps> = ({ beltId }
   }, [colorsBuffer]);
   
   // Update positions each frame (with throttling)
-  useFrame((_, delta) => {
+  useFrame((_, _delta) => {
     if (!meshRef.current || allAsteroids.length === 0) return;
     
     // Check visibility toggle

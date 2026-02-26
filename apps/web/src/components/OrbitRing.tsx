@@ -53,10 +53,11 @@ export const OrbitRing: React.FC<OrbitRingProps> = ({ radius, points, color = '#
   if (!lineGeometry) return null;
   
   return (
+    // @ts-expect-error R3F's <line> conflicts with SVG <line> in JSX typings
     <line geometry={lineGeometry}>
-      <lineBasicMaterial 
-        color={color} 
-        transparent 
+      <lineBasicMaterial
+        color={color}
+        transparent
         opacity={0.3}
       />
     </line>

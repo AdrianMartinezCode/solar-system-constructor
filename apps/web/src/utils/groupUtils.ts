@@ -26,8 +26,8 @@ export function computeVisibleItems(
   if (nestingLevel === 0) {
     rootSystemIds.forEach(id => {
       // Only show systems that aren't in any group
-      const isInGroup = Object.values(groups).some(g => 
-        g.children.some(c => c.type === 'system' && c.id === id)
+      const isInGroup = Object.values(groups).some(g =>
+        g.children.some((c: GroupChild) => c.type === 'system' && c.id === id)
       );
       if (!isInGroup) {
         visible.push({ id, type: 'system' });
@@ -35,13 +35,13 @@ export function computeVisibleItems(
     });
     return visible;
   }
-  
+
   // Max: Show everything expanded with spatial distribution
   if (nestingLevel === 'max') {
     // Show all ungrouped systems
     rootSystemIds.forEach(id => {
-      const isInGroup = Object.values(groups).some(g => 
-        g.children.some(c => c.type === 'system' && c.id === id)
+      const isInGroup = Object.values(groups).some(g =>
+        g.children.some((c: GroupChild) => c.type === 'system' && c.id === id)
       );
       if (!isInGroup) {
         visible.push({ id, type: 'system' });
@@ -87,7 +87,7 @@ export function computeVisibleItems(
       });
     } else {
       // Expand this level
-      group.children.forEach(child => {
+      group.children.forEach((child: GroupChild) => {
         processLevel(child.id, child.type, currentDepth + 1);
       });
     }
@@ -95,14 +95,14 @@ export function computeVisibleItems(
   
   // Start with root items
   rootSystemIds.forEach(id => {
-    const isInGroup = Object.values(groups).some(g => 
-      g.children.some(c => c.type === 'system' && c.id === id)
+    const isInGroup = Object.values(groups).some(g =>
+      g.children.some((c: GroupChild) => c.type === 'system' && c.id === id)
     );
     if (!isInGroup) {
       visible.push({ id, type: 'system' });
     }
   });
-  
+
   rootGroupIds.forEach(groupId => {
     processLevel(groupId, 'group', 1);
   });
@@ -130,7 +130,7 @@ export function wouldCreateCycle(
   let current = groups[parentId];
   while (current) {
     if (current.id === childId) return true;
-    current = current.parentGroupId ? groups[current.parentGroupId] : null;
+    current = (current.parentGroupId ? groups[current.parentGroupId] : null) as Group;
   }
   return false;
 }
@@ -144,7 +144,7 @@ export function getGroupSystems(groupId: string, groups: Record<string, Group>):
   
   const systems: string[] = [];
   
-  group.children.forEach(child => {
+  group.children.forEach((child: GroupChild) => {
     if (child.type === 'system') {
       systems.push(child.id);
     } else {
@@ -164,7 +164,7 @@ export function getGroupAndDescendants(groupId: string, groups: Record<string, G
   
   const groupIds: string[] = [groupId];
   
-  group.children.forEach(child => {
+  group.children.forEach((child: GroupChild) => {
     if (child.type === 'group') {
       groupIds.push(...getGroupAndDescendants(child.id, groups));
     }

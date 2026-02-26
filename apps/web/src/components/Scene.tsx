@@ -53,7 +53,7 @@ export const Scene: React.FC = () => {
     const ids: string[] = [rootStarId];
     const star = starsMap[rootStarId];
     if (star && star.children) {
-      star.children.forEach((childId) => {
+      star.children.forEach((childId: string) => {
         ids.push(...collectSystemStarIds(childId, starsMap));
       });
     }
@@ -222,7 +222,7 @@ export const Scene: React.FC = () => {
           
           // When isolated, only show nebulae associated with the isolated group or its descendants
           if (isolationSets && nebula.associatedGroupIds) {
-            return nebula.associatedGroupIds.some((groupId) =>
+            return nebula.associatedGroupIds.some((groupId: string) =>
               isolationSets.allowedGroupIds.has(groupId)
             );
           }

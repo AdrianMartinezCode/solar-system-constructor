@@ -580,7 +580,9 @@ export const BodyEditorPanel: React.FC = () => {
                 protoplanetaryDisks={protoplanetaryDisks}
                 onAddDisk={addProtoplanetaryDisk}
                 onRemoveDisk={removeProtoplanetaryDisk}
-                onUpdateDisk={updateProtoplanetaryDisk}
+                onUpdateDisk={(diskId: string, field: string, value: any) =>
+                  updateProtoplanetaryDisk(diskId, { [field]: value })
+                }
               />
               
               {/* Show message if no special features apply */}
@@ -590,7 +592,7 @@ export const BodyEditorPanel: React.FC = () => {
                selectedStar.bodyType !== 'blackHole' && 
                !selectedStar.isRoguePlanet &&
                selectedStar.bodyType !== 'lagrangePoint' &&
-               (selectedStar.parentId || selectedStar.bodyType === 'blackHole') && (
+               (selectedStar.parentId) && (
                 <div style={{ 
                   padding: '2rem 1rem', 
                   textAlign: 'center',

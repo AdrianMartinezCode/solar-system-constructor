@@ -38,7 +38,7 @@ export const NebulaEditorPanel: React.FC<NebulaEditorPanelProps> = ({ nebulaId }
     field: K,
     value: NebulaRegion[K]
   ) => {
-    setLocalNebula(prev => prev ? { ...prev, [field]: value } : null);
+    setLocalNebula((prev: NebulaRegion | null) => prev ? { ...prev, [field]: value } : null);
   };
   
   return (
@@ -298,7 +298,7 @@ export const NebulaEditorPanel: React.FC<NebulaEditorPanelProps> = ({ nebulaId }
                   Associated Groups
                 </label>
                 <ul className="nebula-group-list">
-                  {localNebula.associatedGroupIds.map((groupId, idx) => (
+                  {localNebula.associatedGroupIds.map((groupId: string, idx: number) => (
                     <li key={idx}>{groupId}</li>
                   ))}
                 </ul>

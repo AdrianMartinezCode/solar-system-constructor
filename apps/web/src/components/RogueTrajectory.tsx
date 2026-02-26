@@ -91,6 +91,7 @@ export const RogueTrajectory: React.FC<RogueTrajectoryProps> = ({
     <group position={[-currentPosition.x, -currentPosition.y, -currentPosition.z]}>
       {/* Past trajectory (history) - dimmer line showing where the rogue has been */}
       {pastGeometry && (
+        // @ts-expect-error R3F's <line> conflicts with SVG <line> in JSX typings
         <line geometry={pastGeometry}>
           <lineBasicMaterial
             color={baseColor}
@@ -100,9 +101,10 @@ export const RogueTrajectory: React.FC<RogueTrajectoryProps> = ({
           />
         </line>
       )}
-      
+
       {/* Future trajectory (prediction) - slightly brighter than past but still subtle */}
       {futureGeometry && (
+        // @ts-expect-error R3F's <line> conflicts with SVG <line> in JSX typings
         <line geometry={futureGeometry}>
           <lineBasicMaterial
             color={baseColor}

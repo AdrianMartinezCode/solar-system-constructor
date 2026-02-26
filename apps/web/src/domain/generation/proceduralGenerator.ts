@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Star, Group, GroupChild, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../../types';
+import { Star, Group, Position, AsteroidBelt, PlanetaryRing, CometMeta, LagrangePointMeta, ProtoplanetaryDisk, SmallBodyField, NebulaRegion } from '../../types';
 import { createPRNG, PRNG } from '../../../prng';
 import type { TopologyPresetId, LSystemNode as TopologyLSystemNode, TopologyRNG, TopologyGeneratorConfig } from './topology';
 import { createTopologyGenerator, DEFAULT_TOPOLOGY_PRESET, getTopologyPreset } from './topology';
@@ -613,7 +613,7 @@ class LSystemGenerator {
 
 class PhysicsGenerator {
   private config: GeneratorConfig;
-  private rng: RandomGenerator;
+  public readonly rng: RandomGenerator;
   
   constructor(config: GeneratorConfig, rng: RandomGenerator) {
     this.config = config;
@@ -1313,16 +1313,12 @@ class StarDataGenerator {
       : rng.uniform(0.4, 0.6);  // Normal disks have moderate streaking
     
     // Jet color gradient (optional - depends on style)
-    let jetBaseColor: string | undefined;
-    let jetTipColor: string | undefined;
     let jetGradientPower: number | undefined;
-    
+
     if (hasRelativisticJet) {
-      // Vary jet colors slightly for diversity
-      const jetHue = rng.uniform(0.5, 0.65); // Blue-cyan range
-      jetBaseColor = undefined; // Use defaults in renderer
-      jetTipColor = undefined;  // Use defaults in renderer
-      jetGradientPower = accretionStyle === 'quasar' 
+      // Advance RNG state for deterministic generation (jet hue reserved for future use)
+      rng.uniform(0.5, 0.65);
+      jetGradientPower = accretionStyle === 'quasar'
         ? rng.uniform(1.5, 2.0)  // Quasar jets fade slower
         : rng.uniform(2.0, 2.5); // Normal jets fade faster
     }
@@ -1605,12 +1601,10 @@ class GroupGenerator {
 class AsteroidBeltGenerator {
   private config: GeneratorConfig;
   private rng: RandomGenerator;
-  private physics: PhysicsGenerator;
-  
+
   constructor(config: GeneratorConfig, rng: RandomGenerator) {
     this.config = config;
     this.rng = rng;
-    this.physics = new PhysicsGenerator(config, rng);
   }
   
   /**
@@ -1800,12 +1794,10 @@ class AsteroidBeltGenerator {
 class KuiperBeltGenerator {
   private config: GeneratorConfig;
   private rng: RandomGenerator;
-  private physics: PhysicsGenerator;
-  
+
   constructor(config: GeneratorConfig, rng: RandomGenerator) {
     this.config = config;
     this.rng = rng;
-    this.physics = new PhysicsGenerator(config, rng);
   }
   
   /**
@@ -2081,12 +2073,10 @@ class PlanetaryRingGenerator {
 class CometGenerator {
   private config: GeneratorConfig;
   private rng: RandomGenerator;
-  private physics: PhysicsGenerator;
 
   constructor(config: GeneratorConfig, rng: RandomGenerator) {
     this.config = config;
     this.rng = rng;
-    this.physics = new PhysicsGenerator(config, rng);
   }
 
   /**
@@ -2378,7 +2368,7 @@ class LagrangePointGenerator {
    */
   private createLagrangeMarkers(
     pair: { primary: Star; secondary: Star; pairType: 'starPlanet' | 'planetMoon' },
-    stars: Record<string, Star>
+    _stars: Record<string, Star>
   ): Star[] {
     const markers: Star[] = [];
     const { primary, secondary, pairType } = pair;
@@ -2943,7 +2933,7 @@ class NebulaGenerator {
   private computeClusterCenters(
     groups: Record<string, Group>,
     rootGroupIds: string[],
-    stars: Record<string, Star>,
+    _stars: Record<string, Star>,
     rootIds: string[]
   ): Array<{ position: Position; radius: number; groupId?: string }> {
     const centers: Array<{ position: Position; radius: number; groupId?: string }> = [];
@@ -2964,7 +2954,7 @@ class NebulaGenerator {
       // Fallback: create synthetic clusters from root star positions
       // (In practice, stars are at origin unless grouping is enabled, so this is mostly for completeness)
       const clusterSize = 50; // Default radius
-      rootIds.forEach((rootId, index) => {
+      rootIds.forEach((_rootId, _index) => {
         centers.push({
           position: { x: 0, y: 0, z: 0 }, // Stars default to origin
           radius: clusterSize,
@@ -3170,12 +3160,10 @@ class NebulaGenerator {
 class RoguePlanetGenerator {
   private config: GeneratorConfig;
   private rng: RandomGenerator;
-  private physics: PhysicsGenerator;
 
   constructor(config: GeneratorConfig, rng: RandomGenerator) {
     this.config = config;
     this.rng = rng;
-    this.physics = new PhysicsGenerator(config, rng);
   }
 
   /**
@@ -3226,8 +3214,8 @@ class RoguePlanetGenerator {
   private computeReferencePositions(
     groups: Record<string, Group>,
     rootGroupIds: string[],
-    stars: Record<string, Star>,
-    rootIds: string[]
+    _stars: Record<string, Star>,
+    _rootIds: string[]
   ): Array<Position> {
     const positions: Position[] = [];
 

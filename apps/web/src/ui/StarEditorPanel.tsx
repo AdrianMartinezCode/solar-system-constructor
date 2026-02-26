@@ -544,7 +544,7 @@ export const StarEditorPanel: React.FC = () => {
                   value={selectedStar.roguePlanet.velocity.x}
                   onChange={(e) => handleUpdate('roguePlanet', {
                     ...selectedStar.roguePlanet,
-                    velocity: { ...selectedStar.roguePlanet.velocity, x: Number(e.target.value) }
+                    velocity: { ...selectedStar.roguePlanet!.velocity, x: Number(e.target.value) }
                   })}
                   step="0.001"
                 />
@@ -557,7 +557,7 @@ export const StarEditorPanel: React.FC = () => {
                   value={selectedStar.roguePlanet.velocity.y}
                   onChange={(e) => handleUpdate('roguePlanet', {
                     ...selectedStar.roguePlanet,
-                    velocity: { ...selectedStar.roguePlanet.velocity, y: Number(e.target.value) }
+                    velocity: { ...selectedStar.roguePlanet!.velocity, y: Number(e.target.value) }
                   })}
                   step="0.001"
                 />
@@ -570,7 +570,7 @@ export const StarEditorPanel: React.FC = () => {
                   value={selectedStar.roguePlanet.velocity.z}
                   onChange={(e) => handleUpdate('roguePlanet', {
                     ...selectedStar.roguePlanet,
-                    velocity: { ...selectedStar.roguePlanet.velocity, z: Number(e.target.value) }
+                    velocity: { ...selectedStar.roguePlanet!.velocity, z: Number(e.target.value) }
                   })}
                   step="0.001"
                 />
@@ -786,7 +786,7 @@ export const StarEditorPanel: React.FC = () => {
                         value={selectedStar.blackHole.accretionInnerRadius}
                         onChange={(e) => handleUpdate('blackHole', {
                           ...selectedStar.blackHole,
-                          accretionInnerRadius: Math.max(selectedStar.blackHole.shadowRadius * 1.1, Number(e.target.value))
+                          accretionInnerRadius: Math.max(selectedStar.blackHole!.shadowRadius * 1.1, Number(e.target.value))
                         })}
                         min={selectedStar.blackHole.shadowRadius * 1.1}
                         step="0.1"
@@ -801,7 +801,7 @@ export const StarEditorPanel: React.FC = () => {
                         value={selectedStar.blackHole.accretionOuterRadius}
                         onChange={(e) => handleUpdate('blackHole', {
                           ...selectedStar.blackHole,
-                          accretionOuterRadius: Math.max(selectedStar.blackHole.accretionInnerRadius * 1.1, Number(e.target.value))
+                          accretionOuterRadius: Math.max(selectedStar.blackHole!.accretionInnerRadius * 1.1, Number(e.target.value))
                         })}
                         min={selectedStar.blackHole.accretionInnerRadius * 1.1}
                         step="0.5"
@@ -1186,7 +1186,7 @@ export const StarEditorPanel: React.FC = () => {
                         updateRing(selectedStar.id, {
                           innerRadiusMultiplier: value,
                           outerRadiusMultiplier: Math.max(
-                            selectedStar.ring.outerRadiusMultiplier,
+                            selectedStar.ring!.outerRadiusMultiplier,
                             value + 0.1
                           ),
                         });

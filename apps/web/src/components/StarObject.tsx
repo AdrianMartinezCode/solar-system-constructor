@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useEffect } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { useSystemStore } from '../state/systemStore';
 import { useUiStore } from '../state/uiStore';
-import { calculateOrbitalPosition, calculateRoguePlanetPosition, generateOrbitPath, computeRogueTrajectoryPoints } from '../utils/physics';
+import { calculateOrbitalPosition, calculateRoguePlanetPosition, generateOrbitPath } from '../utils/physics';
 import { OrbitRing } from './OrbitRing';
 import * as THREE from 'three';
 import { PlanetaryRingObject } from './PlanetaryRingObject';
@@ -192,7 +192,7 @@ export const StarObject: React.FC<StarObjectProps> = ({ starId }) => {
       )}
       
       {/* Render children recursively */}
-      {star.children.map((childId) => (
+      {star.children.map((childId: string) => (
         <StarObject key={childId} starId={childId} />
       ))}
     </group>

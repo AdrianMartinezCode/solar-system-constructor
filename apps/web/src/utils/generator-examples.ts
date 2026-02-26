@@ -2,7 +2,7 @@
  * Example usage and testing utilities for the procedural generator
  */
 
-import { generateSolarSystem, generateMultipleSystems, DEFAULT_CONFIG } from '../domain/generation';
+import { generateSolarSystem, generateMultipleSystems } from '../domain/generation';
 import type { GeneratorConfig } from '../domain/generation';
 
 // ============================================================================
