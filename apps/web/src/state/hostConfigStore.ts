@@ -19,7 +19,7 @@ interface HostConfigStore {
 }
 
 export const useHostConfigStore = create<HostConfigStore>((set) => ({
-  apiHost: import.meta.env.VITE_API_HOST ?? '',
+  apiHost: import.meta.env.VITE_API_HOST ?? 'http://localhost:3001',
 
   setApiHost: (url) => {
     set({ apiHost: url });

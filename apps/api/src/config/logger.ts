@@ -39,14 +39,21 @@ export function createLogger(env: {
   }
 
   // Stdout-only mode: use pino-pretty in development for readability.
+  // Guard with a resolve check — pino-pretty is a devDependency and may not be
+  // installed in production/Docker images built with --omit=dev.
   if (env.NODE_ENV === 'development') {
-    return pino({
-      level,
-      transport: {
-        target: 'pino-pretty',
-        options: { colorize: true },
-      },
-    });
+    try {
+      import.meta.resolve('pino-pretty');
+      return pino({
+        level,
+        transport: {
+          target: 'pino-pretty',
+          options: { colorize: true },
+        },
+      });
+    } catch {
+      // pino-pretty not installed — fall through to plain JSON logger.
+    }
   }
 
   // Production stdout-only: structured JSON.
