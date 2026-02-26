@@ -49,13 +49,20 @@ The frontend uses a **hexagonal architecture** (ports and adapters) with a share
 
 **Prerequisites:** Node.js 18+ and npm.
 
+### Backend only using docker
+
+```
+docker compose up --build         # starts PostgreSQL
+```
+
+
 ### Frontend only (offline mode)
 
 ```bash
-git clone <repo-url> && cd solar-system-constructor
 npm install
 npm run dev        # http://localhost:5173
 ```
+
 
 ### Full stack (frontend + backend + database)
 
