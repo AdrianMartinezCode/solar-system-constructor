@@ -1,5 +1,7 @@
 # Solar System Constructor
 
+> **[Live Demo](https://adrianmartinezcode.github.io/solar-system-constructor/)** — Try the frontend simulation in your browser (offline mode, no backend required).
+
 A 3D interactive solar system builder with MCP-powered AI integration, real-time SSE streaming, and procedural L-System generation.
 
 <!-- TODO: Add a screenshot or animated GIF here showcasing the 3D solar system view.
