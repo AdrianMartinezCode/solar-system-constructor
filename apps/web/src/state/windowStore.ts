@@ -283,9 +283,10 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     // Load preset-specific windows
     switch (preset) {
       case 'exploration':
-        get().openWindow('overview', undefined, { x: 20, y: 80 });
+        get().openWindow('generator', undefined, { x: 20, y: 80 });
         get().dockWindow(get().taskbarOrder[0], 'left');
-        get().openWindow('stats', undefined, { x: window.innerWidth - 240, y: 80 });
+        get().openWindow('overview');
+        get().openWindow('stats', undefined, { x: window.innerWidth - windowDefaults.stats.width - 20, y: 80 });
         break;
 
       case 'editing':
