@@ -12,7 +12,7 @@ export type WindowType =
   | 'stats'
   | 'starList';
 
-export type DockPosition = 'left' | 'right' | 'top' | null;
+export type DockPosition = 'left' | 'right' | null;
 
 export interface WindowState {
   id: string;
@@ -246,9 +246,6 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
       } else if (position === 'right') {
         newPosition = { x: viewW - win.size.width, y: 60 };
         newSize = { width: win.size.width, height: viewH - 60 - 40 };
-      } else if (position === 'top') {
-        newPosition = { x: 0, y: 60 };
-        newSize = { width: viewW, height: 200 };
       }
 
       return {
@@ -285,7 +282,7 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
       case 'exploration':
         get().openWindow('generator', undefined, { x: 20, y: 80 });
         get().dockWindow(get().taskbarOrder[0], 'left');
-        get().openWindow('overview');
+        get().openWindow('overview', undefined, { x: windowDefaults.generator.width + 20, y: 80 });
         get().openWindow('stats', undefined, { x: window.innerWidth - windowDefaults.stats.width - 20, y: 80 });
         break;
 

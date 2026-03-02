@@ -106,38 +106,33 @@ export const Window: React.FC<WindowProps> = ({ window, children }) => {
     });
   };
 
-  const checkDockingZones = (x: number, y: number) => {
+  const checkDockingZones = (x: number, _y: number) => {
     // Show visual feedback for docking zones
     const dockZoneSize = 50;
-    
+
     if (x < dockZoneSize) {
       document.body.classList.add('dock-left-active');
     } else if (x > globalThis.innerWidth - dockZoneSize) {
       document.body.classList.add('dock-right-active');
-    } else if (y < dockZoneSize + 60) {
-      document.body.classList.add('dock-top-active');
     } else {
-      document.body.classList.remove('dock-left-active', 'dock-right-active', 'dock-top-active');
+      document.body.classList.remove('dock-left-active', 'dock-right-active');
     }
   };
 
   const finalizeDocking = () => {
     const hasDockClass = document.body.classList.contains('dock-left-active') ||
-                        document.body.classList.contains('dock-right-active') ||
-                        document.body.classList.contains('dock-top-active');
-    
+                        document.body.classList.contains('dock-right-active');
+
     if (document.body.classList.contains('dock-left-active')) {
       dockWindow(window.id, 'left');
     } else if (document.body.classList.contains('dock-right-active')) {
       dockWindow(window.id, 'right');
-    } else if (document.body.classList.contains('dock-top-active')) {
-      dockWindow(window.id, 'top');
     } else if (window.docked && !hasDockClass) {
       // Undock if was docked
       dockWindow(window.id, null);
     }
-    
-    document.body.classList.remove('dock-left-active', 'dock-right-active', 'dock-top-active');
+
+    document.body.classList.remove('dock-left-active', 'dock-right-active');
   };
 
   const handleWindowClick = () => {
